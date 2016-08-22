@@ -1,5 +1,5 @@
 from ophyd import (PVPositioner, Component as Cpt, EpicsSignal, EpicsSignalRO,
-                   Signal)
+                   Device)
 from ophyd.utils import ReadOnlyError
 import time as ttime
 
@@ -18,7 +18,10 @@ class UgapPositioner(PVPositioner):
     done = Cpt(EpicsSignalRO, '-Ax:Gap}Mtr.MOVN')
     done_val = 0
 
-    
-ugap = UgapPositioner(prefix='SR:C21-ID:G1A{EPU:1', settle_time=3., name='ugap')
-ugap.read_attrs = ['setpoint', 'readback']
+
+class EPU(Device):
+    gap = Cpt(UgapPositioner, '', settle_time=3)
+
+Epu1 = EPU('SR:C21-ID:G1A{EPU:1', name='EPU1')
+Epu1.gap.read_attrs = ['setpoint', 'readback']
 
