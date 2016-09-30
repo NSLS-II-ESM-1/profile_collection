@@ -129,4 +129,5 @@ def ss_csv(f_nm,sc_num, motor, det):
         from databroker import DataBroker as db, get_table, get_images, get_events
         hdr = db[sc_num]
         df =get_table(hdr,[det, motor])
-        df.to_csv(f_nm, index=False)
+        del df['time']
+        df.to_csv(f_nm,index=False)

@@ -164,6 +164,15 @@ M3U_slit = ESMSlit_type2("XF:21IDB-OP{Mir:3-Slt:10_U_1", name='M3U_slit')
 M4AU_slit = ESMSlit_type2("XF:21IDC-OP{Mir:4A-Slt:A4_U_1", name='M4AU_slit')
 M4BD_slit = ESMSlit_type2("XF:21IDC-OP{Mir:4B-Slt:B5_D_1", name='M4BD_slit')
 
+class ExitSlit(Device):
+    v_gap = Comp(EpicsMotor,"_VG}Mtr")
+    h_gap = Comp(EpicsMotor,"_HG}Mtr")
+    h_def = Comp(EpicsMotor,"_HDS}Mtr")
+    v_def = Comp(EpicsMotor,"_VDS}Mtr")
+    
+Exit_SlitA = ExitSlit('XF:21IDC-OP{Slt:1A-Ax:A1',name='Exit_slitA')
+Exit_SlitB = ExitSlit('XF:21IDC-OP{Slt:1B-Ax:B1',name='Exit_slitB')
+
 #Diagnostics
 class DIAG(Device):
     trans = Comp(EpicsMotor,"}Mtr")    
@@ -179,7 +188,7 @@ M4BD_diag2 = DIAG("XF:21IDC-OP{Mir:4B-Diag:B5_D_2-Ax:2",name = 'M4BD_diag2')
 # --------------------------FRONT END COMPONENTS -----------------------------
 # Slits
 
-class Virtual_Center(PVPositioner):
+class Virtual_Size(PVPositioner):
 #This is used to connect to the front end gap size PV's.
     readback = Comp(EpicsSignalRO, 't2.C')
     setpoint = Comp(EpicsSignal,'size')
@@ -195,9 +204,9 @@ class Virtual_Center(PVPositioner):
 
 class Virtual_Motor_Center_And_Gap(Device):
 #This is used to combine the gap centre and size classes from above into a single class object
-    h_gap = Comp(Virtual_Center,'12-Ax:X}')
+    h_gap = Comp(Virtual_Size,'12-Ax:X}')
     h_center = Comp(Virtual_Center,'12-Ax:X}')
-    v_gap = Comp(Virtual_Center,'12-Ax:Y}')
+    v_gap = Comp(Virtual_Size,'12-Ax:Y}')
     v_center = Comp(Virtual_Center,'12-Ax:Y}')
 
 class Blades(Device):
