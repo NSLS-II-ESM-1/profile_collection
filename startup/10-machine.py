@@ -79,7 +79,7 @@ class M1_mirror(Device):
     Rz = Comp(EpicsMotor,"Roll}Mtr")
     Mirror_Roll = Comp(EpicsMotor,"Roll}Mtr")
 
-M1 = M1_mirror("XF:21IDA-OP{Mir:1-Ax:4_",name="M1")
+# M1 = M1_mirror("XF:21IDA-OP{Mir:1-Ax:4_",name="M1")
 
 class Hexapod_Mir(Device):
     X = Comp(EpicsMotor,"_X}Mtr")
@@ -90,11 +90,11 @@ class Hexapod_Mir(Device):
     Mirror_Exchange = Comp(EpicsMotor,"_Y}Mtr") 
     Z = Comp(EpicsMotor,"_Z}Mtr")
     Rx = Comp(EpicsMotor,"_Rx}Mtr")
-    Mirror_Roll = Comp(EpicsMotor,"_Rx}Mtr")
+    Mirror_Roll = Comp(EpicsMotor,"_Rz}Mtr")
     Ry = Comp(EpicsMotor,"_Ry}Mtr")
     Mirror_Pitch = Comp(EpicsMotor,"_Ry}Mtr")
     Rz = Comp(EpicsMotor,"_Rz}Mtr")
-    Mirror_Yaw = Comp(EpicsMotor,"_Rz}Mtr")
+    Mirror_Yaw = Comp(EpicsMotor,"_Rx}Mtr")
     
 M3 = Hexapod_Mir("XF:21IDB-OP{Mir:3-Ax:11",name="M3")
 M4B = Hexapod_Mir("XF:21IDC-OP{Mir:4B-Ax:B4",name="M4B")
@@ -102,11 +102,13 @@ M4B = Hexapod_Mir("XF:21IDC-OP{Mir:4B-Ax:B4",name="M4B")
 class Monochromator(Device):
     Focus_Const = Comp(EpicsMotor,"Cff}Mtr")
     Energy = Comp(EpicsMotor,"Eng}Mtr")
-    Grating_Trans = Comp(EpicsMotor,"GT}Trans:Mtr")
+    Grating_Trans = Comp(EpicsMotor,"GT}Mtr")
     Mirror_Pitch = Comp(EpicsMotor,"MP}Mtr")
     Grating_Pitch = Comp(EpicsMotor,"GP}Mtr")
 
 PGM = Monochromator("XF:21IDB-OP{Mono:1-Ax:8_",name="PGM")
+
+
 
 class KB_pair(Device):
     VFM_Y = Comp(EpicsMotor,"VFMTy}Mtr")
@@ -170,8 +172,8 @@ class ExitSlit(Device):
     h_def = Comp(EpicsMotor,"_HDS}Mtr")
     v_def = Comp(EpicsMotor,"_VDS}Mtr")
     
-Exit_SlitA = ExitSlit('XF:21IDC-OP{Slt:1A-Ax:A1',name='Exit_slitA')
-Exit_SlitB = ExitSlit('XF:21IDC-OP{Slt:1B-Ax:B1',name='Exit_slitB')
+Exit_SlitA = ExitSlit('XF:21IDC-OP{Slt:1A-Ax:A1',name='Exit_SlitA')
+Exit_SlitB = ExitSlit('XF:21IDC-OP{Slt:1B-Ax:B1',name='Exit_SlitB')
 
 #Diagnostics
 class DIAG(Device):

@@ -104,6 +104,14 @@ def angles(grt_lines,ph_en):
 	print('\n\t M2 = %5.6f, grt = %5.6f , c = %5.6f \n' %(gamma*rad2dg, beta*rad2dg, C))
 
 
+def swap_cols(arr, frm, to):
+        '''
+        This swaps a column from one location to another in a numpy array.
+        '''
+        arr[:,[frm, to]] = arr[:,[to, frm]]
+    
+
+        
 def sl_csv(f_nm):
         ''' save_last_csv - usage: sv_csv(f_nm) 
 		   f_nm =string with extention '***.csv'.
@@ -113,7 +121,10 @@ def sl_csv(f_nm):
         from databroker import DataBroker as db, get_table, get_images, get_events
         hdr = db[-1]
         df =get_table(hdr)
-        df.to_csv(f_nm, index=False)
+
+        f_path="/direct/XF21ID1/csv_files/"+f_nm
+        
+        df.to_csv(f_path, index=False)
 
 
 def ss_csv(f_nm,sc_num, motor, det):
@@ -128,6 +139,45 @@ def ss_csv(f_nm,sc_num, motor, det):
 	
         from databroker import DataBroker as db, get_table, get_images, get_events
         hdr = db[sc_num]
-        df =get_table(hdr,[det, motor])
-        del df['time']
-        df.to_csv(f_nm,index=False)
+        if motor == 'time': 
+                df =get_table(hdr,[ det])
+        else:
+                df =get_table(hdr,[motor, det])                
+                del df['time']
+
+        f_path="/direct/XF21ID1/csv_files/"+f_nm
+        
+        cols=df.columns.tolist()
+        m=cols.index(motor)
+        cols.pop(m)
+        cols=[motor]+cols
+        df=df[cols]
+           
+#        swap_cols(df,df[0].index(motor),0)
+        df.to_csv(f_path,index=False)
+
+def Sic2f(ph_en, i):
+	''' Given the photon energy (in eV) and the XUV Si-diode current (in microAmp), returns the
+		flux (ph/sec). It uses the QY for a typical XUV Si-diode.
+		Usage: Sic2f(hv(eV), i(A))
+	'''									
+									# XUV QY data: number of electrons per 1 photons of a given photon energy	
+	
+	E_eV = [1,1.25,2,2.75,3,4,5,6,7,8,9,10,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340,360,380,400,420,440,460,480,500
+			,520,540,560,580,600,620,640,740,760,780,800,820,840,860,880,900,920,940,960,980,1000,1200,1400,1600,1800,2000,2200,2400,2600,2800
+			,3000,3200,3400,3600,3800,4000,4200,4400,4600,4800,5000,5200,5400,5600,5800,6000]
+	
+	
+	QY = [0.023, 0.32 ,0.64,0.57,0.49,0.432,0.45,0.5,0.7,1,1.05,1.1,3.25,8.38,12.18,17.85,22.72,26.42,31.37,33.5,42.95,50.68,60.61,66.12,71.63,77.13
+			,82.64,88.15,93.66,99.17,104.68,110.19,115.7,121.21,126.72,132.23,137.74,143.25,148.76,154.27,159.78,165.29,170.8,176.31,203.86,209.37,
+			214.88,220.39,225.9,231.41,236.91,242.42,247.94,253.44,258.95,264.46,269.97,275.48,330.58,385.67,440.77,495.87,550.96,606.06,661.18,716.35
+			,771.35,826.45,881.54,936.64,991.74,1046.83,1101.93,1157.02,1212.12,1267.22,1322.31,1377.41,1432.51,1487.6,1542.7,1597.8,1652.89]
+
+	Sictof = interp1d(E_eV, QY)
+	print('min, max = %f, %f' %(min(E_eV), max(E_eV)))
+	if (ph_en >= min(E_eV) and ph_en <= max(E_eV)):
+                print('QY = %f' %(Sictof(ph_en)))
+	else:
+		print("Energy out of range")
+
+	print('flux = %.4g ph/sec' %((i)/(1.6E-19)/Sictof(ph_en)))
