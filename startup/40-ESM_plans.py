@@ -158,7 +158,10 @@ def scan_1D(DETS, scan_motor, start, end ,step_size,DET_channel=None,scan_type=N
      '''
     # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
 
-    steps=round((end-start)/step_size)
+    if(  ( start<end and step_size<0 ) or ( start>end and step_size>0 )   ):
+        step_size*=-1
+    
+    steps=abs(round((end-start)/step_size))
     stop=start+step_size*steps
 
     #This section determines the Y axis and X axis variable to plot for the scan, if the first detector in the list is a single channel
@@ -263,14 +266,20 @@ def scan_multi_1D(DETS, scan_motor1, start1, end1, step_size1,scan_motor2, start
 
 
         
- 
+
 
     # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
-    steps1=round((end1-start1)/step_size1)
+    if(  ( start1<end1 and step_size1<0 ) or ( start1>end1 and step_size1>0 )   ):
+        step_size1*=-1
+    
+    steps1=abs(round((end1-start1)/step_size1))
     stop1=start1+step_size1*steps1
 
+    if(  ( start2<end2 and step_size2<0 ) or ( start2>end2 and step_size2>0 )   ):
+        step_size2*=-1
+    
     if adaptive is None:
-        steps2=round((end2-start2)/step_size2)
+        steps2=abs(round((end2-start2)/step_size2))
         stop2=start2+step_size2*steps2
     else:
         steps2=adaptive[1]
@@ -462,10 +471,14 @@ def scan_2D(DETS, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end
  
 
     # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
+    if(  ( start1<end1 and step_size1<0 ) or ( start1>end1 and step_size1>0 )   ):
+        step_size1*=-1
 
+    if(  ( start2<end2 and step_size2<0 ) or ( start2>end2 and step_size2>0 )   ):
+        step_size2*=-1
 
     if concurrent is True:
-        steps1=round((end1-start1)/step_size1)
+        steps1=abs(round((end1-start1)/step_size1))
         stop1=start1+step_size1*steps1
         
         steps2=steps1
@@ -501,10 +514,10 @@ def scan_2D(DETS, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end
         #print ( 'steps2: '+ str(steps2) + ' steps1: ' + str(steps1)   )  
         
     else:    
-        steps1=round((end1-start1)/step_size1)
+        steps1=abs(round((end1-start1)/step_size1))
         stop1=start1+step_size1*steps1
 
-        steps2=round((end2-start2)/step_size2)
+        steps2=abs(round((end2-start2)/step_size2))
         stop2=start2+step_size2*steps2
     
 
@@ -623,7 +636,7 @@ def scan_2D(DETS, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end
         add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
 
         raster = LiveRaster( (steps1+1,steps2+1) , Z_axis , ylabel= Y_axis, xlabel= X_axis, extent=(start2-step_size2/2,stop2+step_size2/2,stop1+step_size1/2,start1-step_size1/2),
-                            aspect=((stop2-start2+step_size2)/(stop1-start1+step_size1) ) ) 
+                            aspect=(abs( (stop2-start2+step_size2)/(stop1-start1+step_size1) ) ) ) 
         
         @subs_decorator(table)
         @subs_decorator(raster)
@@ -812,8 +825,8 @@ def spiral_square_pattern(x_motor, y_motor, x_centre, y_centre, x_range, y_range
         x_points.append(x_centre)
         y_points.append(y_centre)
         
-    print( 'x_range = '+str(x_range)+', x_num = '+str(x_num)  )
-    print( 'y_range = '+str(y_range)+', y_num = '+str(y_num)  )
+    #print( 'x_range = '+str(x_range)+', x_num = '+str(x_num)  )
+    #print( 'y_range = '+str(y_range)+', y_num = '+str(y_num)  )
      
     delta_x = x_range/(x_num-1)
     delta_y = y_range/(y_num-1)
@@ -831,15 +844,15 @@ def spiral_square_pattern(x_motor, y_motor, x_centre, y_centre, x_range, y_range
 
 
     
-    print ( 'num_ring = '+str(num_ring)  )
+    #print ( 'num_ring = '+str(num_ring)  )
     for n,i_ring in enumerate(range(num_st, num_ring+1,2)):
-        print ('x_centre: '+str(x_centre)+', delta_x: '+str(delta_x))
-        print ('y_centre: '+str(y_centre)+', delta_y: '+str(delta_y))
+        #print ('x_centre: '+str(x_centre)+', delta_x: '+str(delta_x))
+        #print ('y_centre: '+str(y_centre)+', delta_y: '+str(delta_y))
         x_ring_max=x_centre + delta_x * (n+offset)
         y_ring_max=y_centre + delta_y * (n+offset)
         x_ring_min=x_centre - delta_x * (n+offset)
         y_ring_min=y_centre - delta_y * (n+offset)
-        print('i_ring = '+str(i_ring)+', x_ring_min= '+str(x_ring_min)+', y_ring_min= '+str(y_ring_min)  ) 
+        #print('i_ring = '+str(i_ring)+', x_ring_min= '+str(x_ring_min)+', y_ring_min= '+str(y_ring_min)  ) 
 
         for n in range(1, i_ring):
             x = x_ring_min+delta_x*(n-1)
