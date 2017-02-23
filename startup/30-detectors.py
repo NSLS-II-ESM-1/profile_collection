@@ -51,7 +51,19 @@ class MyDetector(SingleTrigger, AreaDetector):
 #               suffix='TIFF1:',
 #               write_path_template='/direct/XF21ID1/image_files/',  # trailing slash!
 #               read_path_template='/direct/XF21ID1/image_files/')
-          
+    image = Cpt(ImagePlugin, 'image1:')
+    stats1 = Cpt(StatsPlugin, 'Stats1:')
+    stats2 = Cpt(StatsPlugin, 'Stats2:')
+    stats3 = Cpt(StatsPlugin, 'Stats3:')
+    stats4 = Cpt(StatsPlugin, 'Stats4:')
+    stats5 = Cpt(StatsPlugin, 'Stats5:')
+    trans1 = Cpt(TransformPlugin, 'Trans1:')
+    roi1 = Cpt(ROIPlugin, 'ROI1:')
+    roi2 = Cpt(ROIPlugin, 'ROI2:')
+    roi3 = Cpt(ROIPlugin, 'ROI3:')
+    roi4 = Cpt(ROIPlugin, 'ROI4:')
+    proc1 = Cpt(ProcessPlugin, 'Proc1:')
+
     hdf5 = Cpt(HDF5PluginWithFileStore,
                suffix='HDF1:',
                write_path_template='/direct/XF21ID1/image_files/',  # trailing slash!
@@ -124,3 +136,17 @@ Anal1A_Cambeam.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam11/'
 Anal1A_Cambeam.hdf5.read_path_template = '/direct/XF21ID1/image_files/cam11/'
 Anal1A_Cambeam.read_attrs = ['hdf5']
 Anal1A_Cambeam.hdf5.read_attrs = []
+
+
+all_standard_pros = [Diag1_camH,Diag1_camV]
+for camera in all_standard_pros:
+    camera.read_attrs = ['stats1', 'stats2','stats3','stats4','stats5']
+    # camera.tiff.read_attrs = []  # leaving just the 'image'
+    for stats_name in ['stats1', 'stats2','stats3','stats4','stats5']:
+        stats_plugin = getattr(camera, stats_name)
+        stats_plugin.read_attrs = ['total']
+        camera.stage_sigs[stats_plugin.blocking_callbacks] = 1
+
+    camera.stage_sigs[camera.roi1.blocking_callbacks] = 1
+    camera.stage_sigs[camera.trans1.blocking_callbacks] = 1
+    camera.stage_sigs[camera.cam.trigger_mode] = 'Fixed Rate'

@@ -64,7 +64,7 @@ def scan_time(DETS,num=1,delay=0,DET_channel=None,scan_type=None):
            DETS  --  A list of detectors to record at each step (first one must be 1D)
            
        OPTIONAL PARAMETERS
-           num   --  Optional input of the number of points to take, default is 1 to capture until stopped using 'ctrl-C' set 'num = None'
+           num   --  Optional input of the number of points to take, default is 1. To capture until stopped using 'ctrl-C' set 'num = None'
            delay --  Optional delay time between succesive readings, default is 0.
            DET_channel  -- Optional channel number to plot for multi channel detectors (eg. for qem to plot 
                            'qem01_current1_mean_value' use 1). To use this option in the scan call you need
