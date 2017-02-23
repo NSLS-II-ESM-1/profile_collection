@@ -7,7 +7,7 @@ from ophyd.areadetector.filestore_mixins import FileStoreHDF5IterativeWrite
 from ophyd.areadetector.filestore_mixins import FileStoreTIFFIterativeWrite
 from ophyd.areadetector import (ADComponent as ADCpt, EpicsSignalWithRBV,
                            ImagePlugin, StatsPlugin, DetectorBase,
-                           SingleTrigger)
+                                SingleTrigger,ROIPlugin,ProcessPlugin,TransformPlugin)
 
 class HDF5PluginWithFileStore(HDF5Plugin, FileStoreHDF5IterativeWrite):
     pass
@@ -138,7 +138,7 @@ Anal1A_Cambeam.read_attrs = ['hdf5']
 Anal1A_Cambeam.hdf5.read_attrs = []
 
 
-all_standard_pros = [Diag1_camH,Diag1_camV]
+all_standard_pros = [Diag1_CamH,Diag1_CamV]
 for camera in all_standard_pros:
     camera.read_attrs = ['stats1', 'stats2','stats3','stats4','stats5']
     # camera.tiff.read_attrs = []  # leaving just the 'image'
