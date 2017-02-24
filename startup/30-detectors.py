@@ -138,7 +138,7 @@ Anal1A_Cambeam.read_attrs = ['hdf5']
 Anal1A_Cambeam.hdf5.read_attrs = []
 
 
-all_standard_pros = [Diag1_CamH,Diag1_CamV]
+all_standard_pros = [Diag1_CamH,Diag1_CamV,Lock23A_CamEA3_1,Lock14A_CamEA4_1,Prep2A_CamEA2_1,Mir3_Cam10_U_1,BC1_Diag1_U_1,BTA2_DiagA2_1,BTB2_DiagB2_1,Anal1A_Camlens,Anal1A_Cambeam]
 for camera in all_standard_pros:
     camera.read_attrs = ['stats1', 'stats2','stats3','stats4','stats5']
     # camera.tiff.read_attrs = []  # leaving just the 'image'
