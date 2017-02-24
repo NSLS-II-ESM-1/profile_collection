@@ -144,7 +144,7 @@ for camera in all_standard_pros:
     # camera.tiff.read_attrs = []  # leaving just the 'image'
     for stats_name in ['stats1', 'stats2','stats3','stats4','stats5']:
         stats_plugin = getattr(camera, stats_name)
-        stats_plugin.read_attrs = ['total']
+        stats_plugin.read_attrs = ['total','min_value','max_value']
         camera.stage_sigs[stats_plugin.blocking_callbacks] = 1
 
     camera.stage_sigs[camera.roi1.blocking_callbacks] = 1
