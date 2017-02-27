@@ -8,8 +8,10 @@ from bluesky.callbacks import LiveTable,LivePlot
 from pyOlog.SimpleOlogClient import SimpleOlogClient
 from esm import ss_csv
 from cycler import cycler
+from collections import ChainMap
 import math
 import re
+from boltons.iterutils import chunked
 #from tqdm import tqdm
 
 
@@ -58,7 +60,8 @@ import re
 def scan_time(DETS,num=1,delay=0,DET_channel=None,scan_type=None):
     '''scan_time(DETS,num=1,delay=0,DET_channel=None,scan_type=None):
        This scan provides a time measurement of a list of detectors, including live plotting and a live table. The detector to 
-       'display' must be 1D and should be first in the list. 
+       'display' must be 1D, or have statistics set up so that a 1D attribute exists (such as intengrated 'total' intensity)  
+       and should be first in the list. 
          
        REQUIRED PARAMETERS
            DETS  --  A list of detectors to record at each step (first one must be 1D)
@@ -122,7 +125,8 @@ def scan_time(DETS,num=1,delay=0,DET_channel=None,scan_type=None):
 def scan_1D(DETS, scan_motor, start, end ,step_size,DET_channel=None,scan_type=None,adaptive=None):
 
     ''' This scan provides a 1D scan using a list of detectors, including a live plot and a live table. The detector to 
-        "display" must be 1D and should be the first in the list of detectors.
+        "display" must be 1D and should be the first in the list of detectors, or have statistics set up so that a 1D 
+        attribute exists (such as intengrated 'total' intensity) and should be first in the list.
         
         REQUIRED PARAMETERS   
             DETS  --  A list of detectors to record at each step (first one must be 1D)
@@ -217,8 +221,9 @@ def scan_1D(DETS, scan_motor, start, end ,step_size,DET_channel=None,scan_type=N
 
 def scan_multi_1D(DETS, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2, step_size2,
                   snake=False,DET_channel=None,plot_seperate=False,scan_type=None,adaptive=None):
-    ''' run a 2D scan using a list of detectors, having each step as a new file,the detector to "display" must be 1D and
-        must be the first detector in the list 'DETS'.
+    ''' run a 2D scan using a list of detectors, having each step as a new file,the detector to "display" must be 1D, or 
+        have statistics set up so that a 1D attribute exists (such as intengrated 'total' intensity) and should be first 
+        in the list. It must be the first detector in the list 'DETS'.
         
         REQUIRED PARAMETERS
             DETS  --  A list of 1D detectors to record at each step
@@ -363,7 +368,8 @@ def scan_multi_1D(DETS, scan_motor1, start1, end1, step_size1,scan_motor2, start
        
 def scan_2D(DETS, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2, step_size2,
                   snake=False,concurrent=False,normal_spiral=False,fermat_spiral=False,square_spiral=False,DET_channel=None,scan_type=None):
-    ''' run a 2D scan using a list of detectors,the detector to "display" must be 1D and must be the first detector in the list 'DETS'.
+    ''' run a 2D scan using a list of detectors,the detector to "display" must be 1D, or have statistics set up so that a 1D attribute exists 
+        (such as intengrated 'total' intensity) and should be first in the list. It must be the first detector in the list 'DETS'.
         
         REQUIRED PARAMETERS
             DETS  --  A list of 1D detectors to record at each step
@@ -648,8 +654,238 @@ def scan_2D(DETS, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end
 
         uid=yield from outer_prod()
 
+
         
-    #Save the file as a csv file using the scan id as the name
+def scan_ND(DETS, *args,concurrent=False,normal_spiral=False,fermat_spiral=False,square_spiral=False,
+              DET_channel=None,scan_type=None):
+    ''' run a 2D scan using a list of detectors,the detector to "display" must be 1D, or have statistics set up so that 
+        a 1D attribute exists (such as intengrated 'total' intensity) and should be first in the list. It must be the 
+        first detector in the list 'DETS'.
+        
+        REQUIRED PARAMETERS
+            DETS  --  A list of 1D detectors to record at each step
+            *args --  This is a list with the pattern:
+                      ( ''scan_motor1, start1,end1,step_size1,  scan_motor2, start2,end2,step_size2,snake2    ....... 
+                                scan_motorN, startN,endN,step_sizeN,snake3)   
+                scan_motorX  --  The Xth "motor" to scan which has the form Device.motor (eg. M1D_slit.inboard), the first motor
+                      is the outer most (slowest) motor and the last is the inner (fastest) motor.
+                startX,endX,step_sizeX  -- The start value, end value and number of steps for the Xth motor, the end value will 
+                      actually be >= to endX, to ensure that the step_size is correct.
+                snakeX  -- For all motors but the first motor there is this 'snake' argument that defines if a winding trajectory
+                            (min -> max, max -> min, ....) or a left-right trajectory (min -> max, min -> max, ....) is to be used.
+                            this is 'True' for a winding trajectory and 'False' for a left-right trajectory.
+            
+        OPTIONAL PARAMETERS                          
+            DET_channel        -- Optional channel number to plot for multi channel detectors (eg. for qem to plot 
+                                  'qem01_current1_mean_value' use 1). To use this option in the scan you need to place 
+                                  ',DET_channel=x' after 'steps' in the scan call.
+            scan_type   -- Optional definition of the scan type to include in the metadata, correct use of this will allow
+                           searching the database to be easier (for instance, if all XPS data is given the scan_type 'XPS'
+                           then searching the database based on the keyword scan_type = 'XPS' will return all XPS scans).   
+   
+
+        OPTIONS:
+           NOTE: The options are attempted in the order shown below and only the first option found will be implemented regardless
+                 of the location in the call. Optional parameters above that are not relevant to these options will be ignored.
+
+           Concurrent motion : This allows for the motion of the first and second motors to occur concurrently. This will map out 
+                           a 1D line though 2D space, with even spaced steps for both axes.
+
+                           To use this feature include 'concurrent=True ' after step_size2 in the call. 
+                               NOTE: In this case step_size2 is not used, but a value must be included. the step size of the second 
+                               motor will be deteremined fro mthe calucalted number of steps for motor one and the range of motor 2.
+                           
+                           REQUIRED PARAMETERS FOR THIS OPTION
+                               no extra parameters are required.
+           
+            spiral        : Indicates that the scan should follow a spiral pattern, centered in the middle of the x and y ranges
+                           defined.
+  
+                          To use this feature include ' normal_spiral = True' after step_size2 in the call
+                               NOTE: The radius delta is determined from the first motor step size and the number of theta steps is 
+                               determined from the radius delta and the motor 2 step size. The pattern for the spiral is a series of 
+                               expanding "rings", according to the following relationships:
+                                
+                                 Parameters:
+                                 1. range1 = end1-start1, range2 = end2-start2
+                                 2. centre1 = start1+range1/2, centre2=start2+range2/2
+                                 3. delta_radius = step_size2
+                                 4. num_theta = round( (4*pi*delta_radius) / ( range2*atan(2*step_size1) )   ) 
+                                         note: this equation ensures that the y axis step size for the largest circle is ~ step_size1
+                                 5. num_rings = 1+int( ( ((range1/2)**2+(range2/2)**2)**(1/2) / (delta_radius)  )**2 )
+                                 6. n = the 'nth' ring in the spiral, i = the 'ith' angle for the 'nth'ring
+ 
+                                 Path equations:
+                                 1. radius = n**(1/2) * delta_radius * num_theta/2
+                                 2. delta_angle = 2*pi/( n*num_theta )
+                                 3. angle  = i * delta_angle 
+                                 4. x = centre2 + radius*cos(angle)                               
+                                 5. y = centre1 + radius*sin(angle)
+             
+                          REQUIRED PARAMETERS FOR THIS OPTION
+                               no extra parameters are required.
+
+
+            fermat spiral  :Indicates that the scan should follow a fermat spiral pattern, centered in the middle of the x and y ranges,
+                           defined.
+
+                          To use this feature include ' fermat_spiral = True' after step_size2 in the call.
+                               NOTE: The radius delta is determined from the first motor step size and the number of theta steps is 
+                               determined from the radius delta and the motor2 step size. The pattern for the spiral maps out a fermat 
+                               spiral, according to the following relationships:
+
+                                 Parameters:
+                                 1. range1 = end1-start1, range2 = end2-start2
+                                 2. centre1 = start1+range1/2, centre2=start2+range2/2
+                                 3. delta_radius = step_size2
+                                 4. num_theta = round( (4*pi*delta_radius) / ( range2*atan(2*step_size1) )   ) 
+                                         note: this equation ensures that the y axis step size for the largest circle is ~ stepsize1
+                                 5. num_rings = int( ( 1.5* ((range1/2)**2+(range2/2)**2)**(1/2) * num_theta / (2*delta_radius)  )**2 )
+                                 6. phi = 137.508 * pi/180
+                                 7. n = the 'nth' ring in the spiral
+ 
+                                 Path equations:
+                                 1. radius = n**(1/2) * delta_radius * num_theta/2
+                                 2. angle  = phi * n 
+                                 3. x = centre2 + radius*cos(angle)                               
+                                 4. y = centre1 + radius*sin(angle)
+
+                           REQUIRED PARAMETERS FOR THIS OPTION
+                               no extra parameters are required.
+
+
+
+            square spiral : Indicates that the scan should follow a square spiral pattern, centered in the middle of the x and y ranges
+                           defined.
+  
+                          To use this feature include ' square_spiral = True' after step_size2 in the call
+                               NOTE:  The pattern for the square spiral is a series of expanding square "rings", the number of points in
+                               both the x and y ranges needs to be both even or both odd, this will be set in the plan if it is not already
+                               true.
+        '''
+
+    args = list(args)
+    #turn the *args entry itno a list
+    args.insert(4,False)
+    #insert "False" as the snake value for the first argument to make it easy to seperate the axes.
+    if len(args) %5 !=0:
+        raise ValueError("wrong number of positional arguments")
+
+    chunk_args= chunked(args,5)
+        
+ 
+    Dim = len(chunk_args)
+    #define the number of motor axes in the scan
+    new_args = []
+    #define the new args list to be sent to the scan plan.
+    motors_list = []
+    
+    # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
+
+    _md = {'scan_name':'scan_2D','scan_type':scan_type}
+    
+    # for each motor axis in the scan.
+    for i,motor_list in enumerate(chunk_args):
+
+        motor=[motor_list[0]]
+        motors_list.append(first_key_heuristic(list(motor)[0]))
+        
+        if (  (motor_list[1]<motor_list[2] and motor_list[3]<0) or ( motor_list[1]>motor_list[2] and motor_list[3]>0 )   ):
+            motor_list[3]*=-1
+            # ensure that the direction defined by the step_size matches that defined by start and stop.
+
+        
+            
+        if concurrent is True:
+        #if the scan is an inner product scan.
+            print ("have not finished this yet")
+
+        else:
+        # if the scan is a normal outer product scan
+            #define the number of steps and the new stop value based on the step_size.
+            steps=abs(round((motor_list[2]-motor_list[1])/motor_list[3]))
+            stop=motor_list[1]+motor_list[3]*steps
+
+            #add the new values to the new_args list
+            new_args.append(motor_list[0])
+            new_args.append(motor_list[1])
+            new_args.append(stop)
+            new_args.append(steps+1)
+
+            if i != 0:
+                new_args.append(motor_list[4])
+
+        #print (" i = "+str(i)+", motor_list = "+str(len(motor_list))+" ,new_args = "+str(len(new_args))+" ,args = "+str(len(args)))        
+        _md.update({'axis_'+str(Dim-i):motor_list[i],'start_'+str(Dim-i):motor_list[1],'stop'+str(Dim-i):motor_list[2],'num'+str(Dim-i):steps,'delta'+str(Dim-i):motor_list[3]})
+      
+    
+
+        
+    #This section determines the Z axis variable to plot for a 2D axis scan, if the first detector in the list is a single channel detector then it plots
+    #that detector value, if it has multiple single channels it plots the channel defined by the optional input DET_channel (channel 1 is plotted if
+    #DET_channel is not specified.
+
+
+    #Setup metadata
+    #This section sets up the metadata that should be included in the experiment file. Users can add/or change the metadata using the md={'keyword1'
+    #:'value1','keyword2':'value2',..... } argument. For instance using md={'scan_name':'measurement type'} will define the scan_name as a particular
+    #measurement type.
+        
+    #setup standard metadata
+
+
+    #Setup live table and live plot and tag modifier for the olog.
+    #This section is used to define the live table and live plot and olog readout functions for the scan.The '@subs_decorator'
+    #call ensures that this is updated at each step of the scan
+    
+
+
+    #This section sets up the rest of the info and performs the correct scan.
+    if concurrent is True:
+    #if the scan is an inner product scan.
+        print ("have not finished this yet")
+    else:
+    # if the scan is a normal outer product scan
+        
+
+        #Set up the plotting, tables and metadata           
+        table = LiveTable(list(motors_list)+list(DETS))
+        
+        if Dim == 2:
+        #for a 2D scan define a Live raster plot.
+            Z_axis = Get_Yaxis_name(DETS[0], DET_channel)
+            Xmotors=[new_args[4]]
+            X_axis = first_key_heuristic(list(Xmotors)[0])
+            Ymotors=[new_args[0]]
+            Y_axis = first_key_heuristic(list(Ymotors)[0])
+
+            _md.update({'plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis})
+        
+            raster = LiveRaster( (new_args[3],new_args[7]) , Z_axis , ylabel= Y_axis, xlabel= X_axis,
+                            extent=(new_args[5]-args[8]/2,new_args[6]+args[8]/2,new_args[2]+args[3]/2,new_args[1]-args[3]/2),
+                            aspect=(abs( (new_args[6]-new_args[5]+args[8])/(new_args[2]-new_args[1]+args[3]) ) ) ) 
+
+            add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
+            
+            #re-cast the new_args list to a tuple
+            new_args = tuple(new_args)
+
+            # Define some decorators to perform at each step (table update, plot update etc.)
+
+            @subs_decorator(table)
+            @subs_decorator(raster)
+            @subs_decorator(add_tag)
+            
+            def outer_prod():
+                return(yield from outer_product_scan(DETS,*new_args,md=_md))
+
+
+        uid=yield from outer_prod()
+
+
+
+                
+
 
        
 ###
@@ -658,7 +894,9 @@ def scan_2D(DETS, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end
 
 def Get_Yaxis_name(det0, det0_channel):
     '''This Routine is used to determine the Y axis name to use for plotting or saving for a given detector and detector 
-       channel. It assumes that if the given detector channel is none that the first channel is to be used.
+       channel, if the detector is an 2D detector it will plot the integrated total intensity, if it is set up to do so.
+       In this case DET_Channel indicates which stats channel to plot.  
+       It assumes that if the given detector channel is none that the first channel is to be used.
        
        REQUIRED PARAMETERS
            det0  --  This is the detector that is to be used
@@ -709,7 +947,7 @@ def ESM_setup_Plot(Y_axis,motors=None):
         #generate the figure name based on x and y axis names, if it doesn't exist create a new one.
         ax = plt.figure(fig_name).gca()
         #set the value of ax to the correct figure name
-        return LivePlot(y_key, x_key, ax=ax)
+        return ESMLivePlot(y_key, x_key, ax=ax)
         #return the LivePlot function with the correct figure and axes names.
     else:
     #if motors is empty
@@ -718,7 +956,7 @@ def ESM_setup_Plot(Y_axis,motors=None):
         #create a new one.
         ax = plt.figure(fig_name).gca()
         #set the value of ax to the correct figure name
-        return LivePlot(y_key, ax=ax)
+        return ESMLivePlot(y_key, ax=ax)
         #return the LivePlot function with the correct figurte and axes names
 
 
@@ -762,6 +1000,147 @@ def ESM_save_csv(uid,Y_axis,time=False):
         df.to_csv(f_path,index=False)
         #save the table to the .csv file.
 
+
+class ESMLivePlot(CallbackBase):
+    """
+    Build a function that updates a plot from a stream of Events.
+    Note: If your figure blocks the main thread when you are trying to
+    scan with this callback, call `plt.ion()` in your IPython session.
+    Parameters
+    ----------
+    y : str
+        the name of a data field in an Event
+    x : str, optional
+        the name of a data field in an Event
+        If None, use the Event's sequence number.
+    legend_keys : list, optional
+        The list of keys to extract from the RunStart document and format
+        in the legend of the plot. The legend will always show the
+        scan_id followed by a colon ("1: ").  Each
+    xlim : tuple, optional
+        passed to Axes.set_xlim
+    ylim : tuple, optional
+        passed to Axes.set_ylim
+    ax : Axes, optional
+        matplotib Axes; if none specified, new figure and axes are made.
+    fig : Figure
+        deprecated: use ax instead
+    All additional keyword arguments are passed through to ``Axes.plot``.
+    Examples
+    --------
+    >>> my_plotter = LivePlot('det', 'motor', legend_keys=['sample'])
+    >>> RE(my_scan, my_plotter)
+    """
+    def __init__(self, y, x=None, *, legend_keys=None, xlim=None, ylim=None,
+                 ax=None, fig=None, **kwargs):
+        super().__init__()
+        if fig is not None:
+            if ax is not None:
+                raise ValueError("Values were given for both `fig` and `ax`. "
+                                 "Only one can be used; prefer ax.")
+            warnings.warn("The `fig` keyword arugment of LivePlot is "
+                          "deprecated and will be removed in the future. "
+                          "Instead, use the new keyword argument `ax` to "
+                          "provide specific Axes to plot on.")
+            ax = fig.gca()
+        if ax is None:
+            fig, ax = plt.subplots()
+        self.ax = ax
+
+        if legend_keys is None:
+            legend_keys = []
+        self.legend_keys = ['scan_id'] + legend_keys
+        if x is not None:
+            self.x, *others = _get_obj_fields([x])
+        else:
+            self.x = None
+        self.y, *others = _get_obj_fields([y])
+        self.ax.set_ylabel(y)
+        self.ax.set_xlabel(x or 'sequence #')
+        if xlim is not None:
+            self.ax.set_xlim(*xlim)
+        if ylim is not None:
+            self.ax.set_ylim(*ylim)
+        self.ax.margins(.1)
+        self.kwargs = kwargs
+        self.lines = []
+        self.legend = None
+        self.legend_title = " :: ".join([name for name in self.legend_keys])
+
+    def start(self, doc):
+        # The doc is not used; we just use the singal that a new run began.
+        self.x_data, self.y_data = [], []
+        label = " :: ".join(
+            [str(doc.get(name, name)) for name in self.legend_keys])
+        kwargs = ChainMap(self.kwargs, {'label': label})
+        self.current_line, = self.ax.plot([], [], **kwargs)
+        self.lines.append(self.current_line)
+        self.legend = self.ax.legend(
+            loc=0, title=self.legend_title).draggable()
+        super().start(doc)
+
+    def event(self, doc):
+        "Unpack data from the event and call self.update()."
+        try:
+            if self.x is not None:
+                # this try/except block is needed because multiple event
+                # streams will be emitted by the RunEngine and not all event
+                # streams will have the keys we want
+                new_x = doc['data'][self.x]
+            else:
+                new_x = doc['time']
+                ###DIFFERENCE FROM LIVEPLOT: AT THIS POINT I CHANGED 'seq_num' TO 'time'###
+            new_y = doc['data'][self.y]
+        except KeyError:
+            # wrong event stream, skip it
+            return
+        self.update_caches(new_x, new_y)
+        self.update_plot()
+        super().event(doc)
+
+    def update_caches(self, x, y):
+        self.y_data.append(y)
+        self.x_data.append(x)
+
+    def update_plot(self):
+        self.current_line.set_data(self.x_data, self.y_data)
+        # Rescale and redraw.
+        self.ax.relim(visible_only=True)
+        self.ax.autoscale_view(tight=True)
+        self.ax.figure.canvas.draw_idle()
+
+    def stop(self, doc):
+        if not self.x_data:
+            print('LivePlot did not get any data that corresponds to the '
+                  'x axis. {}'.format(self.x))
+        if not self.y_data:
+            print('LivePlot did not get any data that corresponds to the '
+                  'y axis. {}'.format(self.y))
+        if len(self.y_data) != len(self.x_data):
+            print('LivePlot has a different number of elements for x ({}) and'
+                  'y ({})'.format(len(self.x_data), len(self.y_data)))
+        super().stop(doc)
+
+def _get_obj_fields(fields):
+    """
+    If fields includes any objects, get their field names using obj.describe()
+    ['det1', det_obj] -> ['det1, 'det_obj_field1, 'det_obj_field2']"
+    """
+    string_fields = []
+    for field in fields:
+        if isinstance(field, str):
+            string_fields.append(field)
+        else:
+            try:
+                field_list = sorted(field.describe().keys())
+            except AttributeError:
+                raise ValueError("Fields must be strings or objects with a "
+                                 "'describe' method that return a dict.")
+            string_fields.extend(field_list)
+    return string_fields
+
+
+        
 class ESMLiveTable(LiveTable):
     ''' This sub-class of LiveTable is to be used in order to add the progress bar and time to finish indicator to the scans. 
 
