@@ -10,7 +10,10 @@ from ophyd.areadetector import (ADComponent as ADCpt, EpicsSignalWithRBV,
                                 SingleTrigger,ROIPlugin,ProcessPlugin,TransformPlugin)
 
 class HDF5PluginWithFileStore(HDF5Plugin, FileStoreHDF5IterativeWrite):
-    pass
+
+    def get_frames_per_point(self):
+        # return self.num_capture.get()
+        return 1
     # AD v2.2.0 (at least) does not have this. It is present in v1.9.1.
     # file_number_sync = None
 
