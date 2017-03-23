@@ -1,5 +1,6 @@
 from ophyd import EpicsSignal,PVPositioner, EpicsSignalRO, EpicsMotor
 from ophyd import Device, Component as Comp
+from ophyd import Component as Cpt
 
 
 MR_attrs = "'user_readback','user_setpoint','motor_is_moving','motor_done_move','motor_stop'"
@@ -79,8 +80,8 @@ class M1_mirror(Device):
     Rz = Comp(EpicsMotor,"Roll}Mtr")
     Mirror_Roll = Comp(EpicsMotor,"Roll}Mtr")
 
-# M1 = M1_mirror("XF:21IDA-OP{Mir:1-Ax:4_",name="M1")
-
+M1 = M1_mirror("XF:21IDA-OP{Mir:1-Ax:4_",name="M1")
+    
 class Hexapod_Mir(Device):
     X = Comp(EpicsMotor,"_X}Mtr")
     Mirror_Trans = Comp(EpicsMotor,"_X}Mtr")
@@ -137,6 +138,15 @@ M4A = KB_pair("XF:21IDC-OP{Mir:4A-Ax:A4_",name="M4A")
 # Slits
 
 #
+class ESM_Diagon(Device):
+    H_Mirror = Comp(EpicsMotor,"-Ax:3_HLPM}Mtr")
+    H_Yag = Comp(EpicsMotor,"-Ax:3_HLPF}Mtr")
+    V_mirror = Comp(EpicsMotor,"-Ax:3_VLPM}Mtr")
+    V_Yag = Comp(EpicsMotor,"-Ax:3_VLPF}Mtr")
+#
+
+Diagon = ESM_Diagon("XF:21IDA-OP{Diag:1",name='Diagon')
+
 class ESMSlit_type1(Device):
     inboard = Comp(EpicsMotor,"-Ax:I}Mtr")
     outboard = Comp(EpicsMotor,"-Ax:O}Mtr")
@@ -225,3 +235,81 @@ class Virtual_Motor_Slits(Blades, Virtual_Motor_Center_And_Gap):
     
 FE_slit = Virtual_Motor_Slits("FE:C21A-OP{Slt:",name='FE_slit')
 
+class TwoButtonShutter(Device):
+    # TODO this needs to be fixed in EPICS as these names make no sense
+    # the vlaue comingout of the PV do not match what is shown in CSS
+    open_cmd = Cpt(EpicsSignal, 'Cmd:Opn-Cmd', string=True)
+    # expected readback on status when open
+    open_val = 'Open'
+
+    close_cmd = Cpt(EpicsSignal, 'Cmd:Cls-Cmd', string=True)
+    # expected readback on status when closed
+    close_val = 'Not Open'
+
+    permit_enabled = Cpt(EpicsSignal, 'Permit:Enbl-Sts', string=True)
+    enabled = Cpt(EpicsSignal, 'Enbl-Sts', string=True)
+
+    status = Cpt(EpicsSignalRO, 'Pos-Sts', string=True)
+    fail_to_close = Cpt(EpicsSignalRO, 'Sts:FailCls-Sts', string=True)
+    fail_to_open = Cpt(EpicsSignalRO, 'Sts:FailOpn-Sts', string=True)
+
+    
+    # user facing commands
+    open_str = 'Open'
+    close_str = 'Close'
+
+    def set(self, val):
+        if self._set_st is not None:
+            raise RuntimeError('trying to set while a set is in progress')
+
+        cmd_map = {self.open_str: self.open_cmd,
+                   self.close_str: self.close_cmd}
+        target_map = {self.open_str: self.open_val,
+                      self.close_str: self.close_val}
+
+        cmd_sig = cmd_map[val]
+        target_val = target_map[val]
+
+        st = self._set_st = DeviceStatus(self)
+        enums = self.status.enum_strs
+
+        def shutter_cb(value, timestamp, **kwargs):
+            value = enums[int(value)]
+            if value == target_val:
+                self._set_st._finished()
+                self._set_st = None
+                self.status.clear_sub(shutter_cb)
+
+        cmd_enums = cmd_sig.enum_strs
+        count = 0
+        def cmd_retry_cb(value, timestamp, **kwargs):
+            nonlocal count
+            value = cmd_enums[int(value)]
+            # ts = datetime.datetime.fromtimestamp(timestamp).strftime(_time_fmtstr)
+            # print('sh', ts, val, st)
+            count += 1
+            if count > 5:
+                cmd_sig.clear_sub(cmd_retry_cb)
+                st._finished(success=False)
+            if value == 'None':
+                if not st.done:
+                    time.sleep(.5)
+                    cmd_sig.set(1)
+                    ts = datetime.datetime.fromtimestamp(timestamp).strftime(_time_fmtstr)
+                    print('** ({}) Had to reactuate shutter while {}ing'.format(ts, val))
+                else:
+                    cmd_sig.clear_sub(cmd_retry_cb)
+
+        cmd_sig.subscribe(cmd_retry_cb, run=False)
+        cmd_sig.set(1)
+        self.status.subscribe(shutter_cb)
+
+
+        return st
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._set_st = None
+        self.read_attrs = ['status']
+
+shutter = TwoButtonShutter('XF:21ID-PPS{Sh:FE}', name='shutter')
