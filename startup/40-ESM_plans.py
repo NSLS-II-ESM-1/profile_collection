@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from databroker import DataBroker as db, get_table, get_images, get_events
 from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
-from bluesky.spec_api import _figure_name
-from bluesky.callbacks import LiveTable,LivePlot
+from bluesky.spec_api import _figure_name, first_key_heuristic
+from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
 from pyOlog.SimpleOlogClient import SimpleOlogClient
 from esm import ss_csv
 from cycler import cycler
@@ -628,7 +628,13 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
          add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
          
-         mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,end1+step_size1) )
+         fig = plt.figure()
+         mesh = LiveMesh(X_axis,Y_axis,Z_axis,
+                         xlim=(start2-step_size2,end2+step_size2),
+                         ylim=(start1-step_size1,end1+step_size1),
+                         clim=(0, 3e8), ax=fig.gca())
+         cb = fig.colorbar(mesh.sc)
+         cb.set_label(mesh.I)
     
          @subs_decorator(table)
          @subs_decorator(mesh)
