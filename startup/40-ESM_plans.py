@@ -598,7 +598,7 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
     #call ensures that this is updated at each step of the scan
     
     #Set up the plotting, tables and metadata           
-    table = LiveTable([X_axis]+[Y_axis]+list(detectors))
+    table = LiveTable([X_axis]+[Y_axis]+[Z_axis])
 
     
     if concurrent is True:
