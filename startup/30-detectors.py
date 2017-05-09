@@ -30,7 +30,7 @@ class ESMQuadEM(QuadEM):
 
         #for c in ['current{}'.format(j) for j in range(1, 5)]:
         #     getattr(self, c).read_attrs = ['mean_value']
-            
+
         # self.read_attrs = ['current{}'.format(j) for j in range(1, 5)]
         self.stage_sigs.update([(self.acquire_mode, 'Single')  # single mode
                                 ])
@@ -53,7 +53,8 @@ class MyDetector(SingleTrigger, AreaDetector):
 #    tiff = Cpt(TIFFPluginWithFileStore,
 #               suffix='TIFF1:',
 #               write_path_template='/direct/XF21ID1/image_files/',  # trailing slash!
-#               read_path_template='/direct/XF21ID1/image_files/')
+#               read_path_template='/direct/XF21ID1/image_files/',
+#               root='/direct'    )
     image = Cpt(ImagePlugin, 'image1:')
     stats1 = Cpt(StatsPlugin, 'Stats1:')
     stats2 = Cpt(StatsPlugin, 'Stats2:')
@@ -70,8 +71,9 @@ class MyDetector(SingleTrigger, AreaDetector):
     hdf5 = Cpt(HDF5PluginWithFileStore,
                suffix='HDF1:',
                write_path_template='/direct/XF21ID1/image_files/',  # trailing slash!
-               read_path_template='/direct/XF21ID1/image_files/')
-    
+               read_path_template='/direct/XF21ID1/image_files/',
+               root='/direct/XF21ID1/')
+
 Diag1_CamH = MyDetector('XF:21IDA-BI{Diag:1-Cam:H}', name='Diag1_CamH')
 Diag1_CamH.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam01/'
 Diag1_CamH.hdf5.read_path_template = '/direct/XF21ID1/image_files/cam01/'
