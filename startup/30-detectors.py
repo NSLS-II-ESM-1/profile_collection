@@ -71,7 +71,8 @@ class MyDetector(SingleTrigger, AreaDetector):
     hdf5 = Cpt(HDF5PluginWithFileStore,
                suffix='HDF1:',
                write_path_template='/direct/XF21ID1/image_files/',  # trailing slash!
-               root='/direct/XF21ID1/')
+               root='/direct/XF21ID1/',
+               fs=db.fs)
 
 Diag1_CamH = MyDetector('XF:21IDA-BI{Diag:1-Cam:H}', name='Diag1_CamH')
 Diag1_CamH.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam01/'
