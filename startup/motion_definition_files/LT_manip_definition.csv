@@ -1,0 +1,5 @@
+position_info,chamber_info,gate_valve_name_info,gate_valve_open_info,transfer_axis_name_info,transfer_axis_high_limit_info,transfer_axis_low_limit_info,LT_X,LT_Y,LT_Z,LT_Ry
+Low_Temp_Tr,Low_Temp,ANAL1A_LOWT_GV,No,LT_Y,530,500,0,525,0,0
+Analysis_Tr,Analysis,ANAL1A_LOWT_GV,manual,LT_Y,500,0,0,60,0,0
+Low_Temp,Low_Temp,,,,,,0,525,0,0
+Analysis,Analysis,,,,,,0,60,10,0
