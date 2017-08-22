@@ -47,7 +47,11 @@ qem07 = ESMQuadEM('XF:21IDC-BI{EM:7}EM180:', name='qem07')
 qem08 = ESMQuadEM('XF:21IDC-BI{EM:8}EM180:', name='qem08')
 qem09 = ESMQuadEM('XF:21IDC-BI{EM:9}EM180:', name='qem09')
 qem10 = ESMQuadEM('XF:21IDC-BI{EM:10}EM180:', name='qem10')
-
+qem11 = ESMQuadEM('XF:21IDC-BI{EM:11}EM180:', name='qem11')
+qem12 = ESMQuadEM('XF:21IDC-BI{EM:12}EM180:', name='qem12')
+qem13 = ESMQuadEM('XF:21IDC-BI{EM:13}EM180:', name='qem13')
+qem15 = ESMQuadEM('XF:21IDC-BI{EM:15}EM180:', name='qem15')
+qem16 = ESMQuadEM('XF:21IDC-BI{EM:16}EM180:', name='qem16')
 
 class MyDetector(SingleTrigger, AreaDetector):
 #    tiff = Cpt(TIFFPluginWithFileStore,

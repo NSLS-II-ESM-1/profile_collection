@@ -943,128 +943,6 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,scan_type=None):
 ###Alignment scans
 ###These are scans specifically written for beamline alignment. 
 
-def M3_pitch_alignment(Branch="A"):
-    ''' 
-    Runs a scan of the M3 mirror pitch to the exit slit to find the maximum and then sets the pitch to this value. 
-        
-    This scan is used to find the optimal location of either the M3 mirror pitch. It runs a 1D scan over a
-    pre-determined range for the M3 Pitch and then determines the intensity maxima position. The range of the scan is 
-    different if the scan is for the B branch or the A branch.
-
-    PARAMETERS
-    ----------
-
-    Branch : string, optional
-        This allows for the selection of the Branch line for the scan to use. 
-                    Allowed values are: A - use the "A" branch.
-                                        B - use the "B" branch.
-                                       
-    '''
-
-    x_axis = M3.Ry                 # The x axis of the scan
-
-    FE_hgap_axis = FEslit.h_gap     # The front end horizontal gap motor
-    FE_hgap_pos  = 0.6               # The front end horizontal gap value
-    FE_vgap_axis = FEslit.v_gap     # The front end vertical gap motor
-    FE_vgap_pos  = 0.6               # The front end vertical gap value
-
-    scan_type_str='M3_pitch_alignment_'+Branch
-    
-    if Branch is "A":
-        x_start = -0.69              # The x_axis start value of the scan
-        x_end   = -0.73              # The x_axis end value of the scan
-        x_stepsize = -0.00002          # The x_axis step size of the scan
-
-        detector = qem07      # The detector to use for the scan.
-        det_range = '350 pC'     # The range to use for the scan
-        det_vals_reading = 5  # The values per reading to use.
-        det_avg_time = 0.1    # The averaging time to use.
-        det_int_time = 0.0004 # The integration time to use.
-
-        Exit_Slit_hgap_motor = ExitSlitA.h_gap # The motor required to move the horizontal exit slit
-        Exit_Slit_hgap_pos = 5                # The horizontal gap opening to use
-        Exit_Slit_vgap_motor = ExitSlitA.v_gap # THe motor required to move the vertical exit slit
-        Exit_Slit_vgap_pos = 5                # The vertical gap opening to use
-
-
-        Diode_motor = BTA2diag.trans    #The motor to move the diode into position.
-        Diode_pos = -63                  #The position of the diode motor to be used during the scan
-
-
-    elif Branch is "B":
-        x_start = -0.69              # The x_axis start value of the scan
-        x_end   = -0.730              # The x_axis end value of the scan
-        x_stepsize = -0.00002         # The x_axis step size of the scan
-
-        detector = qem12      # The detector to use for the scan.
-        det_range = '350 pC'     # The range to use for the scan
-        det_vals_reading = 5  # The values per reading to use.
-        det_avg_time = 0.1    # The averaging time to use.
-        det_int_time = 0.0004 # The integration time to use.
-
-        Exit_Slit_hgap_motor = ExitSlitB.h_gap # The motor required to move the horizontal exit slit
-        Exit_Slit_hgap_pos = 5                 # The horizontal gap opening to use
-        Exit_Slit_vgap_motor = ExitSlitB.v_gap # The motor required to move the vertical exit slit
-        Exit_Slit_vgap_pos = 5                  # The vertical gap opening to use
-        
-        Diode_motor = BTB2diag.trans    #The motor to move the diode into position.
-        Diode_pos = -63                  #The position of the diode motor to be used during the scan
-
-
-    # Read the intial values for each motor that is to be moved.
-    initial_x_pos  =x_axis.position
-
-    initial_FE_hgap_pos = FE_hgap_axis.position
-    initial_FE_vgap_pos = FE_vgap_axis.position
-
-    initial_det_range = detector.em_range.value                # The initial detector range
-    initial_det_vals_reading = detector.values_per_read.value  # The initial values per reading.
-    initial_det_avg_time = detector.averaging_time.value       # The initial averaging time.
-    initial_det_int_time = detector.integration_time.value     # The initial integration time.
-
-    initial_Exit_Slit_hgap_pos = Exit_Slit_hgap_motor.position # The initial horizontal gap opening
-    initial_Exit_Slit_vgap_pos = Exit_Slit_vgap_motor.position # The initial vertical gap opening
-
-    initial_diode_pos = Diode_motor.position                   # The initial location of the diode motor.
-
-    #Move the values to the starting positions for the scan.
-    
-    yield from mv( x_axis,x_start, FE_hgap_axis,FE_hgap_pos, FE_vgap_axis,FE_vgap_pos,
-                   Diode_motor,Diode_pos, Exit_Slit_hgap_motor,Exit_Slit_hgap_pos,
-                   Exit_Slit_vgap_motor,Exit_Slit_vgap_pos)
-
-    detector.em_range.put(det_range)                    # The range to use for the scan
-    detector.values_per_read.put(det_vals_reading)      # The values per reading to use.
-    detector.averaging_time.put(det_avg_time)           # The averaging time to use.
-    detector.integration_time.put(det_int_time)         # The integration time to use.
-
-    #Run the scan
-    uid=yield from (scan_1D([detector],x_axis,x_start,x_end,x_stepsize,scan_type=scan_type_str)) 
-
-    #move everything to the initial positions
-    yield from mv(FE_hgap_axis,initial_FE_hgap_pos, FE_vgap_axis,initial_FE_vgap_pos,
-                   Diode_motor,initial_diode_pos, Exit_Slit_hgap_motor,initial_Exit_Slit_hgap_pos,
-                   Exit_Slit_vgap_motor,initial_Exit_Slit_vgap_pos)
-
-    detector.em_range.put(initial_det_range)                    # The range to use for the scan
-    detector.values_per_read.put(initial_det_vals_reading)      # The values per reading to use.
-    detector.averaging_time.put(initial_det_avg_time)           # The averaging time to use.
-    detector.integration_time.put(initial_det_int_time)         # The integration time to use
-
-    #Determine the location of the maximum intensity.
-    if uid is not None:
-        hdr=db[uid]
-        output=max_in_1D(uid)
-
-        max_y=output[1]
-        max_x=output[0]
-
-        #set the scan axis to the new value.
-    else:
-        max_x=initial_x_pos
-        
-    yield from mv( x_axis,max_x )
-    
 
 def FE_slits_alignment(detector_location="Diagon",mv_center=False,return_all=False):
     ''' 
@@ -1098,20 +976,20 @@ def FE_slits_alignment(detector_location="Diagon",mv_center=False,return_all=Fal
     Und_gap = 35.5  #The gap to use for the undulator, together with the photon energy they ensure that the 'image' is of
                # a 2D 'peak' to allow for ease of calculations in the routine.
     
-    x_axis = FEslit.h_center # The x axis of the scan
+    x_axis = FE_slit.h_center # The x axis of the scan
     x_start = -5              # The x_axis start value of the scan
     x_end   = 5               # The x_axis end value of the scan
     x_stepsize = .5          # The x_axis step size of the scan
 
-    y_axis = FEslit.v_center # The y axis of the scan
+    y_axis = FE_slit.v_center # The y axis of the scan
     y_start = -5              # The y_axis start value of the scan
     y_end   = 5              # The y_axis end value of the scan
     y_stepsize = .5         # The y_axis step size of the scan
 
 
-    FE_hgap_axis = FEslit.h_gap     # The front end horizontal gap motor
+    FE_hgap_axis = FE_slit.h_gap     # The front end horizontal gap motor
     FE_hgap_pos  = 0.75              # The front end horizontal gap value
-    FE_vgap_axis = FEslit.v_gap     # The front end vertical gap motor
+    FE_vgap_axis = FE_slit.v_gap     # The front end vertical gap motor
     FE_vgap_pos  = 0.75              # The front end vertical gap value
 
     accuracy_level = 0.2    #Used to compare the old and new "center" positions, if the difference is larger
@@ -1138,6 +1016,9 @@ def FE_slits_alignment(detector_location="Diagon",mv_center=False,return_all=Fal
         det_ROI1_Xsize  = 780 # The size, in points, for ROI1.    
         det_ROI1_Ystart = 85  # The starting point for ROI1.
         det_ROI1_Ysize  = 780 # The size, in points, for ROI1.
+    
+
+        initial_guess = (1E7,0.5,0.2,2.6,1.6,2E8) # This is the initial guess used in the 2D gaussian fitting.
 
         scan_type_str='FE_slit_alignment_Diagon'
         
@@ -1148,17 +1029,19 @@ def FE_slits_alignment(detector_location="Diagon",mv_center=False,return_all=Fal
         det_avg_time = 0.1    # The averaging time to use.
         det_int_time = 0.0004 # The integration time to use.
 
-        Exit_Slit_hgap_motor = ExitSlitA.h_gap # THe motor required to move the horizontal exit slit
+        Exit_Slit_hgap_motor = Exit_SlitA.h_gap # THe motor required to move the horizontal exit slit
         Exit_Slit_hgap_pos = 500                # The horizontal gap opening to use
-        Exit_Slit_vgap_motor = ExitSlitA.v_gap # THe motor required to move the vertical exit slit
+        Exit_Slit_vgap_motor = Exit_SlitA.v_gap # THe motor required to move the vertical exit slit
         Exit_Slit_vgap_pos = 500                # The vertical gap opening to use
 
         PGM_Energy_motor = PGM.Energy    #The motor required to move the PGM energy.
         PGM_Energy_pos = 662             #THe energy at which to perform the scan.
 
 
-        Diode_motor = BTA2diag.trans    #The motor to move the diode into position.
+        Diode_motor = BTA2_diag.trans    #The motor to move the diode into position.
         Diode_pos = -63                  #The position of the diode motor to be used during the scan
+        
+        initial_guess = (1E7,0.5,0.2,2.6,1.6,2E8) # This is the initial guess used in the 2D gaussian fitting.
 
         scan_type_str='FE_slit_alignment_Gas_cellA'
         
@@ -1170,17 +1053,19 @@ def FE_slits_alignment(detector_location="Diagon",mv_center=False,return_all=Fal
         det_avg_time = 0.1    # The averaging time to use.
         det_int_time = 0.0004 # The integration time to use.
 
-        Exit_Slit_hgap_motor = ExitSlitB.h_gap # The motor required to move the horizontal exit slit
+        Exit_Slit_hgap_motor = Exit_SlitB.h_gap # The motor required to move the horizontal exit slit
         Exit_Slit_hgap_pos = 500                # The horizontal gap opening to use
-        Exit_Slit_vgap_motor = ExitSlitB.v_gap # The motor required to move the vertical exit slit
+        Exit_Slit_vgap_motor = Exit_SlitB.v_gap # The motor required to move the vertical exit slit
         Exit_Slit_vgap_pos = 500                # The vertical gap opening to use
 
         PGM_Energy_motor = PGM.Energy    #The motor required to move the PGM energy.
         PGM_Energy_pos = 662             #THe energy at which to perform the scan.
 
         
-        Diode_motor = BTB2diag.trans    #The motor to move the diode into position.
+        Diode_motor = BTB2_diag.trans    #The motor to move the diode into position.
         Diode_pos = -63                  #The position of the diode motor to be used during the scan
+        
+        initial_guess = (1E7,0.5,0.2,2.6,1.6,2E8) # This is the initial guess used in the 2D gaussian fitting.
 
         scan_type_str='FE_slit_alignment_Gas_cellB'
 
@@ -1265,25 +1150,29 @@ def FE_slits_alignment(detector_location="Diagon",mv_center=False,return_all=Fal
 
     if uid is not None:
         hdr=db[uid]
-        output=max_in_2D(uid)
+        #data=db.get_table(hdr,[hdr.start.plot_Xaxis,hdr.start.plot_Yaxis,hdr.start.plot_Zaxis])
+        #Load the data from the databroker.
+        xh = db.get_table(hdr,[hdr.start.plot_Xaxis])
+        xv = db.get_table(hdr,[hdr.start.plot_Yaxis])
+        data0 = db.get_table(hdr,[hdr.start.plot_Zaxis])
 
-        max_y=output[1]
-        max_x=output[2]
+        popt, pcov = opt.leastsq(gaussian_2D_error,x0=initial_guess,args=(data0[hdr.start.plot_Zaxis],xh[hdr.start.plot_Xaxis],
+                                                                          xv[hdr.start.plot_Yaxis]))
 
-        if (abs(max_x/initial_x_axis-1) <= accuracy_level) and (abs(max_y/initial_y_axis-1) <= accuracy_level):
+
+        if (abs(popt[1]/initial_x_axis-1) <= accuracy_level) and (abs(popt[2]/initial_y_axis-1) <= accuracy_level):
             print ("The fitted FE slit position at the ",str(detector_location),
-                   " detector is: FE_slit_h_center = ",max_x," FE_slit_v_center = ", max_y)
+               " detector is: FE_slit_h_center = ",popt[1]," FE_slit_v_center = ", popt[2])
         else:
             mv_center=False
             print ("WARNING:: THE NEW FITTED POSITION IS DIFFERENT FROM THE NEW POSITION BY ",
-                   max(abs(max_x-initial_x_axis),abs(max_y-initial_y_axis) ),
+                   max(abs(popt[1]-initial_x_axis),abs(popt[2]-initial_y_axis) ),
                    " (The fitted FE slit position at the ",detector_location,
-                   " detector is: FE_slit_h_center = ",max_x," FE_slit_v_center = ", max_y,
+                   " detector is: FE_slit_h_center = ",popt[1]," FE_slit_v_center = ", popt[2],
                    ", the new position has not been set)")
 
     else:
-        max_x=None
-        max_y=None
+        popt=np.array([None,None,None,None,None,None])    
     
 
     # Reset the values to the original position if 'return_all = True'
@@ -1313,21 +1202,21 @@ def FE_slits_alignment(detector_location="Diagon",mv_center=False,return_all=Fal
                           diode_motor,initial_diode_pos)
 
             detector.em_range.put(initial_det_range)                    # The range to use for the scan
-            detector.values_per_read.put(initial_det_vals_reading)      # The values per reading to use.
+            detector.values_per_read.put(initial_det_vals_reading)  # The values per reading to use.
             detector.averaging_time.put(initial_det_avg_time)           # The averaging time to use.
             detector.integration_time.put(initial_det_int_time)         # The integration time to use.
         
 
         
     if mv_center is True:
-        yield from mv(FE_hgap_axis,max_x,  FE_vgap_axis,max_y)
+        yield from mv(FE_hgap_axis,popt[0],  FE_vgap_axis,popt[1])
     elif return_all is True:
         yield from mv (FE_hgap_axis,initial_FE_hgap_pos,  FE_vgap_axis,initial_FE_vgap_pos)
 
 
     #ADD AN OPEN SHUTTER CALL HERE
 
-    return [max_x,max_y]
+    return popt
 
 
 def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=False):
@@ -1336,7 +1225,8 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
     the exit slit. 
         
     This scan is used to find the optimal location of either the M1 or M3 mirror axes. It runs a 2D scan over a
-    pre-determined range for the 2 axes and then determines the intensity maxima position.
+    pre-determined range for the 2 axes and then fits a gaussian to each "row" to determine the intensity maxima
+    and/or the linewidth minima.
 
     PARAMETERS
     ----------
@@ -1368,9 +1258,9 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
     Und_gap = 35.5  #The gap to use for the undulator, together with the photon energy they ensure that the 'correct' detector
                     #settings are used
 
-    FE_hgap_axis = FEslit.h_gap     # The front end horizontal gap motor
+    FE_hgap_axis = FE_slit.h_gap     # The front end horizontal gap motor
     FE_hgap_pos  = 0.75              # The front end horizontal gap value
-    FE_vgap_axis = FEslit.v_gap     # The front end vertical gap motor
+    FE_vgap_axis = FE_slit.v_gap     # The front end vertical gap motor
     FE_vgap_pos  = 0.75              # The front end vertical gap value
                     
     PGM_Energy_motor = PGM.Energy    #The motor required to move the PGM energy.
@@ -1386,24 +1276,24 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
                             #than this it sends out a warning and does not update
     
     if Branch is "A":
-        Exit_Slit_hgap_motor = ExitSlitA.h_gap # The motor required to move the horizontal exit slit
+        Exit_Slit_hgap_motor = Exit_SlitA.h_gap # The motor required to move the horizontal exit slit
         Exit_Slit_hgap_pos = 0                  # The horizontal gap opening to use
-        Exit_Slit_vgap_motor = ExitSlitA.v_gap # The motor required to move the vertical exit slit
+        Exit_Slit_vgap_motor = Exit_SlitA.v_gap # The motor required to move the vertical exit slit
         Exit_Slit_vgap_pos = 5                  # The vertical gap opening to use
 
-        Diode_motor = BTA2diag.trans    #The motor to move the diode into position.
+        Diode_motor = BTA2_diag.trans    #The motor to move the diode into position.
         Diode_pos = -63                  #The position of the diode motor to be used during the scan
         
         detector = qem07      # The detector to use for the scan.
 
         
     elif Branch is "B":
-        Exit_Slit_hgap_motor = ExitSlitB.h_gap # The motor required to move the horizontal exit slit
+        Exit_Slit_hgap_motor = Exit_SlitB.h_gap # The motor required to move the horizontal exit slit
         Exit_Slit_hgap_pos = 10                 # The horizontal gap opening to use
-        Exit_Slit_vgap_motor = ExitSlitB.v_gap # The motor required to move the vertical exit slit
+        Exit_Slit_vgap_motor = Exit_SlitB.v_gap # The motor required to move the vertical exit slit
         Exit_Slit_vgap_pos = 10                 # The vertical gap opening to use
 
-        Diode_motor = BTB2diag.trans    #The motor to move the diode into position.
+        Diode_motor = BTB2_diag.trans    #The motor to move the diode into position.
         Diode_pos = -63                  #The position of the diode motor to be used during the scan
 
         detector = qem12      # The detector to use for the scan.
@@ -1438,6 +1328,10 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
             
         scan_type_str='Mirror_alignment_M1_RY_M3_RY_Branch_'+Branch
 
+        initial_guess_row = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the rows.
+        initial_guess_amp = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the amplitudes.
+        initial_guess_LW = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the linewidths.
+
         
     elif axes is "M3_X_M3_Ry":
         if Branch is "A":
@@ -1464,6 +1358,10 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
             
         scan_type_str='Mirror_alignment_M3_X_M3_RY_Branch_'+Branch
 
+        initial_guess_row = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the rows.
+        initial_guess_amp = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the amplitudes.
+        initial_guess_LW = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the linewidths.
+
     elif axes is "M3_Z_M3_Ry":
         if Branch is "A":
             x_axis = M3.Ry # The x axis of the scan
@@ -1489,6 +1387,9 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
             
         scan_type_str='Mirror_alignment_M3_Z_M3_RY_Branch_'+Branch
 
+        initial_guess_row = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the rows.
+        initial_guess_amp = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the amplitudes.
+        initial_guess_LW = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the linewidths.
 
     elif axes is "M3_Rz_M3_Ry":
         if Branch is "A":
@@ -1515,6 +1416,9 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
             
         scan_type_str='Mirror_alignment_M3_Rz_M3_Ry_Branch_'+Branch
 
+        initial_guess_row = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the rows.
+        initial_guess_amp = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the amplitudes.
+        initial_guess_LW = (1E7,0.5,0.2,1E8) # This is the initial guess used in the gaussian fitting of the linewidths.
         
     else:
         return None
@@ -1555,27 +1459,66 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
 
 
     if uid is not None: 
+        #reference the data
         hdr=db[uid]
-        output=max_in_2D(uid)
 
-        max_y=db.get_table(hdr,[hdr.start.plot_Yaxis])[x_num*popt_amp[1]]
-        max_x=position[popt_amp[1]]
+        #find out the shape of the data
+        x_num = hdr.start.X_num
+        y_num = hdr.start.Y_num
+        
+        #Load the data from the databroker.
+   
+        amplitude=[]
+        linewidth=[]
+        position=[]
+        y_seq=[]
+        
+        #step through each "row" and fit a gaussian.
+        for y_step in range(0,y_num):
+            x = db.get_table(hdr,[hdr.start.plot_Xaxis])[0+x_num*y_step:5+x_num*y_step] 
+            y_seq.append(y_step)
+            data = db.get_table(hdr,[hdr.start.plot_Zaxis])[0+x_num*y_step:5+x_num*y_step]
 
+            popt_row, pcov_row = opt.leastsq(gaussian_1D_error,x0=initial_guess_row,args=(data[hdr.start.plot_Zaxis],x[hdr.start.plot_Xaxis]))
+            amplitude.append(popt_row[0])
+            position.append(popt_row[1])
+            linewidth.append(popt_row[2])
 
-        if abs(max_x/initial_x_axis_pos-1) <= accuracy_level and abs(max_y/initial_y_axis_pos-1) <= accuracy_level:
-            print ("The fitted x axis positions at the ",Branch," ",x_axis_motor.name, " motor are: ",max_x,
-                   ". The fitted y axis positions at the ",Branch," ",y_axis_motor.name, " motor are: ",max_y)
-            output=[max_x,max_y]
+        #fit to the amplitude row
+        popt_amp, pcov_amp = opt.leastsq(gaussian_1D_error,x0=initial_guess_amp,args=(amplitude,y_seq))
+        
+        #fit to the linewdith row
+        popt_LW, pcov_LW = opt.leastsq(gaussian_1D_error,x0=initial_guess_LW,args=(linewidth,y_seq))
+
+        amp_y=db.get_table(hdr,[hdr.start.plot_Yaxis])[x_num*popt_amp[1]]
+        amp_x=position[popt_amp[1]]
+        
+        LW_y=db.get_table(hdr,[hdr.start.plot_Yaxis])[x_num*popt_LW[1]]
+        LW_x=position[popt_LW[1]]
+
+        if abs(amp_y/LW_y-1) >= accuracy_level and abs(amp_x/LW_x-1) >= accuracy_level:
+            #If the amplituide and linewidth give different locations.
+            mv_optimum=False
+            print ("WARNING:: THE NEW FITTED POSITIONS ARE DIFFERENT FROM EACH OTHER BY ",max(abs(amp_y-LW_Y),abs(amp_x-LW_x) ),
+                   " (The fitted x axis positions at the ",Branch," ",x_axis_motor.name, " motor are: ",amp_x,"(amp fit) and",LW_x,
+                   "(LW fit). The fitted y axis positions at the ",Branch," ",y_axis_motor.name, " motor are: ",amp_y,"(amp fit) and",LW_y,
+                   "(LW fit). The new position has not been set)")
+        elif abs(amp_x/initial_x_axis_pos-1) <= accuracy_level and abs(ampy/initial_y_axis_pos-1) <= accuracy_level:
+            print ("The fitted x axis positions at the ",Branch," ",x_axis_motor.name, " motor are: ",amp_x,"(amp fit) and",LW_x,
+                   "(LW fit). The fitted y axis positions at the ",Branch," ",y_axis_motor.name, " motor are: ",amp_y,"(amp fit) and",LW_y,
+                   "(LW fit).")
+            output=[[amp_x,amp_y],[LW_x,LW_y]]
         else:
             mv_center=False
-            print ("WARNING:: THE NEW FITTED POSITION IS DIFFERENT FROM THE OLD POSITION BY ",max(abs(max_x-initial_x_axis_pos),
-                    abs(max_y-initial_y_axis_pos) ),"(The fitted x axis positions at the ",Branch," ",x_axis_motor.name, " motor are: ",max_x,
-                   ". The fitted y axis positions at the ",Branch," ",y_axis_motor.name, " motor are: ",max_y,". The new position has not been set")
+            print ("WARNING:: THE NEW FITTED POSITION IS DIFFERENT FROM THE OLD POSITION BY ",max(abs(amp_x-initial_x_axis_pos),
+                    abs(amp_y-initial_y_axis_pos) ),"(The fitted x axis positions at the ",Branch," ",x_axis_motor.name, " motor are: ",amp_x,
+                   "(amp fit) and",LW_x,"(LW fit). The fitted y axis positions at the ",Branch," ",y_axis_motor.name, " motor are: ",amp_y,
+                   "(amp fit) and",LW_y,"(LW fit). The new position has not been set)")
 
     else:
        output=None
-       max_x=None
-       max_y=None
+       amp_x=None
+       amp_y=None
        
    
 
@@ -1594,16 +1537,16 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
 
         
     if mv_optimum is True:
-        yield from mv( x_axis,max_x,  y_axis, max_y)
+        yield from mv( x_axis,amp_x,  y_axis, amp_y)
     elif return_all is True:
         yield from mv ( x_axis,initial_x_axis_pos,  y_axis, initial_y_axis_pos)
 
 
     #ADD AN OPEN SHUTTER CALL HERE
+
+
     
     return output
-
-
 
 def M1_M3_alignment(Branch='A',mv_optimum=False,return_all=True):
     ''' 
@@ -2157,113 +2100,5 @@ def gaussian_2D_error(params,y,x1,x2):
     return gaussian_2D(x1, x2, params)-y
 
 
-def fit_Gauss_1Dseries(uid,initial_guess):
-    ''' 
-    This scan fits 1D Gaussian curves o each line in a 2D dataset giben by uid.
-        
-    This scan is used to fit to a 1D Gaussian to each line in a 2D dataset, the output is then a set of 1D data corresponding to the
-    amplitude, position and linewidth as a fucntion of the Y axis of the dataset. The function returns a list with 4 items, the items 
-    being the data for amplitude,position, linewidth, background offset and y_sequence number.                   
-
-    Parameters
-    ----------
-    uid : number
-        This is the uid used to extract the data from the databroker.
-                                       
-    initial_guess : list
-        This is the initial guess for the amplitude, centre, width and background offset, in a list in this order.
-
-    '''  
-
-    #reference the data
-    hdr=db[uid]
     
-    #find out the shape of the data
-    x_num = hdr.start.X_num
-    y_num = hdr.start.Y_num
-        
-    #Load the data from the databroker.
-   
-    amplitude=[]
-    linewidth=[]
-    position=[]
-    background=[]
-    y_seq=[]
-        
-    #step through each "row" and fit a gaussian.
-    for y_step in range(0,y_num):
-        x = db.get_table(hdr,[hdr.start.plot_Xaxis])[x_num*y_step:x_num*(y_step+1)-1] 
-        y_seq.append(y_step)
-        data = db.get_table(hdr,[hdr.start.plot_Zaxis])[x_num*y_step:x_num*(y_step+1)-1]
-
-        popt_row, pcov_row = opt.leastsq(gaussian_1D_error,x0=initial_guess,args=(data[hdr.start.plot_Zaxis],x[hdr.start.plot_Xaxis]))
-        amplitude.append(popt_row[0])
-        position.append(popt_row[1])
-        linewidth.append(popt_row[2])
-        background.append(popt_row[3])
-
-        initial_guess[0]=popt_row[0]
-        initial_guess[1]=popt_row[1]
-        initial_guess[2]=popt_row[2]
-        initial_guess[3]=popt_row[3]
-
-        
-    return [amplitude,linewidth,position,background,y_seq]
     
-
-def max_in_1D(uid):
-    ''' 
-    This scan is used to find the maximum value in a 1D data set and return the max value, and the x co-ordinate.
-        
-    This scan is used to find the maximum value in a 1D dataset and return the max value, and the x co-ordinate.
-    It returns a list containing the x and y values for the maximum y value in the dataset.                   
-
-    Parameters
-    ----------
-    uid : number
-        This is the uid used to extract the data from the databroker.
-
-    '''
-    
-    scan = db[scan_id]
-    if scan.start.plot_Xaxis.startswith('FE'):
-        Xname = scan.start.plot_Xaxis.replace('_readback', '_setpoint')
-    else:
-        Xname = scan.start.plot_Xaxis+'_user_setpoint'
-        
-    data2D = db.get_table(scan,[Xname, scan.start.plot_Yaxis])
-    del data2D['time']
-
-    max_idx = np.argmax(data3D[scan.start.plot_Yaxis], axis=None)
-
-    return [data2D[Xname][max_idx],data2D[scan.start.plot_Yaxis][max_idx]]
-
-
-def max_in_2D(uid):
-    ''' 
-    This scan is used to find the maximum value in a 2D data set and return the max value, and the x and y co-ordinates.
-        
-    This scan is used to find the maximum value in a 2D dataset and return the max value, and the x and y co-ordinates.
-    It returns a list containg the x, y and z values for the maximum z value in the dataset.                   
-
-    Parameters
-    ----------
-    uid : number
-        This is the uid used to extract the data from the databroker.
-
-    '''
-    
-    scan = db[scan_id]
-    if scan.start.plot_Xaxis.startswith('FE'):
-        Xname = scan.start.plot_Xaxis.replace('_readback', '_setpoint')
-        Yname = scan.start.plot_Yaxis.replace('_readback', '_setpoint')
-    else:
-        Xname = scan.start.plot_Xaxis+'_user_setpoint'
-        Yname = scan.start.plot_Yaxis+'_user_setpoint'
-        
-    data3D = db.get_table(scan,[Xname, Yname, scan.start.plot_Zaxis])
-    del data3D['time']
-
-    max_idx = np.argmax(data3D[scan.start.plot_Zaxis], axis=None)
-
-    return [data3D[Xname][max_idx],data3D[Yname][max_idx],data3D[scan.start.plot_Zaxis][max_idx]]

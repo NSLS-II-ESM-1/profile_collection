@@ -101,14 +101,16 @@ M3 = Hexapod_Mir("XF:21IDB-OP{Mir:3-Ax:11",name="M3")
 M4B = Hexapod_Mir("XF:21IDC-OP{Mir:4B-Ax:B4",name="M4B")
 
 class Monochromator(Device):
-    Focus_Const = Comp(EpicsMotor,"Cff}Mtr")
-    Energy = Comp(EpicsMotor,"Eng}Mtr")
-    Grating_Trans = Comp(EpicsMotor,"GT}Mtr")
-    Mirror_Pitch = Comp(EpicsMotor,"MP}Mtr")
-    Grating_Pitch = Comp(EpicsMotor,"GP}Mtr")
+    Focus_Const = Comp(EpicsMotor,"-Ax:8_Cff}Mtr")
+    Energy = Comp(EpicsMotor,"-Ax:8_Eng}Mtr")
+    Grating_Trans = Comp(EpicsMotor,"-Ax:8_GT}Mtr")
+    Mirror_Pitch = Comp(EpicsMotor,"-Ax:8_MP}Mtr")
+    Mirror_Pitch_off = Comp(EpicsSignal,"-Ax:8_MP}Mtr.OFF")
+    Grating_Pitch = Comp(EpicsMotor,"-Ax:8_GP}Mtr")
+    Grating_Pitch_off = Comp(EpicsSignal,"-Ax:8_GP}Mtr.OFF")
+    Grating_lines = Comp(EpicsSignal,"}:LINES:SET")
 
-PGM = Monochromator("XF:21IDB-OP{Mono:1-Ax:8_",name="PGM")
-
+PGM = Monochromator("XF:21IDB-OP{Mono:1",name="PGM")
 
 
 class KB_pair(Device):
@@ -139,7 +141,7 @@ M4A = KB_pair("XF:21IDC-OP{Mir:4A-Ax:A4_",name="M4A")
 
 #
 class ESM_Diagon(Device):
-    H_Mirror = Comp(EpicsMotor,"-Ax:3_HLPM}Mtr")
+    H_mirror = Comp(EpicsMotor,"-Ax:3_HLPM}Mtr")
     H_Yag = Comp(EpicsMotor,"-Ax:3_HLPF}Mtr")
     V_mirror = Comp(EpicsMotor,"-Ax:3_VLPM}Mtr")
     V_Yag = Comp(EpicsMotor,"-Ax:3_VLPF}Mtr")
@@ -157,10 +159,10 @@ class ESMSlit_type1(Device):
     v_gap = Comp(EpicsMotor,"-Ax:VG}Mtr")
     v_center = Comp(EpicsMotor,"-Ax:VC}Mtr")
 #
-M1D_slit = ESMSlit_type1("XF:21IDA-OP{Mir:1-Slt:4_D_1", name='M1D_slit')
-PGMU_slit = ESMSlit_type1("XF:21IDB-OP{Mono:1-Slt:7_U_1", name='PGMU_slit')
-PGMD_slit = ESMSlit_type1("XF:21IDB-OP{Mono:1-Slt:8_D_1", name='PGMD_slit')
-M4BU_slit = ESMSlit_type1("XF:21IDC-OP{Mir:4B-Slt:B4_U_1", name='M4BU_slit')
+M1Dslit = ESMSlit_type1("XF:21IDA-OP{Mir:1-Slt:4_D_1", name='M1Dslit')
+PGMUslit = ESMSlit_type1("XF:21IDB-OP{Mono:1-Slt:7_U_1", name='PGMUslit')
+PGMDslit = ESMSlit_type1("XF:21IDB-OP{Mono:1-Slt:8_D_1", name='PGMDslit')
+M4BUslit = ESMSlit_type1("XF:21IDC-OP{Mir:4B-Slt:B4_U_1", name='M4BUslit')
 
 class ESMSlit_type2(Device):
     h_scan = Comp(EpicsMotor,"-Ax:HS}Mtr")
@@ -172,9 +174,9 @@ class ESMSlit_type2(Device):
     v_gap = Comp(EpicsMotor,"-Ax:VG}Mtr")
     v_center = Comp(EpicsMotor,"-Ax:VC}Mtr")
 
-M3U_slit = ESMSlit_type2("XF:21IDB-OP{Mir:3-Slt:10_U_1", name='M3U_slit')
-M4AU_slit = ESMSlit_type2("XF:21IDC-OP{Mir:4A-Slt:A4_U_1", name='M4AU_slit')
-M4BD_slit = ESMSlit_type2("XF:21IDC-OP{Mir:4B-Slt:B5_D_1", name='M4BD_slit')
+M3Uslit = ESMSlit_type2("XF:21IDB-OP{Mir:3-Slt:10_U_1", name='M3Uslit')
+M4AUslit = ESMSlit_type2("XF:21IDC-OP{Mir:4A-Slt:A4_U_1", name='M4AUslit')
+M4BDslit = ESMSlit_type2("XF:21IDC-OP{Mir:4B-Slt:B5_D_1", name='M4BDslit')
 
 class ExitSlit(Device):
     v_gap = Comp(EpicsMotor,"_VG}Mtr")
@@ -182,20 +184,20 @@ class ExitSlit(Device):
     h_def = Comp(EpicsMotor,"_HDS}Mtr")
     v_def = Comp(EpicsMotor,"_VDS}Mtr")
     
-Exit_SlitA = ExitSlit('XF:21IDC-OP{Slt:1A-Ax:A1',name='Exit_SlitA')
-Exit_SlitB = ExitSlit('XF:21IDC-OP{Slt:1B-Ax:B1',name='Exit_SlitB')
+ExitSlitA = ExitSlit('XF:21IDC-OP{Slt:1A-Ax:A1',name='ExitSlitA')
+ExitSlitB = ExitSlit('XF:21IDC-OP{Slt:1B-Ax:B1',name='ExitSlitB')
 
 #Diagnostics
 class DIAG(Device):
     trans = Comp(EpicsMotor,"}Mtr")    
 
 
-BTA2_diag = DIAG("XF:21IDC-OP{BT:A2-Diag:A2_1-Ax:1", name= 'BTA2_diag')
-BTB2_diag = DIAG("XF:21IDC-OP{BT:B2-Diag:B2_1-Ax:1", name= 'BTB2_diag')
-M3U_diag = DIAG("XF:21IDB-OP{Mir:3-Diag:10_U_1-Ax:1", name= 'M3U_diag')
-M4AU_diag = DIAG("XF:21IDC-OP{Mir:4A-Diag:A3_U_1-Ax:1",name = 'M4AU_diag')
-M4BD_diag1 = DIAG("XF:21IDC-OP{Mir:4B-Diag:B5_D_1-Ax:1",name = 'M4BD_diag1')
-M4BD_diag2 = DIAG("XF:21IDC-OP{Mir:4B-Diag:B5_D_2-Ax:2",name = 'M4BD_diag2')
+BTA2diag = DIAG("XF:21IDC-OP{BT:A2-Diag:A2_1-Ax:1", name= 'BTA2diag')
+BTB2diag = DIAG("XF:21IDC-OP{BT:B2-Diag:B2_1-Ax:1", name= 'BTB2diag')
+M3Udiag = DIAG("XF:21IDB-OP{Mir:3-Diag:10_U_1-Ax:1", name= 'M3Udiag')
+M4AUdiag = DIAG("XF:21IDC-OP{Mir:4A-Diag:A3_U_1-Ax:1",name = 'M4AUdiag')
+M4BDdiag1 = DIAG("XF:21IDC-OP{Mir:4B-Diag:B5_D_1-Ax:1",name = 'M4BDdiag1')
+M4BDdiag2 = DIAG("XF:21IDC-OP{Mir:4B-Diag:B5_D_2-Ax:2",name = 'M4BDdiag2')
 
 # --------------------------FRONT END COMPONENTS -----------------------------
 # Slits
@@ -233,7 +235,7 @@ class Virtual_Motor_Slits(Blades, Virtual_Motor_Center_And_Gap):
     pass
 
     
-FE_slit = Virtual_Motor_Slits("FE:C21A-OP{Slt:",name='FE_slit')
+FEslit = Virtual_Motor_Slits("FE:C21A-OP{Slt:",name='FEslit')
 
 class TwoButtonShutter(Device):
     # TODO this needs to be fixed in EPICS as these names make no sense
@@ -298,10 +300,8 @@ class TwoButtonShutter(Device):
                     ts = datetime.datetime.fromtimestamp(timestamp).strftime(_time_fmtstr)
                     print('** ({}) Had to reactuate shutter while {}ing'.format(ts, val))
                 else:
-                    cmd_sig.clear_sub(cmd_retry_cb)
-
-        cmd_sig.subscribe(cmd_retry_cb, run=False)
-        cmd_sig.set(1)
+                    cmd_sig.clear_sub(cmcmd_sig.subscribe(cmd_retry_cb, run=False))
+                    cmd_sig.set(1)
         self.status.subscribe(shutter_cb)
 
 
@@ -313,3 +313,4 @@ class TwoButtonShutter(Device):
         self.read_attrs = ['status']
 
 shutter = TwoButtonShutter('XF:21ID-PPS{Sh:FE}', name='shutter')
+shutter_A = TwoButtonShutter('XF:21ID-PPS{Sh:1A}', name='shutterA')

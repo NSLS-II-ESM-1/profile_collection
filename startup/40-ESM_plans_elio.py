@@ -10,6 +10,7 @@ from bluesky.spec_api import _figure_name, first_key_heuristic
 from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
 from pyOlog.SimpleOlogClient import SimpleOlogClient
 #from ophyd import EpicSignal
+from esm import ss_csv
 from cycler import cycler
 from collections import ChainMap
 import math
@@ -31,11 +32,11 @@ def ESM_check(return_all=False):
                        ############# Define the Beamline Motors 
     Und = EPU1.gap
 
-    FE_h_center = FEslit.h_center             # The front end horizontal center motor
-    FE_v_center = FEslit.v_center             # The front end vertical gap motor
+    FE_h_center = FE_slit.h_center             # The front end horizontal center motor
+    FE_v_center = FE_slit.v_center             # The front end vertical gap motor
 
-    FE_hgap_axis = FEslit.h_gap     # The front end horizontal gap motor
-    FE_vgap_axis = FEslit.v_gap     # The front end vertical gap motor
+    FE_hgap_axis = FE_slit.h_gap     # The front end horizontal gap motor
+    FE_vgap_axis = FE_slit.v_gap     # The front end vertical gap motor
 
     MM1_InOut_motor = M1.Mirror_InOut 
     MM1_Pitch_motor = M1.Mirror_Pitch 
@@ -50,8 +51,8 @@ def ESM_check(return_all=False):
     
     PGM_Energy_motor = PGM.Energy    #The motor required to move the PGM energy.
 
-    Exit_Slit_hgap_motor = ExitSlitA.h_gap    # THe motor required to move the horizontal exit slit
-    Exit_Slit_vgap_motor = ExitSlitA.v_gap    # THe motor required to move the vertical exit slit
+    Exit_Slit_hgap_motor = Exit_SlitA.h_gap    # THe motor required to move the horizontal exit slit
+    Exit_Slit_vgap_motor = Exit_SlitA.v_gap    # THe motor required to move the vertical exit slit
 
     Diode_motor = BTA2_diag.trans    #The motor to move the diode into position.
 
@@ -219,8 +220,8 @@ def ESM_status(f_nm = None):
     Und1 = EPU1.gap
     Und2 = EPU2.gap
     
-    FE_h_center = FEslit.h_center             # The front end horizontal center motor
-    FE_v_center = FEslit.v_center             # The front end vertical gap motor
+    FE_h_center = F_slit.h_center             # The front end horizontal center motor
+    FE_v_center = F_slit.v_center             # The front end vertical gap motor
 
     FE_hgap_axis = FEslit.h_gap     # The front end horizontal gap motor
     FE_vgap_axis = FEslit.v_gap     # The front end vertical gap motor
@@ -369,16 +370,16 @@ def ESM_check_test(return_all=True):
     det_avg_time = 0.1    # The averaging time to use.
     det_int_time = 0.0004 # The integration time to use.
 
-    Exit_Slit_hgap_motor = ExitSlitA.h_gap # THe motor required to move the horizontal exit slit
+    Exit_Slit_hgap_motor = Exit_SlitA.h_gap # THe motor required to move the horizontal exit slit
     Exit_Slit_hgap_pos = 20                # The horizontal gap opening to use
-    Exit_Slit_vgap_motor = ExitSlitA.v_gap # THe motor required to move the vertical exit slit
+    Exit_Slit_vgap_motor = Exit_SlitA.v_gap # THe motor required to move the vertical exit slit
     Exit_Slit_vgap_pos = 10                # The vertical gap opening to use
 
     PGM_Energy_motor = PGM.Energy    #The motor required to move the PGM energy.
     PGM_Energy_pos = 695             #THe energy at which to perform the scan.
 
 
-    Diode_motor = BTA2diag.trans    #The motor to move the diode into position.
+    Diode_motor = BTA2_diag.trans    #The motor to move the diode into position.
     Diode_pos = -63                  #The position of the diode motor to be used during the scan
 
     scan_type_str='Reference_Flux_Check'
@@ -776,33 +777,3 @@ class FastShutter2(Device):
 
 
 fast_shutter2 = FastShutter2('XF:21ID-TS{EVR:C1', name='fast_shutter2')
-
-
-def ss_csv(f_nm,sc_num, motor, det):
-        ''' save_scan_csv - usage: 
-
-		   f_nm =string with extention '***.csv'.
-                   sc_num = scan number
-                   motor name
-                   detector        
-		   saves in csv format the last run'.
-	'''								
-	
-        from databroker import DataBroker as db, get_table, get_images, get_events
-        hdr = db[sc_num]
-        if motor == 'time': 
-                df =get_table(hdr,[ det])
-        else:
-                df =get_table(hdr,[motor, det])                
-                del df['time']
-
-        f_path="/direct/XF21ID1/csv_files/"+f_nm
-        
-        cols=df.columns.tolist()
-        m=cols.index(motor)
-        cols.pop(m)
-        cols=[motor]+cols
-        df=df[cols]
-           
-#        swap_cols(df,df[0].index(motor),0)
-        df.to_csv(f_path,index=False)

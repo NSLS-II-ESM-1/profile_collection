@@ -212,10 +212,11 @@ class ESM_motion_device:
             The output dictionary that contains the chamber names and information.
  
         '''
-        #defien the input parameter
+        #define the input parameter
         self.to_location=to_location
         
         #define the output dictionary
+        
         axis_dict={}
         
         #define the list of axes
@@ -325,6 +326,55 @@ class ESM_motion_device:
         return chamber_name
 
 
+    def status(self, output='string'):
+        ''' 
+        Reads the status of every axis defined for the device and outputs the result as a dictioanry or a 
+        formatted string. 
+        
+        Reads the position of every axis for the device and returns a dictionary, returns a formatted string
+        or appends to a file.
+
+        PARAMETERS
+        ----------
+        
+        output : str, optional
+            Indicates what to do with the output, default is to return a formatted string. Can take the values:
+                - 'string', indicates the routine should return a formatted string.
+                - 'string_and_file', indicates the routine should return a formatted string and append to a 
+                   status file for the device.
+                - 'dict', indicates the routine should return a dictionary of positions.
+
+        f_string : str
+            Possible output string for formatting.
+
+        status_dict : dict
+            Possible outputted dictionary, which has keywords for each motor in the axis list and contains 
+            a dictionary of axes names and positions.
+ 
+        '''
+
+        #define the input parameter
+        self.output=output
+
+        #define the dictionary of motion axes for the current instance.
+        axis_list=self.axes()
+        axis_dict=self.axes_dict()
+
+        temp_list=axis_list
+
+        status_dict={}
+     
+        
+        #continue looping over the list of remaining axes until none exist.
+        while len(temp_list)>=0:
+            temp_axes_dict={}
+            device_name,_,axis = temp_list[0].partition('_')
+            temp_axes_list = list(key for key in temp_list if key.startswith(device_name) )
+            for axes in temp_axes_list:
+                temp_axes_dict[axes]=axis_dict[axes]
+
+
+                    
     
     def ask_user_continue(self,request_str):
         ''' 

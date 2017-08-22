@@ -31,3 +31,7 @@ EPU1 = EPU('SR:C21-ID:G1A{EPU:1', name='EPU1')
 EPU1.gap.read_attrs = ['setpoint', 'readback']
 EPU1.gap.readback.name='EPU1_gap'
 
+EPU2 = EPU('SR:C21-ID:G1B{EPU:2', name='EPU2')
+EPU2.gap.read_attrs = ['setpoint', 'readback']
+EPU2.gap.readback.name='EPU2_gap'
+
