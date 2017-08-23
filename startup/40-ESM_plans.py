@@ -4,9 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import os
-from databroker import DataBroker as db, get_table, get_images, get_events
 from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
-from bluesky.spec_api import _figure_name, first_key_heuristic
 from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
 from pyOlog.SimpleOlogClient import SimpleOlogClient
 from esm import ss_csv
@@ -1729,11 +1727,11 @@ def ESM_save_csv(uid,Y_axis,motors_list,time=False):
         f_nm=str(hdr.start.scan_id)+'.csv'
         # Define the filen name from the scan id number and the  '.csv' suffix
         if time:
-            df =get_table(hdr,[Y_axis])
+            df = hdr.table(fields=[Y_axis])
             #get the table if the X_axis is to be time.
         else:
             motor=motors_list[0]
-            df =get_table(hdr,motors_list+[Y_axis])                
+            df = hdr.table(fields=motors_list+[Y_axis])                
             del df['time']
             #if the X axis is not to be time then find the scan motor name from the uid get the table then delete the time
             #column

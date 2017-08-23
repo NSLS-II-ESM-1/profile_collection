@@ -1,6 +1,7 @@
 from ophyd import EpicsSignal,PVPositioner, EpicsSignalRO, EpicsMotor
 from ophyd import Device, Component as Comp
 from ophyd import Component as Cpt
+from ophyd import DeviceStatus
 
 
 MR_attrs = "'user_readback','user_setpoint','motor_is_moving','motor_done_move','motor_stop'"
@@ -237,7 +238,7 @@ class Virtual_Motor_Slits(Blades, Virtual_Motor_Center_And_Gap):
     
 FEslit = Virtual_Motor_Slits("FE:C21A-OP{Slt:",name='FEslit')
 
-class TwoButtonShutter(Device):
+class TwoButtonShutter(Device:)
     # TODO this needs to be fixed in EPICS as these names make no sense
     # the vlaue comingout of the PV do not match what is shown in CSS
     open_cmd = Cpt(EpicsSignal, 'Cmd:Opn-Cmd', string=True)
@@ -259,7 +260,6 @@ class TwoButtonShutter(Device):
     # user facing commands
     open_str = 'Open'
     close_str = 'Close'
-
     def set(self, val):
         if self._set_st is not None:
             raise RuntimeError('trying to set while a set is in progress')
@@ -300,8 +300,10 @@ class TwoButtonShutter(Device):
                     ts = datetime.datetime.fromtimestamp(timestamp).strftime(_time_fmtstr)
                     print('** ({}) Had to reactuate shutter while {}ing'.format(ts, val))
                 else:
-                    cmd_sig.clear_sub(cmcmd_sig.subscribe(cmd_retry_cb, run=False))
-                    cmd_sig.set(1)
+                    cmd_sig.clear_sub(cmd_retry_cb)
+
+        cmd_sig.subscribe(cmd_retry_cb, run=False)
+        cmd_sig.set(1)
         self.status.subscribe(shutter_cb)
 
 
@@ -314,3 +316,4 @@ class TwoButtonShutter(Device):
 
 shutter = TwoButtonShutter('XF:21ID-PPS{Sh:FE}', name='shutter')
 shutter_A = TwoButtonShutter('XF:21ID-PPS{Sh:1A}', name='shutterA')
+gate1 = TwoButtonShutter('XF:21IDA-VA{Mir:1-GV:4_D_1}', name='gate1')

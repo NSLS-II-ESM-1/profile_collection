@@ -2,7 +2,7 @@
 # script) where an instance of databroker.Broker named `db` is already defined.
 
 
-from databroker_browser.qt import BrowserWindow, CrossSection, StackViewer
+
 
 
 search_result = lambda h: "{start[plan_name]} ['{start[uid]:.6}']".format(**h)
@@ -25,4 +25,5 @@ def fig_dispatch(header, factory):
 
 
 def browse():
+    from databroker_browser.qt import BrowserWindow, CrossSection, StackViewer    
     return BrowserWindow(db, fig_dispatch, text_summary, search_result)

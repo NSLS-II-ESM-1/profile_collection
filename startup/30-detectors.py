@@ -36,6 +36,13 @@ class ESMQuadEM(QuadEM):
                                 ])
         self.configuration_attrs = ['integration_time', 'averaging_time','em_range','num_averaged','values_per_read']
 
+    def set_primary(self, n):
+        if n == 'All':
+            self.hints = None
+            return
+        
+        self.hints = {'fields': [getattr(self, f'current{n}').mean_value.name]}
+
 qem01 = ESMQuadEM('XF:21IDA-BI{EM:1}EM180:', name='qem01')
 qem02 = ESMQuadEM('XF:21IDB-BI{EM:2}EM180:', name='qem02')
 qem03 = ESMQuadEM('XF:21IDB-BI{EM:3}EM180:', name='qem03')
@@ -76,7 +83,7 @@ class MyDetector(SingleTrigger, AreaDetector):
                suffix='HDF1:',
                write_path_template='/direct/XF21ID1/image_files/',  # trailing slash!
                root='/direct/XF21ID1/',
-               fs=db.fs)
+               reg=db.reg)
 
 Diag1_CamH = MyDetector('XF:21IDA-BI{Diag:1-Cam:H}', name='Diag1_CamH')
 Diag1_CamH.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam01/'

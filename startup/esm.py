@@ -4,9 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import os
-from databroker import DataBroker as db, get_table, get_images, get_events
 from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
-from bluesky.spec_api import _figure_name, first_key_heuristic
 from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
 from pyOlog.SimpleOlogClient import SimpleOlogClient
 #from ophyd import EpicSignal
@@ -787,13 +785,11 @@ def ss_csv(f_nm,sc_num, motor, det):
                    detector        
 		   saves in csv format the last run'.
 	'''								
-	
-        from databroker import DataBroker as db, get_table, get_images, get_events
         hdr = db[sc_num]
         if motor == 'time': 
-                df =get_table(hdr,[ det])
+                df = hdr.table(fields=[det])
         else:
-                df =get_table(hdr,[motor, det])                
+                df = hdr.table(fields=[motor, det])
                 del df['time']
 
         f_path="/direct/XF21ID1/csv_files/"+f_nm
