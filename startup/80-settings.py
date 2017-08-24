@@ -35,8 +35,7 @@ def print_md(name, doc):
 #from ophyd.commands import wh_pos, log_pos, mov, movr
 """
 
-sd.baseline = [PGM, EPU1, EPU2, ExitSlitA, ExitSlitB]
-# maybe put this where PGM is defined
-PGM.hints = {'fields': [PGM.Energy.name]}
+sd.baseline = [PGM, EPU1, EPU2, ExitSlitA, ExitSlitB,FEslit,M1,M3,M4A,M4B,LT,SP]
 
-BlueskyMagics.positioners = [BTA2diag.trans]
+
+BlueskyMagics.positioners = [EPU1.phase,EPU2.phase,EPU1.gap,EPU2.gap,M1.X,M1.Ry,M1.Rz]

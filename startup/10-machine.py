@@ -15,7 +15,9 @@ class LL_mtr(Device):
     Claw_Grab = Comp(EpicsMotor,'2-Claw:EA3_1-Ax:C}Mtr')
     Dock_Trans = Comp(EpicsMotor,'1-Dock:EA4_1-Ax:F}Mtr')
 
-LL = LL_mtr('XF:21IDD-ES{LL:',read_attrs = MR_attrs, name='LL')
+LL = LL_mtr('XF:21IDD-ES{LL:', name='LL')
+# define what is displayed from the LL during quieries using LL.hints.
+LL.hints = {'fields': [LL.Claw_Trans.name,LL.Claw_Rotate.name,LL.Claw_Grab.name,LL.Dock_Trans.name]}
 
 
 #
@@ -28,8 +30,9 @@ class LT_mtr(Device):
    Z = Comp(EpicsMotor,"-Ax:Z}Mtr")
    Ry =  Comp(EpicsMotor,"-Ax:Ry}Mtr")
 
-LT = LT_mtr('XF:21IDD-ES{LT:1-Manip:EA5_1',read_attrs = MR_attrs, name='LT')
-
+LT = LT_mtr('XF:21IDD-ES{LT:1-Manip:EA5_1', name='LT')
+# define what is displayed from LT during quieries using LT.hints.
+LT.hints = {'fields': [LT.X.name,LT.Y.name,LT.Z.name,LT.Ry.name]}
 
 
 # ---------------------------- SAMPLE_PREP Chamber -----------------------------
@@ -41,8 +44,9 @@ class SP_mtr(Device):
     Z = Comp(EpicsMotor,"-Ax:Z}Mtr")
     Rx = Comp(EpicsMotor,"-Ax:Rx}Mtr")
 
-SP = SP_mtr('XF:21IDD-ES{SP:1-Manip:EA2_1',read_attrs = MR_attrs, name='SP')
-
+SP = SP_mtr('XF:21IDD-ES{SP:1-Manip:EA2_1', name='SP')
+# define what is displayed from SP during quieries using SP.hints.
+SP.hints = {'fields': [SP.X.name,SP.Y.name,SP.Z.name,SP.Rx.name]}
 
 #
 #
@@ -56,7 +60,9 @@ class An_mtr(Device):
     Claw_Trans = Comp(EpicsMotor,"{ST:1-Claw:EA1_1-Ax:T}Mtr")
     Claw_Grab = Comp(EpicsMotor,"{ST:1-Claw:EA1_1-Ax:C}Mtr")
 
-An = An_mtr("XF:21IDD-ES",read_attrs = MR_attrs, name='An')
+An = An_mtr("XF:21IDD-ES", name='An')
+# define what is displayed from An during quieries using An.hints.
+An.hints = {'fields': [An.Claw_Trans.name,An.Claw_Grab.name]}
 
 #
 #
@@ -67,8 +73,9 @@ An = An_mtr("XF:21IDD-ES",read_attrs = MR_attrs, name='An')
 class Analyzer_mtr(Device):
     Rz = Comp(EpicsMotor,"{SA:1-DPRF:EA1_1-Ax:1}Mtr")
 
-SA = Analyzer_mtr("XF:21IDD-ES",read_attrs = MR_attrs, name='SA')
-
+SA = Analyzer_mtr("XF:21IDD-ES", name='SA')
+# define what is displayed from SA during quieries using SA.hints.
+SA.hints = {'fields': [SA.Rz.name]}
 #
 #
 #---------------------------Mirrors------------------------------
@@ -82,6 +89,8 @@ class M1_mirror(Device):
     Mirror_Roll = Comp(EpicsMotor,"Roll}Mtr")
 
 M1 = M1_mirror("XF:21IDA-OP{Mir:1-Ax:4_",name="M1")
+# define what is displayed from M1 during quieries using M1.hints.
+M1.hints = {'fields': [M1.X.name,M1.Ry.name,M1.Rz.name]}
     
 class Hexapod_Mir(Device):
     X = Comp(EpicsMotor,"_X}Mtr")
@@ -99,7 +108,11 @@ class Hexapod_Mir(Device):
     Mirror_Yaw = Comp(EpicsMotor,"_Rx}Mtr")
     
 M3 = Hexapod_Mir("XF:21IDB-OP{Mir:3-Ax:11",name="M3")
+# define what is displayed from M3 during quieries using M3.hints.
+M3.hints = {'fields': [M3.X.name,M3.Y.name,M3.Z.name,M3.Rx.name,M3.Ry.name,M3.Rz.name]}
 M4B = Hexapod_Mir("XF:21IDC-OP{Mir:4B-Ax:B4",name="M4B")
+# define what is displayed from M3 during quieries using M3.hints.
+M4B.hints = {'fields': [M4B.X.name,M4B.Y.name,M4B.Z.name,M4B.Rx.name,M4B.Ry.name,M4B.Rz.name]}
 
 class Monochromator(Device):
     Focus_Const = Comp(EpicsMotor,"-Ax:8_Cff}Mtr")
@@ -112,6 +125,8 @@ class Monochromator(Device):
     Grating_lines = Comp(EpicsSignal,"}:LINES:SET")
 
 PGM = Monochromator("XF:21IDB-OP{Mono:1",name="PGM")
+# define what is displayed from the PGM during quieries using PGM.hints.
+PGM.hints = {'fields': [PGM.Energy.name,PGM.Focus_Const.name,PGM.Grating_lines.name]}
 
 
 class KB_pair(Device):
@@ -133,7 +148,9 @@ class KB_pair(Device):
     VFM_Au_Mesh = Comp(EpicsMotor,"VGM}Mtr")
     
 
-M4A = KB_pair("XF:21IDC-OP{Mir:4A-Ax:A4_",name="M4A")    
+M4A = KB_pair("XF:21IDC-OP{Mir:4A-Ax:A4_",name="M4A")
+# define what is displayed from M4A during quieries using M4A.hints.
+M4A.hints = {'fields': [M4A.VFM_Y.name,M4A.VFM_Z.name,M4A.HFM_Z.name,M4A.HFM_X.name]}
 
 #
 #
@@ -149,6 +166,8 @@ class ESM_Diagon(Device):
 #
 
 Diagon = ESM_Diagon("XF:21IDA-OP{Diag:1",name='Diagon')
+# define what is displayed from Diagon during quieries using Diagon.hints.
+Diagon.hints = {'fields': [Diagon.H_mirror.name,Diagon.H_Yag.name,Diagon.V_mirror.name,Diagon.V_Yag.name]}
 
 class ESMSlit_type1(Device):
     inboard = Comp(EpicsMotor,"-Ax:I}Mtr")
@@ -161,9 +180,17 @@ class ESMSlit_type1(Device):
     v_center = Comp(EpicsMotor,"-Ax:VC}Mtr")
 #
 M1Dslit = ESMSlit_type1("XF:21IDA-OP{Mir:1-Slt:4_D_1", name='M1Dslit')
+# define what is displayed from M1Dslit during quieries using M1Dslit.hints.
+M1Dslit.hints = {'fields': [M1Dslit.h_gap.name,M1Dslit.h_center.name,M1Dslit.v_gap.name,M1Dslit.v_center.name]}
 PGMUslit = ESMSlit_type1("XF:21IDB-OP{Mono:1-Slt:7_U_1", name='PGMUslit')
+# define what is displayed from PGMUslit during quieries using PGMUslit.hints.
+PGMUslit.hints = {'fields': [PGMUslit.h_gap.name,PGMUslit.h_center.name,PGMUslit.v_gap.name,PGMUslit.v_center.name]}
 PGMDslit = ESMSlit_type1("XF:21IDB-OP{Mono:1-Slt:8_D_1", name='PGMDslit')
+# define what is displayed from PGMDslit during quieries using PGMDslit.hints.
+PGMDslit.hints = {'fields': [PGMDslit.h_gap.name,PGMDslit.h_center.name,PGMDslit.v_gap.name,PGMDslit.v_center.name]}
 M4BUslit = ESMSlit_type1("XF:21IDC-OP{Mir:4B-Slt:B4_U_1", name='M4BUslit')
+# define what is displayed from PGMUslit during quieries using PGMUslit.hints.
+M4BUslit.hints = {'fields': [M4BUslit.h_gap.name,M4BUslit.h_center.name,M4BUslit.v_gap.name,M4BUslit.v_center.name]}
 
 class ESMSlit_type2(Device):
     h_scan = Comp(EpicsMotor,"-Ax:HS}Mtr")
@@ -176,8 +203,11 @@ class ESMSlit_type2(Device):
     v_center = Comp(EpicsMotor,"-Ax:VC}Mtr")
 
 M3Uslit = ESMSlit_type2("XF:21IDB-OP{Mir:3-Slt:10_U_1", name='M3Uslit')
+M3Uslit.hints = {'fields': [M3Uslit.h_gap.name,M3Uslit.h_center.name,M3Uslit.v_gap.name,M3Uslit.v_center.name]}
 M4AUslit = ESMSlit_type2("XF:21IDC-OP{Mir:4A-Slt:A4_U_1", name='M4AUslit')
+M4AUslit.hints = {'fields': [M4AUslit.h_gap.name,M4AUslit.h_center.name,M4AUslit.v_gap.name,M4AUslit.v_center.name]}
 M4BDslit = ESMSlit_type2("XF:21IDC-OP{Mir:4B-Slt:B5_D_1", name='M4BDslit')
+M4BDslit.hints = {'fields': [M4BDslit.h_gap.name,M4BDslit.h_center.name,M4BDslit.v_gap.name,M4BDslit.v_center.name]}
 
 class ExitSlit(Device):
     v_gap = Comp(EpicsMotor,"_VG}Mtr")
@@ -186,7 +216,9 @@ class ExitSlit(Device):
     v_def = Comp(EpicsMotor,"_VDS}Mtr")
     
 ExitSlitA = ExitSlit('XF:21IDC-OP{Slt:1A-Ax:A1',name='ExitSlitA')
+ExitSlitA.hints = {'fields': [ExitSlitA.h_gap.name,ExitSlitA.v_gap.name]}
 ExitSlitB = ExitSlit('XF:21IDC-OP{Slt:1B-Ax:B1',name='ExitSlitB')
+ExitSlitB.hints = {'fields': [ExitSlitB.h_gap.name,ExitSlitB.v_gap.name]}
 
 #Diagnostics
 class DIAG(Device):
@@ -194,11 +226,17 @@ class DIAG(Device):
 
 
 BTA2diag = DIAG("XF:21IDC-OP{BT:A2-Diag:A2_1-Ax:1", name= 'BTA2diag')
+BTA2diag.hints = {'fields': [BTA2diag.trans.name]}
 BTB2diag = DIAG("XF:21IDC-OP{BT:B2-Diag:B2_1-Ax:1", name= 'BTB2diag')
+BTB2diag.hints = {'fields': [BTB2diag.trans.name]}
 M3Udiag = DIAG("XF:21IDB-OP{Mir:3-Diag:10_U_1-Ax:1", name= 'M3Udiag')
+M3Udiag.hints = {'fields': [M3Udiag.trans.name]}
 M4AUdiag = DIAG("XF:21IDC-OP{Mir:4A-Diag:A3_U_1-Ax:1",name = 'M4AUdiag')
+M4AUdiag.hints = {'fields': [M4AUdiag.trans.name]}
 M4BDdiag1 = DIAG("XF:21IDC-OP{Mir:4B-Diag:B5_D_1-Ax:1",name = 'M4BDdiag1')
+M4BDdiag1.hints = {'fields': [M4BDdiag1.trans.name]}
 M4BDdiag2 = DIAG("XF:21IDC-OP{Mir:4B-Diag:B5_D_2-Ax:2",name = 'M4BDdiag2')
+M4BDdiag2.hints = {'fields': [M4BDdiag2.trans.name]}
 
 # --------------------------FRONT END COMPONENTS -----------------------------
 # Slits
@@ -237,8 +275,10 @@ class Virtual_Motor_Slits(Blades, Virtual_Motor_Center_And_Gap):
 
     
 FEslit = Virtual_Motor_Slits("FE:C21A-OP{Slt:",name='FEslit')
+# define what is displayed from M1Dslit during quieries using M1Dslit.hints.
+FEslit.hints = {'fields': [FEslit.h_gap.name,FEslit.h_center.name,FEslit.v_gap.name,FEslit.v_center.name]}
 
-class TwoButtonShutter(Device:)
+class TwoButtonShutter(Device):
     # TODO this needs to be fixed in EPICS as these names make no sense
     # the vlaue comingout of the PV do not match what is shown in CSS
     open_cmd = Cpt(EpicsSignal, 'Cmd:Opn-Cmd', string=True)
@@ -290,7 +330,7 @@ class TwoButtonShutter(Device:)
             # ts = datetime.datetime.fromtimestamp(timestamp).strftime(_time_fmtstr)
             # print('sh', ts, val, st)
             count += 1
-            if count > 5:
+            if count > 1:
                 cmd_sig.clear_sub(cmd_retry_cb)
                 st._finished(success=False)
             if value == 'None':
@@ -314,6 +354,39 @@ class TwoButtonShutter(Device:)
         self._set_st = None
         self.read_attrs = ['status']
 
-shutter = TwoButtonShutter('XF:21ID-PPS{Sh:FE}', name='shutter')
-shutter_A = TwoButtonShutter('XF:21ID-PPS{Sh:1A}', name='shutterA')
-gate1 = TwoButtonShutter('XF:21IDA-VA{Mir:1-GV:4_D_1}', name='gate1')
+#Define the shutters from the above class.
+shutter_FE = TwoButtonShutter('XF:21ID-PPS{Sh:FE}', name='shutter_FE')
+shutter_FOE = TwoButtonShutter('XF:21IDA-PPS{PSh}', name='shutter_FOE')
+shutter_A = TwoButtonShutter('XF:21IDC-PPS{PSh:1A}', name='shutter_A')
+shutter_B = TwoButtonShutter('XF:21IDC-PPS{PSh:1B}', name='shutter_B')
+
+#Define the beamline gatevalves from the above class.
+#Section A (Inside FOE) 
+BC1_GV2 = TwoButtonShutter('XF:21IDA-VA{BC:1-GV:2_D_1}', name='BC1_GV2')
+Diag1_GV3 = TwoButtonShutter('XF:21IDA-VA{Diag:1-GV:3_D_1}', name='Diag1_GV3')
+Mir1_GV4 = TwoButtonShutter('XF:21IDA-VA{Mir:1-GV:4_D_1}', name='Mir1_GV4')
+
+#Section B (Between FOE and Mirror 3) 
+BT6_GV6 = TwoButtonShutter('XF:21IDB-VA{BT:6-GV:6_D_1}', name='BT6_GV6')
+BT7_GV7 = TwoButtonShutter('XF:21IDB-VA{BT:7-GV:7_D_1}', name='BT7_GV7')
+Mono1_GV8 = TwoButtonShutter('XF:21IDB-VA{Mono:1-GV:8_D_1}', name='Mono1_GV8')
+BT9_GV9 = TwoButtonShutter('XF:21IDB-VA{BT:9-GV:9_D_1}', name='BT9_GV9')
+BT10_GV10 = TwoButtonShutter('XF:21IDB-VA{BT:10-GV:10_D_1}', name='BT10_GV10')
+
+#Section C, A Branch (A Branch after Mirror 3)
+Mir3_GV11A = TwoButtonShutter('XF:21IDC-VA{Mir:3-GV:11_D_A}', name='Mir:3_GV11A')
+Slt1A_GVA1 = TwoButtonShutter('XF:21IDC-VA{Slt:1A-GV:A1_D_1}', name='Slt1A_GVA1')
+BTA2_GVA2 = TwoButtonShutter('XF:21IDC-VA{BT:A2-GV:A2_D_1}', name='BTA2_GVA2')
+BTA3_GVA3 = TwoButtonShutter('XF:21IDC-VA{BT:A3-GV:A3_D_1}', name='BTA3_GVA3')
+
+#Section C, B Branch (B Branch after Mirror 3)
+Mir3_GV11B = TwoButtonShutter('XF:21IDC-VA{Mir:3-GV:11_D_B}', name='Mir:3_GV11B')
+Slt1B_GVB1 = TwoButtonShutter('XF:21IDC-VA{Slt:1B-GV:B1_D_1}', name='Slt1B_GVB1')
+BTB2_GVB2 = TwoButtonShutter('XF:21IDC-VA{BT:B2-GV:B2_D_1}', name='BTB2_GVB2')
+BTB3_GVB3 = TwoButtonShutter('XF:21IDC-VA{BT:B3-GV:B3_D_1}', name='BTB3_GVB3')
+Mir4B_GVB4 = TwoButtonShutter('XF:21IDC-VA{Mir:4B-GV:B4_D_1}', name='Mir4B_GVB4')
+BTB5_GVB5 = TwoButtonShutter('XF:21IDC-VA{BT:B5-GV:B5_D_1}', name='BTB5_GVB5')
+
+
+#Section D, (A Branch endstation)
+Anal1A_EA1 = TwoButtonShutter('XF:21IDD-VA{ANAL:1A-GV:EA1_1}', name='Anal1A_EA1')

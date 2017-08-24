@@ -33,7 +33,7 @@ ip=IPython.get_ipython()
 ##    Definition of the motion device class located at ESM.
 
 class ESM_motion_device:
-    def __init__(self,definition_file_path):
+    def __init__(self,definition_file_path,name):
         '''
         Move a series of motors to one of a series of predefined locations.
         This plan allows the user to move a series of motors to various locations as described in a .csv setup
@@ -46,6 +46,9 @@ class ESM_motion_device:
         ---------
         definition_file_path_str: str
             A string containing the filepath to the .csv file that defines the instance.
+
+        name: str
+            The name of the instance for use in later code.
 
         data_dict: dict
             A dictionary that holds the information from the definition file with each sample position
@@ -111,6 +114,7 @@ class ESM_motion_device:
         
         #define the inputted values when defining an instance.
         self.definition_file_path=definition_file_path
+        self.name=name
 
         
         #define the information dictionaries for the instance.
@@ -310,7 +314,7 @@ class ESM_motion_device:
             obj,_,attr = chamber_dict[ list(chamber_dict.keys())[0] ] ['transfer_axis_name_info'].partition('_')
             #defien the transfer axis object
             transfer_axis=getattr(ip.user_ns[obj],attr)
-            #determine the current trasnfer axis postion 
+            #determine the current transfer axis postion 
             axis_pos=transfer_axis.position
             #determine which chamber contains the axis position. 
 
@@ -356,24 +360,38 @@ class ESM_motion_device:
 
         #define the dictionary of motion axes for the current instance.
         axis_list=self.axes()
-        axis_dict=self.axes_dict()
+        axis_dict=self.axes_dict(self.locations()[0])
 
         temp_list=axis_list
 
         status_dict={}
      
-        
+        exit_val=0
         #continue looping over the list of remaining axes until none exist.
-        while len(temp_list)>=0:
-            temp_axes_dict={}
+        while len(temp_list)>0 and exit_val<=20:
             device_name,_,axis = temp_list[0].partition('_')
             temp_axes_list = list(key for key in temp_list if key.startswith(device_name) )
-            for axes in temp_axes_list:
-                temp_axes_dict[axes]=axis_dict[axes]
 
+            status_dict[device_name]=temp_axes_list
+                
+            temp_list = list(key for key in temp_list if not key.startswith(device_name) )
+            exit_val+=1
 
-                    
-    
+        f_string='************************************************************\n'
+        f_string+=self.name+' STATUS:  '+time.strftime("%c") + '\n'
+        f_string+='************************************************************\n\n'
+
+        for key in list(status_dict.keys()):
+            f_string+='    '+key+':\n'
+            key_dict = status_dict[key]
+            for axis in key_dict:
+                obj,_,attr = axis.partition('_')
+                f_string+='\t '+axis+' -->  %f\n' % getattr(ip.user_ns[obj],attr).position
+            f_string+='\n'
+        
+        print (f_string)
+
+        
     def ask_user_continue(self,request_str):
         ''' 
         This function asks the user to confirm that the current process should be completed.
@@ -538,7 +556,7 @@ class ESM_motion_device:
 ## Define the instances of the ESM_device class
 
 #The low temperature manipulator
-LT_manip=ESM_motion_device('/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/LT_manip_definition.csv')    
+LT_manip=ESM_motion_device('/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/LT_manip_definition.csv','LOW TEMPERATURE MANIPULATOR')    
 
 #The beamline as a whole (swap branches, etc).
-Beamline=ESM_motion_device('/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/Beamline_definition.csv')  
+Beamline=ESM_motion_device('/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/Beamline_definition.csv','BEAMLINE')  

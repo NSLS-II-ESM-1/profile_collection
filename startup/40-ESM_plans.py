@@ -57,7 +57,7 @@ from boltons.iterutils import chunked
 ###These scans are used to scan over time.
 
 
-def scan_time(detectors,num=1,delay=0,DET_channel=None,scan_type=None):
+def scan_time(detectors,num=1,delay=0,DET_channel=None,DET_channel_value=None,scan_type=None):
     '''
     scan over time
     This scan provides a time measurement of a list of detectors, including live plotting and a live table. The detector to 
@@ -72,54 +72,54 @@ def scan_time(detectors,num=1,delay=0,DET_channel=None,scan_type=None):
         Optional input of the number of points to take, default is 1. To capture until stopped using 'ctrl-C' set 'num = None'
     delay : number, optional  
         Optional delay time between succesive readings, default is 0.
-    DET_channel : integer, optional  
-        Optional channel number to plot for multi channel detectors (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
-            To use this option in the scan call you need to place ',DET_channel=x' after 'steps' in the scan call
+    DET_channel : list, optional  
+        Optional channel number, for each detector, to plot for multi channel detectors 
+        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
+            To use this option in the scan call you need to place ',
+
+            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
+
+    DET_channel_value : list, optional 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
+        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
+            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+
+
     scan_type : string, optional 
-    Optional definition of the scan type to include in the metadata, correct use of this will allow searching the database to be 
-    easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database based on the keyword scan_type 
-    = 'XPS' will return all XPS scans).
+        Optional definition of the scan type to include in the metadata, correct use of this will allow searching the 
+        database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database 
+        based on the keyword scan_type = 'XPS' will return all XPS scans).
      '''
     #This section determines the Y axis variable to plot for the scan, if the first detector in the list is a single channel
     #detector then it plots that detector value, if it has multiple single channels it plots the channel defined by the
     #optional input DET_channel (channel 1 is plotted if DET_channel is not specified.
-    Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
+#    Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
 
     #Setup metadata
-    #This section sets up the metadata that should be included in the experiment file. Users can add/or change the metadata using the md={'keyword1'
-    #:'value1','keyword2':'value2',..... } argument. For instance using md={'scan_type':'measurement type'} will define the scan_type as a particular
+    #This section sets up the metadata that should be included in the experiment file.
+    #Users can add/or change the metadata using the md={'keyword1'
+    #:'value1','keyword2':'value2',..... } argument. For instance using md={'scan_type':'measurement type'}
+    #will define the scan_type as a particular
     #measurement type.
         
     #setup standard metadata
-    _md = {'scan_name':'scan_time','plot_Xaxis':'sequence_no','plot_Yaxis':Y_axis,'scan_type':scan_type,'delay':delay}
+    # _md = {'scan_name':'scan_time','plot_Xaxis':'sequence_no','plot_Yaxis':Y_axis,'scan_type':scan_type,'delay':delay}
 
-        #Define the OLOG message to be generated.
-           #This section is used to define what should be written to the OLOG. I want to include in here the text to be
-           #written to the OLOG, some of the metadata as keywords for searching the OLOG as well as attach a text file
-           #with a detalied list of all scan info and beamline motor positions and readouts for comparison later. 
-        
+    #change the "hints" on the detectors so that only the relevant info is included
+    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
 
-    
-    #Setup live table and live plot and tag modifier for the olog.
-    #This section is used to define the live table and live plot functions for the scan.The '@subs_decorator'
-    #call ensures that this is updated at each step of the scan           
     if num is not 1:
-        table = LiveTable([])
-        plot =  ESM_setup_Plot(Y_axis)  #LivePlot(Y_axis,scan_motor.name, ax=ax)
-        add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
 
-        @subs_decorator(table)
-        @subs_decorator(plot)
-        @subs_decorator(add_tag)
         def inner():
-            return( yield from count(detectors,num,delay,md=_md))
+            return( yield from count(detectors,num,delay))
     else:
         def inner():
-            return( yield from count(detectors,num,delay,md=_md))
+            return( yield from count(detectors,num,delay))
       
     uid=yield from inner()
     motors=[]
-    ESM_save_csv(uid,Y_axis,motors,time=True)
+#    ESM_save_csv(uid,Y_axis,motors,time=True)
 
     return uid
     
@@ -129,7 +129,7 @@ def scan_time(detectors,num=1,delay=0,DET_channel=None,scan_type=None):
 ###These scans are used to scan over 1 "motor" axis, the motor can be any variable that can be "set" via bluesky.
 
 
-def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,scan_type=None,adaptive=None):
+def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,DET_channel_value=None,scan_type=None,adaptive=None):
 
     ''' 
     scan over a single axis taking a list of detectors at each point.
@@ -140,7 +140,7 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,scan_t
     PARAMETERS
     ----------   
     detectors : list  
-        A list of detectors to record at each step (first one must be 1D)
+        A list of detectors to record at each step.
     scan_motor : motor  
         The "motor" to scan which has the form Device.motor (eg. M1D_slit.inboard)
     start : number
@@ -150,9 +150,20 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,scan_t
     step_size : number
         The step size for the scan axis
 
-    DET_channel : integer, optional 
-        Optional channel number to plot for multi channel detectors (eg. for qem to plot 'qem01_current1_mean_value' 
-        use 1). To use this option in the scan call you need to place ',DET_channel=x' after 'steps' in the scan call.
+    DET_channel : list, optional  
+        Optional channel number, for each detector, to plot for multi channel detectors 
+        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
+            To use this option in the scan call you need to place ',
+
+            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
+
+    DET_channel_value : list, optional 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
+        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
+            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+
+
     scan_type : string, optional
         Optional definition of the scan type to include in the metadata, correct use of this will allow searching the 
         database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database 
@@ -190,10 +201,10 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,scan_t
     #single channel detector then it plots that detector value, if it has multiple single channels it plots the channel
     #defined by the optional input DET_channel (channel 1 is plotted if DET_channel is not specified), the X_axis is
     #assumed to be the first motor in the list 'motors'.
-    Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
-    motors=[scan_motor]
-    X_axis = first_key_heuristic(list(motors)[0])
-    motors_list=[X_axis]
+#    Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
+#    motors=[scan_motor]
+#    X_axis = first_key_heuristic(list(motors)[0])
+#    motors_list=[X_axis]
     
     #Setup metadata
     #This section sets up the metadata that should be included in the experiment file. Users can add/or change the
@@ -201,21 +212,10 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,scan_t
     #md={'scan_type':'measurement type'} will define the scan_type as a particular measurement type.
         
     #setup standard metadata
-    _md = {'scan_name':'scan_1D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'scan_type':scan_type,'delta':step_size}
+#    _md = {'scan_name':'scan_1D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'scan_type':scan_type,'delta':step_size}
 
     
-    #Setup live table and live plot and tag modifier for the olog.
-    #This section is used to define the live table and live plot and olog output  functions for the scan.The
-    #'@subs_decorator' call ensures that this is updated at each step of the scan           
 
-    #table = ESMLiveTable([scan_motor]+list(DETS),num_starts=1)
-    table = LiveTable([X_axis]+list(detectors))
-    plot =  ESM_setup_Plot(Y_axis,motors)
-    add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
-
-    @subs_decorator(table)
-    @subs_decorator(plot)
-    @subs_decorator(add_tag)
         
     #Define the scan
     def inner():
@@ -240,7 +240,7 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,scan_t
 
 
 def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2, step_size2,
-                  snake=False,DET_channel=None,plot_seperate=False,scan_type=None,adaptive=None):
+                  snake=False,DET_channel=None,DET_channel_value=None,scan_type=None,adaptive=None):
     ''' 
     run a series of 1D scans over a second motor (each line saved seperately). 
     Run a 2D scan using a list of detectors, having each step as a new file,the detector to "display" must be 1D, or 
@@ -268,10 +268,20 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
         Optional snake value (ie. have the scan move the scan_motor2 from start2 to end2 on even runs and from end2 
             to start2 on odd runs. 
                 To use this option in the scan you need to place ',snake=True' after steps in the scan call.                          
-    DET_channel : integer, optional 
-        Optional channel number to plot for multi channel detectors (eg. for qem to plot 'qem01_current1_mean_value' 
-            use 1). 
-                To use this option in the scan you need to place ',DET_channel=x' after 'steps' in the scan call.
+    DET_channel : list, optional  
+        Optional channel number, for each detector, to plot for multi channel detectors 
+        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
+            To use this option in the scan call you need to place ',
+
+            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
+
+    DET_channel_value : list, optional 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
+        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
+            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+
+
     scan_type : string, optional
         Optional definition of the scan type to include in the metadata, correct use of this will allow searching the 
         database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database 
@@ -328,10 +338,10 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
     #This section determines the Y axis variable to plot for the scan, if the first detector in the list is a single
     #channel detector then it plots that detector value, if it has multiple single channels it plots the channel
     #defined by the optional input DET_channel (channel 1 is plotted if DET_channel is not specified.)
-    Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
-    motors=[scan_motor2]
-    X_axis = first_key_heuristic(list(motors)[0])
-    motors_list=[X_axis]
+#    Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
+#    motors=[scan_motor2]
+#    X_axis = first_key_heuristic(list(motors)[0])
+#    motors_list=[X_axis]
     
     #Setup metadata
     #This section sets up the metadata that should be included in the experiment file. Users can add/or change the
@@ -339,40 +349,23 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
     #:'measurement type'} will define the scan_name as a particular measurement type.
         
     #setup standard metadata
-    _md = {'scan_name':'scan_multi_1D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'scan_type':scan_type,'delta':step_size2,
-             'multi_axis':scan_motor1.name,'multi_start':start1,'multi_stop':stop1,'multi_num':steps1+1,
-              'multi_delta':step_size1}
-    
-    #Setup live table and live plot and tag modifier for the olog.
-    #This section is used to define the live table and live plot and olog readout functions for the scan.The 
-    # @subs_decorator call ensures that this is updated at each step of the scan
-    
-    #Set up the plotting, tables and metadata           
-    table = LiveTable([X_axis]+list(detectors))
-    if not plot_seperate :
-       plot =  ESM_setup_Plot(Y_axis,motors)
-        
-    add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
+#    _md = {'scan_name':'scan_multi_1D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'scan_type':scan_type,'delta':step_size2,
+#'multi_axis':scan_motor1.name,'multi_start':start1,'multi_stop':stop1,'multi_num':steps1+1,
+#              'multi_delta':step_size1}
 
+         
 
 
     for i,c_val in enumerate(np.linspace(start1, stop1, num=(steps1+1))):
     # Step through each of the outer motor values
        yield from abs_set(scan_motor1, c_val, wait=True )
-       if plot_seperate:
-           plot=   LivePlot(Y_axis,first_key_heuristic(list(motors)[0]),ax=None)
-
-           
+         
        #add the location of this scan in the multi scan, and the intial uid.
        
        _md.update ( {'multi_pos':i+1 , 'initial_uid': initial_uid } )
        
            
-       #set the motor1 position 
-       @subs_decorator(table)
-       @subs_decorator(plot)
-       @subs_decorator(add_tag)
-       # Define some decorators to perform at each step (table update, plot update etc.)
+
        def inner_forward():
            if adaptive is None:
                return(yield from scan(detectors,scan_motor2,start2,stop2,steps2+1,md=_md))
@@ -380,9 +373,7 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
               return( yield from adaptive_scan(detectors,Y_axis,scan_motor2.name,start2,stop2,adaptive[0],adaptive[1],
                                                adaptive[2],adaptive[3],adaptive[4],md=_md))
            #defines what the scan at each motor 1 step should be
-       @subs_decorator(table)
-       @subs_decorator(plot)
-       @subs_decorator(add_tag)
+
        def inner_backward():
            if adaptive is None:
                return (yield from scan(detectors,scan_motor2,stop2,start2,steps2+1,md=_md))
@@ -411,58 +402,67 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
        
 def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2, step_size2,
                   snake=False,concurrent=False,normal_spiral=False,fermat_spiral=False,square_spiral=False,
-                  DET_channel=None,scan_type=None):
-    ''' run a 2D scan using a list of detectors,the detector to "display" must first in the list and have a 
-        1D attribute (such as total intensity). 
+                  DET_channel=None,DET_channel_value=None,scan_type=None):
+    '''
+    Run a 2D scan using a list of detectors.
         
-        PARAMETERS
-        ----------
-        detectors : list 
-            A list of detectors to record at each step
-        scan_motor1 : motor
-            The outer "motor" to scan (which is different for each file) which has the form Device.motor 
-            (eg. M1D_slit.inboard)
-        scan_motor2 : motor 
-            The inner "motor" to scan (x axis for each file) which has the form Device.motor 
-            (eg. M1D_slit.inboard)
-        start1,start2 : numbers
-            The start values for axis 1 and axis 2 respectively
-        end1,end2 : numbers
-            The end values axis 1 and axis 2 respectively (this is a suggested value only, real value will 
-            be deteremind using start and step_size.
-        steps1,steps2 : numbers
-            The number of steps for axis 1 and axis 2 respectively.
+    PARAMETERS
+    ----------
+    detectors : list 
+        A list of detectors to record at each step
+    scan_motor1 : motor
+        The outer "motor" to scan (which is different for each file) which has the form Device.motor 
+        (eg. M1D_slit.inboard)
+    scan_motor2 : motor 
+        The inner "motor" to scan (x axis for each file) which has the form Device.motor 
+        (eg. M1D_slit.inboard)
+    start1,start2 : numbers
+        The start values for axis 1 and axis 2 respectively
+    end1,end2 : numbers
+        The end values axis 1 and axis 2 respectively (this is a suggested value only, real value will 
+        be deteremind using start and step_size.
+    steps1,steps2 : numbers
+        The number of steps for axis 1 and axis 2 respectively.
 
-        snake : boolean, optional
-            Optional snake value (ie. have the scan move the scan_motor2 from start2 to end2 on even runs 
-            and from end2 to start2 on odd runs. 
-                To use this option in the scan you need to place ',snake=True' after steps in the scan call.                          
-        DET_channel : integer, optional 
-            Optional channel number to plot for multi channel detectors (eg. for qem to plot 
-            'qem01_current1_mean_value' use 1). 
-                To use this option in the scan you need to place ',DET_channel=x' after 'steps' in the scan call.
-        scan_type : string, optional
-            Optional definition of the scan type to include in the metadata, correct use of this will allow 
-            searching the database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then 
-            searching the database based on the keyword scan_type = 'XPS' will return all XPS scans).   
+    snake : boolean, optional
+        Optional snake value (ie. have the scan move the scan_motor2 from start2 to end2 on even runs 
+        and from end2 to start2 on odd runs. 
+            To use this option in the scan you need to place ',snake=True' after steps in the scan call.                          
+    DET_channel : list, optional  
+        Optional channel number, for each detector, to plot for multi channel detectors 
+        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
+            To use this option in the scan call you need to place ',
+
+            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
+
+    DET_channel_value : list, optional 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
+        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
+            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+
+
+
+    scan_type : string, optional
+        Optional definition of the scan type to include in the metadata, correct use of this will allow 
+        searching the database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then 
+        searching the database based on the keyword scan_type = 'XPS' will return all XPS scans).   
    
 
-        Concurrent motion : boolean, optional
-            This allows for the motion of the first and second motors to occur concurrently. This will map out a
-            1D line though 2D space, with even spaced steps for both axes.
-                To use this feature include 'concurrent=True ' after step_size2 in the call. 
+    Concurrent motion : boolean, optional
+        This allows for the motion of the first and second motors to occur concurrently. This will map out a
+        1D line though 2D space, with even spaced steps for both axes.
+            To use this feature include 'concurrent=True ' after step_size2 in the call. 
                            
-                NOTE: In this case step_size2 is not used, but a value must be included. the step size of the second 
-                motor will be determined fro mthe calucalted number of steps for motor one and the range of motor 2.
+            NOTE: In this case step_size2 is not used, but a value must be included. the step size of the second 
+            motor will be determined fro mthe calucalted number of steps for motor one and the range of motor 2.
                            
-                           REQUIRED PARAMETERS FOR THIS OPTION
-                               no extra parameters are required.
            
-        spiral : boolean, optional 
-            Optional indicator that the scan should follow a spiral pattern, centered in the middle of the x and y 
-            ranges defined.
+    spiral : boolean, optional 
+        Optional indicator that the scan should follow a spiral pattern, centered in the middle of the x and y 
+        ranges defined.
   
-                To use this feature include ' normal_spiral = True' after step_size2 in the call
+            To use this feature include ' normal_spiral = True' after step_size2 in the call
                                
                 NOTE: The radius delta is determined from the first motor step size and the number of theta steps is 
                 determined from the radius delta and the motor 2 step size. The pattern for the spiral is a series of 
@@ -501,11 +501,11 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
                                no extra parameters are required.
 
 
-        fermat spiral : boolean, optional
-            Optional indicator that the scan should follow a fermat spiral pattern, centered in the middle of the x and 
-            y ranges, defined.
+    fermat spiral : boolean, optional
+        Optional indicator that the scan should follow a fermat spiral pattern, centered in the middle of the x and 
+        y ranges, defined.
 
-                To use this feature include ' fermat_spiral = True' after step_size2 in the call.
+            To use this feature include ' fermat_spiral = True' after step_size2 in the call.
                                
                 NOTE: The radius delta is determined from the first motor step size and the number of theta steps is 
                 determined from the radius delta and the motor2 step size. The pattern for the spiral maps out a fermat 
@@ -544,18 +544,17 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
 
 
-        square spiral : boolean, optional
-            Optional indicator that the scan should follow a square spiral pattern, centered in the middle of the x and y 
-                ranges defined.
+    square spiral : boolean, optional
+        Optional indicator that the scan should follow a square spiral pattern, centered in the middle of the x and y 
+            ranges defined.
   
-                To use this feature include ' square_spiral = True' after step_size2 in the call
+            To use this feature include ' square_spiral = True' after step_size2 in the call
 
                 NOTE:  The pattern for the square spiral is a series of expanding square "rings", the number of points in
                 both the x and y ranges needs to be both even or both odd, this will be set in the plan if it is not already
                 true.
 
-                       REQUIRED PARAMETERS FOR THIS OPTION
-                           no extra parameters are required.
+ 
         '''
 
 
@@ -617,11 +616,11 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
     #This section determines the Z axis variable to plot for the scan, if the first detector in the list is a single channel
     #detector then it plots that detector value, if it has multiple single channels it plots the channel defined by the
     #optional input DET_channel (channel 1 is plotted if DET_channel is not specified).
-    Z_axis = Get_Yaxis_name(detectors[0], DET_channel)
-    Xmotors=[scan_motor2]
-    X_axis = first_key_heuristic(list(Xmotors)[0])
-    Ymotors=[scan_motor1]
-    Y_axis = first_key_heuristic(list(Ymotors)[0])
+#    Z_axis = Get_Yaxis_name(detectors[0], DET_channel)
+#    Xmotors=[scan_motor2]
+#    X_axis = first_key_heuristic(list(Xmotors)[0])
+#    Ymotors=[scan_motor1]
+#    Y_axis = first_key_heuristic(list(Ymotors)[0])
 
     #Setup metadata
     #This section sets up the metadata that should be included in the experiment file. Users can add/or change the metadata
@@ -630,98 +629,71 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
         
     #setup standard metadata
 
-
-    #Setup live table and live plot and tag modifier for the olog.
-    #This section is used to define the live table and live plot and olog readout functions for the scan.The '@subs_decorator'
-    #call ensures that this is updated at each step of the scan
-    
-    #Set up the plotting, tables and metadata           
-    table = LiveTable([X_axis]+[Y_axis]+[Z_axis])
-
     
     if concurrent is True:
-        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
-             'X_axis':X_axis,'X_start':start2,'X_stop':stop2,'X_num':steps2+1,'X_delta':step_size2,
-             'Y_axis':Y_axis,'Y_start':start1,'Y_stop':stop1,'Y_num':steps1+1,'Y_delta':step_size1}
+ #       _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_typ#e,
+#             'X_axis':X_axis,'X_start':start2,'X_stop':stop2,'X_num':steps2+1,'X_delta':step_size2,
+#             'Y_axis':Y_axis,'Y_start':start1,'Y_stop':stop1,'Y_num':steps1+1,'Y_delta':step_size1}
 
-        add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
-
-        
-        plot =  ESM_setup_Plot(Z_axis,Ymotors)
-
-        @subs_decorator(table)
-        @subs_decorator(plot)
-        @subs_decorator(add_tag)
         # Define some decorators to perform at each step (table update, plot update etc.)
 
         def inner_prod():
-            return(yield from inner_product_scan(detectors,steps1+1,scan_motor1,start1,stop1,scan_motor2,start2,stop2,md=_md))
+            return(yield from inner_product_scan(detectors,steps1+1,scan_motor1,start1,stop1,scan_motor2,start2,stop2,))#md=_md))
 
         uid= yield from inner_prod()
         
     elif normal_spiral is True:
-         _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
-               'X_axis':X_axis,'X_start':start2,'X_end':end2,'X_centre':centre2,'X_range':range2,'delta_radius':delta_radius,
-               'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'num_theta':num_theta}  
+#         _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
+#               'X_axis':X_axis,'X_start':start2,'X_end':end2,'X_centre':centre2,'X_range':range2,'delta_radius':delta#_radius,
+#               'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'num_theta':num_theta}  
 
-         add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
-         
-         fig = plt.figure()
-         mesh = LiveMesh(X_axis,Y_axis,Z_axis,
-                         xlim=(start2-step_size2,end2+step_size2),
-                         ylim=(start1-step_size1,end1+step_size1),
-                         clim=(0, 3e8), ax=fig.gca())
-         cb = fig.colorbar(mesh.sc)
-         cb.set_label(mesh.I)
-    
-         @subs_decorator(table)
-         @subs_decorator(mesh)
-         @subs_decorator(add_tag)
+
          # Define some decorators to perform at each step (table update, plot update etc.)
+         mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,
+                                                                                             end1+step_size1) )
 
+         @subs_decorator(mesh)
+
+
+         
          def spiral_scan():
              return(yield from spiral(detectors,scan_motor2,scan_motor1,centre2,centre1,range2,range1,delta_radius,
-                                      num_theta,md=_md))
+                                      num_theta))#,md=_md))
 
          uid= yield from spiral_scan()
 
          
     elif fermat_spiral is True:
-        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
-               'X_axis':X_axis,'X_start':start2,'X_end':end2,'X_centre':centre2,'X_range':range2,'delta_radius':delta_radius,
-               'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'num_theta':num_theta}
+#        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
+#               'X_axis':X_axis,'X_start':start2,'X_end':end2,'X_centre':centre2,'X_range':range2,'delta_radius':delta_radius,
+#               'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'num_theta':num_theta}
 
-        add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
+
         
         mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,
-                                                                                              end1+step_size1) )
-        
-        @subs_decorator(table)
+                                                                                             end1+step_size1) )
+
         @subs_decorator(mesh)
-        @subs_decorator(add_tag)
-        # Define some decorators to perform at each step (table update, plot update etc.)
+
 
         def fermat_scan():
             return(yield from spiral_fermat(detectors,scan_motor2,scan_motor1,centre2,centre1,range2,range1,delta_radius,
-                                            num_theta/2,md=_md))
+                                            num_theta/2))#,md=_md))
     
         uid= yield from fermat_scan()
 
         
     elif square_spiral is True:
-        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
-               'X_axis':X_axis,'X_start':start2,'X_end':end2,'X_centre':centre2,'X_range':range2,'x_num':steps2,
-               'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'y_num':steps1}
+ #       _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
+#               'X_axis':X_axis,'X_start':start2,'X_end':end2,'X_centre':centre2,'X_range':range2,'x_num':steps2,
+#               'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'y_num':steps1}
 
-        add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
         
         mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,
                                                                                               end1+step_size1) )
-        
-        @subs_decorator(table)
+
         @subs_decorator(mesh)
-        @subs_decorator(add_tag)
-        # Define some decorators to perform at each step (table update, plot update etc.)
+
 
         def square_scan():
             return(yield from spiral_square(detectors,scan_motor2,scan_motor1,centre2,centre1,range2,range1,
@@ -732,23 +704,19 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
         
     else:
-        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
-               'X_axis':X_axis,'X_start':start2,'X_stop':stop2,'X_num':steps2+1,'X_delta':step_size2,
-             'Y_axis':Y_axis,'Y_start':start1,'Y_stop':stop1,'Y_num':steps1+1,'Y_delta':step_size1}
-
-        add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
+ #       _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
+#               'X_axis':X_axis,'X_start':start2,'X_stop':stop2,'X_num':steps2+1,'X_delta':step_size2,
+#             'Y_axis':Y_axis,'Y_start':start1,'Y_stop':stop1,'Y_num':steps1+1,'Y_delta':step_size1}
 
         grid = LiveGrid( (steps1+1,steps2+1) , Z_axis , ylabel= Y_axis, xlabel= X_axis, extent=(start2-step_size2/2,                                                                                                stop2+step_size2/2,start1-step_size1/2,stop1+step_size1/2),
                          aspect=(abs( (stop2-start2)/(stop1-start1) ) ) ) 
         
-        @subs_decorator(table)
         @subs_decorator(grid)
-        @subs_decorator(add_tag)
         # Define some decorators to perform at each step (table update, plot update etc.)
 
         def outer_prod():
             return(yield from outer_product_scan(detectors,scan_motor1,start1,stop1,steps1+1,scan_motor2,start2,stop2,
-                                                 steps2+1,snake,md=_md))
+                                                 steps2+1,snake))#,md=_md))
 
         uid=yield from outer_prod()
 
@@ -756,7 +724,7 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
 
         
-def scan_ND(DETS, *args,concurrent=False,DET_channel=None,scan_type=None):
+def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None,scan_type=None):
     ''' run a 2D scan using a list of detectors,the detector to "display" must be 1D, or have statistics set up so that 
         a 1D attribute exists (such as intengrated 'total' intensity) and should be first in the list. It must be the 
         first detector in the list 'DETS'.
@@ -778,9 +746,20 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,scan_type=None):
                       trajectory (min -> max, max -> min, ....) or a left-right trajectory (min -> max, min -> max, ....) 
                       is to be used. This is 'True' for a winding trajectory and 'False' for a left-right trajectory.
                                       
-        DET_channel : integer, optional
-            Optional channel number to plot for multi channel detectors (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
-                To use this option in the scan you need to place ',DET_channel=x' after 'steps' in the scan call.
+    DET_channel : list, optional  
+        Optional channel number, for each detector, to plot for multi channel detectors 
+        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
+            To use this option in the scan call you need to place ',
+
+            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
+
+    DET_channel_value : list, optional 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
+        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
+            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+
+        
         scan_type : string optional.
             Optional definition of the scan type to include in the metadata, correct use of this will allow searching the 
             database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database 
@@ -816,7 +795,7 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,scan_type=None):
     
     # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
 
-    _md = {'scan_name':'scan_ND','scan_type':scan_type}
+ #   _md = {'scan_name':'scan_ND','scan_type':scan_type}
     
     # for each motor axis in the scan.
     for i,motor_list in enumerate(chunk_args):
@@ -864,9 +843,8 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,scan_type=None):
             if i != 0:
                 new_args.append(motor_list[4])
 
-        #print (" i = "+str(i)+", motor_list = "+str(len(motor_list))+" ,new_args = "+str(len(new_args))+" ,args = "+str(len(args)))        
-            _md.update({'axis'+str(Dim-i): motor_list[0].name,'start'+str(Dim-i): motor_list[1],'stop'+str(Dim-i):motor_list[2],
-                    'num'+str(Dim-i):steps,'delta'+str(Dim-i):motor_list[3]})
+ #           _md.update({'axis'+str(Dim-i): motor_list[0].name,'start'+str(Dim-i): motor_list[1],'stop'+str(Dim-i):motor_list[2],
+#                    'num'+str(Dim-i):steps,'delta'+str(Dim-i):motor_list[3]})
       
     
 
@@ -884,25 +862,12 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,scan_type=None):
     #setup standard metadata
 
 
-    #Setup live table and live plot and tag modifier for the olog.
-    #This section is used to define the live table and live plot and olog readout functions for the scan.The '@subs_decorator'
-    #call ensures that this is updated at each step of the scan
-    
-
 
     #This section sets up the rest of the info and performs the correct scan.
     if concurrent is True:
     #if the scan is an inner product scan.
 
         #setup the table, plotting and the metadata.
-        table = LiveTable(list(motors_list)+list(detectors))
-        plot =  ESM_setup_Plot(Y_axis,X_motors)
-        add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
-
-        @subs_decorator(plot)
-        @subs_decorator(table)
-        @subs_decorator(add_tag)
-        # Define some decorators to perform at each step (table update, plot update etc.)
 
         def inner_prod():
             return(yield from inner_product_scan(detectors,steps,*new_args,md=_md))
@@ -912,21 +877,15 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,scan_type=None):
     else:
     # if the scan is a normal outer product scan
         
-
-        #Set up the tables and metadata           
-        table = LiveTable(list(motors_list)+list(detectors))
-        add_tag = simple_olog_client.create_tag(_md['scan_name'],active=True)
             
         #re-cast the new_args list to a tuple
         new_args = tuple(new_args)
 
         # Define some decorators to perform at each step (table update, plot update etc.)
 
-        @subs_decorator(table)
-        @subs_decorator(add_tag)
             
         def outer_prod():
-            return(yield from outer_product_scan(detectors,*new_args,md=_md))
+            return(yield from outer_product_scan(detectors,*new_args))#,md=_md))
 
 
         uid=yield from outer_prod()
@@ -1669,11 +1628,36 @@ def Get_Yaxis_name(det0, det0_channel):
     # finally return the name of the channel associated with plot_target.  
     return first_key_heuristic(plot_target)
 
+def ESM_setup_hints(detectors,DET_channel,DET_channel_value):
+    '''
+    This function is used to set the hints to a sub-set of the total value of possible attributes. 
+
+    This function uses the 'set_primary' attribute of our detectors in order to change the list of attributes in the
+    .hints attribute.
+
+    PARAMETERS:
+    -----------
+    detectors : list
+        A list of detectors
+
+    DET_channel : list
+        Channel numbers to plot for each detectors (eg. for qem to plot 'qem01_current1_mean_value' 
+        use DET_channel=[1]). 
+
+    DET_channel_value : list 
+        A list of Channel values to plot for each detectors and channel (eg. for a camera to plot 'stats1_max_value' 
+        use DET_channel_value=[["max"]]). Can take the values 'total', 'max' or 'min'.
+            
+    '''
+
+    for i,DET in enumerate(detectors):
+        DET.set_primary(DET_channel[i],DET_channel_value[i])
+    
 
 
 def ESM_setup_Plot(Y_axis,motors=None):
     '''
-    Setup a LivePlot by inspecting motors and Y_axis and plotting on an existing plot if it exists. If motors is empty,
+    Setup a Liveplot by inspecting motors and Y_axis and plotting on an existing plot if it exists. If motors is empty,
     use sequence number.The function returns LivePlot with the correct axis, and figure definition. 
     
     REQUIRED PARAMETERS
@@ -1694,7 +1678,7 @@ def ESM_setup_Plot(Y_axis,motors=None):
         #generate the figure name based on x and y axis names, if it doesn't exist create a new one.
         ax = plt.figure(fig_name).gca()
         #set the value of ax to the correct figure name
-        return ESMLivePlot(y_key, x_key, ax=ax)
+        return LivePlot(y_key, x_key, ax=ax)
         #return the LivePlot function with the correct figure and axes names.
     else:
     #if motors is empty
@@ -1703,7 +1687,7 @@ def ESM_setup_Plot(Y_axis,motors=None):
         #create a new one.
         ax = plt.figure(fig_name).gca()
         #set the value of ax to the correct figure name
-        return ESMLivePlot(y_key, ax=ax)
+        return LivePlot(y_key, ax=ax)
         #return the LivePlot function with the correct figurte and axes names
 
 

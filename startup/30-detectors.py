@@ -36,12 +36,16 @@ class ESMQuadEM(QuadEM):
                                 ])
         self.configuration_attrs = ['integration_time', 'averaging_time','em_range','num_averaged','values_per_read']
 
-    def set_primary(self, n):
+    def set_primary(self, n , value=None):
+        name_list=[]
         if n == 'All':
             self.hints = None
-            return
+        else:
+            for channel in n:
+                name_list.append(getattr(self, f'current{channel}').mean_value.name)
+               
+            self.hints = {'fields':name_list}
         
-        self.hints = {'fields': [getattr(self, f'current{n}').mean_value.name]}
 
 qem01 = ESMQuadEM('XF:21IDA-BI{EM:1}EM180:', name='qem01')
 qem02 = ESMQuadEM('XF:21IDB-BI{EM:2}EM180:', name='qem02')
@@ -85,6 +89,31 @@ class MyDetector(SingleTrigger, AreaDetector):
                root='/direct/XF21ID1/',
                reg=db.reg)
 
+    def set_primary(self, n,value=None):
+        name_list=[]
+        if n[0] == 'All':
+            
+            for x in range(1,5):
+                name_list.append(getattr(getattr(self, f'stats{x}'),'total').name)
+                name_list.append(getattr(getattr(self, f'stats{x}'),'max_value').name)          
+                name_list.append(getattr(getattr(self, f'stats{x}'),'min_value').name)
+
+        elif value is not None:
+            for i, channel in enumerate(n):
+                value_list=value[i]
+                for val in value_list:
+                    if val == 'max' or val == 'min':
+                        val+='_value'
+
+                    name_list.append(getattr(getattr(self, f'stats{channel}'),val).name)
+
+        else:
+            for channel in n:
+                name_list.append(getattr(getattr(self, f'stats{channel}'),'total').name)
+
+        self.hints = {'fields':name_list}
+               
+        
 Diag1_CamH = MyDetector('XF:21IDA-BI{Diag:1-Cam:H}', name='Diag1_CamH')
 Diag1_CamH.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam01/'
 
@@ -132,3 +161,4 @@ for camera in all_standard_pros:
     camera.stage_sigs[camera.roi1.blocking_callbacks] = 1
     camera.stage_sigs[camera.trans1.blocking_callbacks] = 1
     camera.stage_sigs[camera.cam.trigger_mode] = 'Fixed Rate'
+    camera.set_primary(['All'])
