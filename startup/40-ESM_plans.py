@@ -57,7 +57,7 @@ from boltons.iterutils import chunked
 ###These scans are used to scan over time.
 
 
-def scan_time(detectors,num=1,delay=0,DET_channel=None,DET_channel_value=None,scan_type=None):
+def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,scan_type=None):
     '''
     scan over time
     This scan provides a time measurement of a list of detectors, including live plotting and a live table. The detector to 
@@ -83,7 +83,7 @@ def scan_time(detectors,num=1,delay=0,DET_channel=None,DET_channel_value=None,sc
         Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
         (eg. for a camera to plot 'stats1_max_value' use "max"). 
             To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+            DET_channel=[[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...]] where "*_val" is 'total', 'max', or 'min'.
 
 
     scan_type : string, optional 
@@ -91,10 +91,16 @@ def scan_time(detectors,num=1,delay=0,DET_channel=None,DET_channel_value=None,sc
         database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database 
         based on the keyword scan_type = 'XPS' will return all XPS scans).
      '''
-    #This section determines the Y axis variable to plot for the scan, if the first detector in the list is a single channel
-    #detector then it plots that detector value, if it has multiple single channels it plots the channel defined by the
-    #optional input DET_channel (channel 1 is plotted if DET_channel is not specified.
-#    Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
+    #This section ensures that if DET_channel= list is not defined that it has the same length as
+    #detectors 
+ 
+    if len(DET_channel) < len (detectors):
+        for x in range(len(DET_channel),len(detectors)):
+            DET_channel.append([1])
+    
+    #This section determines the Y axis variable to plot for the scan
+
+    Y_axis = Get_Yaxis_name(detectors, DET_channel,DET_channel_value)
 
     #Setup metadata
     #This section sets up the metadata that should be included in the experiment file.
@@ -104,7 +110,8 @@ def scan_time(detectors,num=1,delay=0,DET_channel=None,DET_channel_value=None,sc
     #measurement type.
         
     #setup standard metadata
-    # _md = {'scan_name':'scan_time','plot_Xaxis':'sequence_no','plot_Yaxis':Y_axis,'scan_type':scan_type,'delay':delay}
+    _md = {'scan_name':'scan_time','plot_Xaxis':'sequence_no','plot_Yaxis':Y_axis,
+           'scan_type':scan_type,'delay':delay}
 
     #change the "hints" on the detectors so that only the relevant info is included
     ESM_setup_hints(detectors,DET_channel,DET_channel_value)
@@ -112,14 +119,18 @@ def scan_time(detectors,num=1,delay=0,DET_channel=None,DET_channel_value=None,sc
     if num is not 1:
 
         def inner():
-            return( yield from count(detectors,num,delay))
+            return( yield from count(detectors,num,delay,md=_md))
     else:
         def inner():
-            return( yield from count(detectors,num,delay))
+            return( yield from count(detectors,num,delay,md=_md))
       
     uid=yield from inner()
     motors=[]
 #    ESM_save_csv(uid,Y_axis,motors,time=True)
+
+
+    #change the "hints" on the detectors back to the default
+    ESM_setup_hints(detectors,None,None)
 
     return uid
     
@@ -191,6 +202,9 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,DET_ch
      '''
     # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
 
+    #change the "hints" on the detectors so that only the relevant info is included
+    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
+    
     if(  ( start<end and step_size<0 ) or ( start>end and step_size>0 )   ):
         step_size*=-1
     
@@ -230,6 +244,10 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,DET_ch
     # save the data to .csv
     ESM_save_csv(uid,Y_axis,motors_list)
 
+
+    #change the "hints" on the detectors back to the default
+    ESM_setup_hints(detectors,None,None)
+    
     return uid
 
     
@@ -314,6 +332,9 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
 
         
 
+    #change the "hints" on the detectors so that only the relevant info is included
+    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
+    
 
     # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
     if(  ( start1<end1 and step_size1<0 ) or ( start1>end1 and step_size1>0 )   ):
@@ -396,6 +417,10 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
        
        #Save the file as a csv file using the scan id as the name
        ESM_save_csv(uid,Y_axis,motors_list)
+
+
+    #change the "hints" on the detectors back to the default
+    ESM_setup_hints(detectors,'All','None')
        
     return initial_uid
 
@@ -559,7 +584,8 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
 
         
- 
+    #change the "hints" on the detectors so that only the relevant info is included
+    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
 
     # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
     if(  ( start1<end1 and step_size1<0 ) or ( start1>end1 and step_size1>0 )   ):
@@ -720,6 +746,10 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
         uid=yield from outer_prod()
 
+
+    #change the "hints" on the detectors back to the default
+    ESM_setup_hints(detectors,'All','None')
+        
     return uid
 
 
@@ -777,6 +807,9 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None
                                no extra parameters are required.
         '''
 
+    #change the "hints" on the detectors so that only the relevant info is included
+    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
+    
     args = list(args)
     #turn the *args entry itno a list
     args.insert(4,False)
@@ -795,13 +828,13 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None
     
     # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
 
- #   _md = {'scan_name':'scan_ND','scan_type':scan_type}
+    _md = {'scan_name':'scan_ND','scan_type':scan_type}
     
     # for each motor axis in the scan.
     for i,motor_list in enumerate(chunk_args):
 
         motor=[motor_list[0]]
-        motors_list.append(first_key_heuristic(list(motor)[0]))
+        motors_list.append(list(motor)[0].hints['fields'])
         
         if (  (motor_list[1]<motor_list[2] and motor_list[3]<0) or ( motor_list[1]>motor_list[2] and motor_list[3]>0 )   ):
             motor_list[3]*=-1
@@ -843,24 +876,16 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None
             if i != 0:
                 new_args.append(motor_list[4])
 
- #           _md.update({'axis'+str(Dim-i): motor_list[0].name,'start'+str(Dim-i): motor_list[1],'stop'+str(Dim-i):motor_list[2],
-#                    'num'+str(Dim-i):steps,'delta'+str(Dim-i):motor_list[3]})
-      
-    
 
-        
-    #This section determines the Z axis variable to plot for a 2D axis scan, if the first detector in the list is a single
-    #channel detector then it plots that detector value, if it has multiple single channels it plots the channel defined by
-    #the optional input DET_channel (channel 1 is plotted if DET_channel is not specified).
 
 
     #Setup metadata
     #This section sets up the metadata that should be included in the experiment file. Users can add/or change the metadata using
     #the md={'keyword1':'value1','keyword2':'value2',..... } argument. For instance using md={'scan_name':'measurement type'} will
     #define the scan_name as a particular measurement type.
-        
-    #setup standard metadata
-
+    _md.update({'axis'+str(Dim-i): motor_list[0].name,'start'+str(Dim-i): motor_list[1],'stop'+str(Dim-i):motor_list[2],
+                    'num'+str(Dim-i):steps,'delta'+str(Dim-i):motor_list[3]})
+      
 
 
     #This section sets up the rest of the info and performs the correct scan.
@@ -890,6 +915,9 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None
 
         uid=yield from outer_prod()
 
+    #change the "hints" on the detectors back to the default
+    ESM_setup_hints(detectors,'All','None')
+        
     return uid
 
 
@@ -1597,7 +1625,7 @@ def M1_M3_alignment(Branch='A',mv_optimum=False,return_all=True):
 ###UTILITY FUNCTIONS
 ### These are functions that are used in the scan plans above, but are not independent scan plans themselves. 
 
-def Get_Yaxis_name(det0, det0_channel):
+def Get_Yaxis_name(detectors, DET_channel, DET_channel_value):
     '''This Routine is used to determine the Y axis name to use for plotting or saving for a given detector and detector 
        channel, if the detector is an 2D detector it will plot the integrated total intensity, if it is set up to do so.
        In this case DET_Channel indicates which stats channel to plot.  
@@ -1608,25 +1636,71 @@ def Get_Yaxis_name(det0, det0_channel):
            DET_channel  -- This is the detector channel to be used
    
     '''
-    if det0_channel is not None:
-    # if DET_channel is a number
-        try:
-            read_chan, *_ = [r for r in det0.read_attrs if str(det0_channel) in r]
-            # attempt to find the detector with the number 'DET_channel' in the name. if found save the position to read_chan  
-        except ValueError:
-            # if the channel number is not found set plot_target to det0
-            plot_target = det0
+    name_list=[]
+    for i,DET in enumerate(detectors):
+        if DET_channel is None:
+            plot_target = DET
+            name_list.append(plot_target.name)
+        elif DET_channel[i] is None:
+            plot_target = DET
+            name_list.append(plot_target.name)
         else:
-            # if the exception is not found read the attribute name from the channel name attributes list
-            plot_target = getattr(det0, read_chan)
-        finally:
-            pass
-    else:
-        #if DET_channel is None then set the plot target to det0
-        plot_target = det0
-        
+            for j,channel in enumerate(DET_channel[i]):
+            
+            # if DET_channel is a number
+                try:
+                    read_chan = [r for r in DET.read_attrs if str(channel) in r]
+                    # attempt to find the detector with the number 'DET_channel' in the name.
+                    #if found save the position to read_chan  
+                except ValueError:
+ 
+                    # if the channel number is not found set plot_target to det0
+                    plot_target = DET
+                else:
+                    # if the exception is not found read the attribute name from the channel name
+                    #attributes list
+                    if len(read_chan) == 0:
+                        raise ValueError("channel number does not exist for detector")
+                    else:
+                        if DET_channel_value is None:
+                            plot_target = getattr(DET, read_chan[0])
+                            name_list.append(plot_target.name)
+                        elif DET_channel_value[i] is None:
+                            plot_target = getattr(DET, read_chan[0])
+                            name_list.append(plot_target.name)
+                        elif DET_channel_value[i][j] is None:
+                            plot_target = getattr(DET, read_chan[0])
+                            name_list.append(plot_target.name)
+
+                        else:    
+                            for channel_value in DET_channel_value[i][j]:
+                                if channel_value is None:                      
+                                    plot_target = getattr(DET, read_chan[0])
+                                    name_list.append(plot_target.name)
+                                else:
+                                    channel_target=getattr(DET, read_chan[0])
+                                    try:
+                                        read_chan_val = [r for r in channel_target.read_attrs if
+                                                        str(channel_value) in r]
+                                    except ValueError:
+
+                                        plot_target=channel_target
+
+                                    else:
+                                        #print (read_chan_val)
+                                        plot_target = getattr(channel_target, read_chan_val[0])
+
+                                    name_list.append(plot_target.name)
+
+
+                finally:
+                     pass
+                
     # finally return the name of the channel associated with plot_target.  
-    return first_key_heuristic(plot_target)
+    return name_list 
+#    return first_key_heuristic(plot_target)
+
+
 
 def ESM_setup_hints(detectors,DET_channel,DET_channel_value):
     '''
@@ -1649,47 +1723,15 @@ def ESM_setup_hints(detectors,DET_channel,DET_channel_value):
         use DET_channel_value=[["max"]]). Can take the values 'total', 'max' or 'min'.
             
     '''
-
     for i,DET in enumerate(detectors):
-        DET.set_primary(DET_channel[i],DET_channel_value[i])
+        if DET_channel is None:
+            DET.set_primary(['All'],value=['All'])
+        else:
+            if DET_channel_value is None:
+                DET.set_primary(DET_channel[i],value=None)
+            else:
+                DET.set_primary(DET_channel[i],value=DET_channel_value[i])
     
-
-
-def ESM_setup_Plot(Y_axis,motors=None):
-    '''
-    Setup a Liveplot by inspecting motors and Y_axis and plotting on an existing plot if it exists. If motors is empty,
-    use sequence number.The function returns LivePlot with the correct axis, and figure definition. 
-    
-    REQUIRED PARAMETERS
-        Y_axis -- the name of the Y_axis for the plot (can be found using Get_Yaxis_name) 
-
-    OPTIONAL PARAMETERS
-        motors -- a list containing the motor for the scan x axis 
-
-    '''
-    y_key = Y_axis
-    #set the y_key to the Y-axis
-    
-    if motors:
-    # if motors is not empty
-        x_key = first_key_heuristic(list(motors)[0])
-        #find the "axis name" associated with the given motor
-        fig_name = _figure_name('BlueSky: {} v {}'.format(y_key, x_key))
-        #generate the figure name based on x and y axis names, if it doesn't exist create a new one.
-        ax = plt.figure(fig_name).gca()
-        #set the value of ax to the correct figure name
-        return LivePlot(y_key, x_key, ax=ax)
-        #return the LivePlot function with the correct figure and axes names.
-    else:
-    #if motors is empty
-        fig_name = _figure_name('BlueSky: {} v time'.format(y_key))
-        #generate the figure name associated with the axes for sequence number instead of motor name, if it doesn't exist
-        #create a new one.
-        ax = plt.figure(fig_name).gca()
-        #set the value of ax to the correct figure name
-        return LivePlot(y_key, ax=ax)
-        #return the LivePlot function with the correct figurte and axes names
-
 
         
 def ESM_save_csv(uid,Y_axis,motors_list,time=False):
@@ -1732,133 +1774,6 @@ def ESM_save_csv(uid,Y_axis,motors_list,time=False):
         df.to_csv(f_path,index=False)
         #save the table to the .csv file.
 
-
-class ESMLivePlot(CallbackBase):
-    """
-    Build a function that updates a plot from a stream of Events.
-    Note: If your figure blocks the main thread when you are trying to
-    scan with this callback, call `plt.ion()` in your IPython session.
-    Parameters
-    ----------
-    y : str
-        the name of a data field in an Event
-    x : str, optional
-        the name of a data field in an Event
-        If None, use the Event's sequence number.
-    legend_keys : list, optional
-        The list of keys to extract from the RunStart document and format
-        in the legend of the plot. The legend will always show the
-        scan_id followed by a colon ("1: ").  Each
-    xlim : tuple, optional
-        passed to Axes.set_xlim
-    ylim : tuple, optional
-        passed to Axes.set_ylim
-    ax : Axes, optional
-        matplotib Axes; if none specified, new figure and axes are made.
-    fig : Figure
-        deprecated: use ax instead
-    All additional keyword arguments are passed through to ``Axes.plot``.
-    Examples
-    --------
-    >>> my_plotter = LivePlot('det', 'motor', legend_keys=['sample'])
-    >>> RE(my_scan, my_plotter)
-    """
-    def __init__(self, y, x=None, *, legend_keys=None, xlim=None, ylim=None,
-                 ax=None, fig=None, **kwargs):
-        super().__init__()
-        if fig is not None:
-            if ax is not None:
-                raise ValueError("Values were given for both `fig` and `ax`. "
-                                 "Only one can be used; prefer ax.")
-            warnings.warn("The `fig` keyword arugment of LivePlot is "
-                          "deprecated and will be removed in the future. "
-                          "Instead, use the new keyword argument `ax` to "
-                          "provide specific Axes to plot on.")
-            ax = fig.gca()
-        if ax is None:
-            fig, ax = plt.subplots()
-        self.ax = ax
-
-        if legend_keys is None:
-            legend_keys = []
-        self.legend_keys = ['scan_id'] + legend_keys
-        if x is not None:
-            self.x, *others = _get_obj_fields([x])
-        else:
-            self.x = None
-        self.y, *others = _get_obj_fields([y])
-        self.ax.set_ylabel(y)
-        self.ax.set_xlabel(x or 'time (seconds)')
-        if xlim is not None:
-            self.ax.set_xlim(*xlim)
-        if ylim is not None:
-            self.ax.set_ylim(*ylim)
-        self.ax.margins(.1)
-        self.kwargs = kwargs
-        self.lines = []
-        self.legend = None
-        self.legend_title = " :: ".join([name for name in self.legend_keys])
-
-    def start(self, doc):
-        # The doc is not used; we just use the singal that a new run began.
-        self.x_data, self.y_data = [], []
-        self.initial_time = None
-        label = " :: ".join(
-            [str(doc.get(name, name)) for name in self.legend_keys])
-        kwargs = ChainMap(self.kwargs, {'label': label})
-        self.current_line, = self.ax.plot([], [], **kwargs)
-        self.lines.append(self.current_line)
-        self.legend = self.ax.legend(
-            loc=0, title=self.legend_title).draggable()
-        super().start(doc)
-
-    def event(self, doc):
-        "Unpack data from the event and call self.update()."
-        try:
-            if self.x is not None:
-                # this try/except block is needed because multiple event
-                # streams will be emitted by the RunEngine and not all event
-                # streams will have the keys we want
-                new_x = doc['data'][self.x]
-            else:
-                new_x = doc['time']
-                if self.initial_time is None:
-                    self.initial_time = new_x
-
-                new_x = new_x - self.initial_time
-                
-                ###DIFFERENCE FROM LIVEPLOT: AT THIS POINT I CHANGED 'seq_num' TO 'time'###
-                ### I also added the lines here to make the time start from the first point.
-            new_y = doc['data'][self.y]
-        except KeyError:
-            # wrong event stream, skip it
-            return
-        self.update_caches(new_x, new_y)
-        self.update_plot()
-        super().event(doc)
-
-    def update_caches(self, x, y):
-        self.y_data.append(y)
-        self.x_data.append(x)
-
-    def update_plot(self):
-        self.current_line.set_data(self.x_data, self.y_data)
-        # Rescale and redraw.
-        self.ax.relim(visible_only=True)
-        self.ax.autoscale_view(tight=True)
-        self.ax.figure.canvas.draw_idle()
-
-    def stop(self, doc):
-        if not self.x_data:
-            print('LivePlot did not get any data that corresponds to the '
-                  'x axis. {}'.format(self.x))
-        if not self.y_data:
-            print('LivePlot did not get any data that corresponds to the '
-                  'y axis. {}'.format(self.y))
-        if len(self.y_data) != len(self.x_data):
-            print('LivePlot has a different number of elements for x ({}) and'
-                  'y ({})'.format(len(self.x_data), len(self.y_data)))
-        super().stop(doc)
 
 def _get_obj_fields(fields):
     """
@@ -2052,200 +1967,3 @@ def spiral_square(detectors, x_motor, y_motor, x_centre, y_centre, x_range,
     return (yield from scan_nd(detectors, cyc, per_step=per_step, md=_md))
 
 
-def gaussian_1D(x,params):
-    '''This function defines a 2D gaussian that is used for fitting.
-    Parameters
-    ----------
-    x : variable
-        the axis variable for the 1D gaussian.
-    params : variables
-        the list of "fitting" variables for the 2D gaussian
-            Parameters:
-
-            1. amp  =  the amplitude of the 1D guassian
-            2. cen =  the centre of the first axis gaussian
-            4. std = the width of the first axis gaussian
-            6. bkg  = height of the constant background for the gaussian
-    '''
-    amp,cen,std,bkg = params
-    return amp*np.exp(-(x-cen)**2/2/std**2)+bkg
-
-def gaussian_1D_error(params,y,x):
-    '''This function defines the difference between a fitted gaussian and the raw data.
-    Parameters
-    ----------
-    params : variables
-        the list of "fitting" variables for the 2D gaussian
-            Parameters:
-
-            1. amp  =  the amplitude of the 1D guassian
-            2. cen =  the centre of the first axis gaussian
-            4. std = the width of the first axis gaussian
-            6. bkg  = height of the constant background for the gaussian
-
-    y  : variable 
-        the value of the raw data at (x)
-    x : variable
-        the axis variable for the 1D gaussian.
-    '''
-
-    return gaussian_1D(x, params)-y
-                      
-    
-def gaussian_2D(x1,x2,params):
-    '''This function defines a 2D gaussian that is used for fitting.
-    Parameters
-    ----------
-    x1 : variable
-        the first axis variable for the 2D gaussian.
-    x2 : variable
-        the second axis variable for the 2D gaussian.
-    params : variables
-        the list of "fitting" variables for the 2D gaussian
-            Parameters:
-
-            1. amp  =  the amplitude of the 2D guassian
-            2. cen1 =  the centre of the first axis gaussian
-            3. cen2 = the centre of the 2nd axis guassian 
-            4. std1 = the width of the first axis gaussian
-            5. std2 = the width of the second axis gaussian
-            6. bkg  = height of the constant background for the gaussian
-    '''
-    amp,cen1,cen2,std1,std2,bkg = params
-    return amp*np.exp(-(x1-cen1)**2/2/std1**2-(x2-cen2)**2/2/std2**2)+bkg
-
-def gaussian_2D_error(params,y,x1,x2):
-    '''This function defines the difference between a fitted gaussian and the raw data.
-    Parameters
-    ----------
-    params : variables
-        the list of "fitting" variables for the 2D gaussian
-            Parameters:
-
-            1. amp  =  the amplitude of the 2D guassian
-            2. cen1 =  the centre of the first axis gaussian
-            3. cen2 = the centre of the 2nd axis guassian 
-            4. std1 = the width of the first axis gaussian
-            5. std2 = the width of the second axis gaussian
-            6. bkg  = height of the constant background for the gaussian
-    y  : variable 
-        the value of the raw data at (x1, y1)
-    x1 : variable
-        the first axis variable for the 2D gaussian.
-    x2 : variable
-        the second axis variable for the 2D gaussian.
-    '''
-
-    return gaussian_2D(x1, x2, params)-y
-
-
-def fit_Gauss_1Dseries(uid,initial_guess):
-    ''' 
-    This scan fits 1D Gaussian curves o each line in a 2D dataset giben by uid.
-        
-    This scan is used to fit to a 1D Gaussian to each line in a 2D dataset, the output is then a set of 1D data corresponding to the
-    amplitude, position and linewidth as a fucntion of the Y axis of the dataset. The function returns a list with 4 items, the items 
-    being the data for amplitude,position, linewidth, background offset and y_sequence number.                   
-
-    Parameters
-    ----------
-    uid : number
-        This is the uid used to extract the data from the databroker.
-                                       
-    initial_guess : list
-        This is the initial guess for the amplitude, centre, width and background offset, in a list in this order.
-
-    '''  
-
-    #reference the data
-    hdr=db[uid]
-    
-    #find out the shape of the data
-    x_num = hdr.start.X_num
-    y_num = hdr.start.Y_num
-        
-    #Load the data from the databroker.
-   
-    amplitude=[]
-    linewidth=[]
-    position=[]
-    background=[]
-    y_seq=[]
-        
-    #step through each "row" and fit a gaussian.
-    for y_step in range(0,y_num):
-        x = db.get_table(hdr,[hdr.start.plot_Xaxis])[x_num*y_step:x_num*(y_step+1)-1] 
-        y_seq.append(y_step)
-        data = db.get_table(hdr,[hdr.start.plot_Zaxis])[x_num*y_step:x_num*(y_step+1)-1]
-
-        popt_row, pcov_row = opt.leastsq(gaussian_1D_error,x0=initial_guess,args=(data[hdr.start.plot_Zaxis],x[hdr.start.plot_Xaxis]))
-        amplitude.append(popt_row[0])
-        position.append(popt_row[1])
-        linewidth.append(popt_row[2])
-        background.append(popt_row[3])
-
-        initial_guess[0]=popt_row[0]
-        initial_guess[1]=popt_row[1]
-        initial_guess[2]=popt_row[2]
-        initial_guess[3]=popt_row[3]
-
-        
-    return [amplitude,linewidth,position,background,y_seq]
-    
-
-def max_in_1D(uid):
-    ''' 
-    This scan is used to find the maximum value in a 1D data set and return the max value, and the x co-ordinate.
-        
-    This scan is used to find the maximum value in a 1D dataset and return the max value, and the x co-ordinate.
-    It returns a list containing the x and y values for the maximum y value in the dataset.                   
-
-    Parameters
-    ----------
-    uid : number
-        This is the uid used to extract the data from the databroker.
-
-    '''
-    
-    scan = db[scan_id]
-    if scan.start.plot_Xaxis.startswith('FE'):
-        Xname = scan.start.plot_Xaxis.replace('_readback', '_setpoint')
-    else:
-        Xname = scan.start.plot_Xaxis+'_user_setpoint'
-        
-    data2D = db.get_table(scan,[Xname, scan.start.plot_Yaxis])
-    del data2D['time']
-
-    max_idx = np.argmax(data3D[scan.start.plot_Yaxis], axis=None)
-
-    return [data2D[Xname][max_idx],data2D[scan.start.plot_Yaxis][max_idx]]
-
-
-def max_in_2D(uid):
-    ''' 
-    This scan is used to find the maximum value in a 2D data set and return the max value, and the x and y co-ordinates.
-        
-    This scan is used to find the maximum value in a 2D dataset and return the max value, and the x and y co-ordinates.
-    It returns a list containg the x, y and z values for the maximum z value in the dataset.                   
-
-    Parameters
-    ----------
-    uid : number
-        This is the uid used to extract the data from the databroker.
-
-    '''
-    
-    scan = db[scan_id]
-    if scan.start.plot_Xaxis.startswith('FE'):
-        Xname = scan.start.plot_Xaxis.replace('_readback', '_setpoint')
-        Yname = scan.start.plot_Yaxis.replace('_readback', '_setpoint')
-    else:
-        Xname = scan.start.plot_Xaxis+'_user_setpoint'
-        Yname = scan.start.plot_Yaxis+'_user_setpoint'
-        
-    data3D = db.get_table(scan,[Xname, Yname, scan.start.plot_Zaxis])
-    del data3D['time']
-
-    max_idx = np.argmax(data3D[scan.start.plot_Zaxis], axis=None)
-
-    return [data3D[Xname][max_idx],data3D[Yname][max_idx],data3D[scan.start.plot_Zaxis][max_idx]]

@@ -607,7 +607,7 @@ def esm_grt(grt, ph_en, branch = 'A', EPU = 57):
         print('select the beamline branch (A or B)')
                                                            # check the select energy makes sense
     if (grt == 1200) and (ph_en > 1500 or ph_en < 130):
-              print('energy out of range for 1200 l/mm grating (130-500 eV)')
+              print('energy out of range for 1200 l/mm grating (130-1500 eV)')
     elif (grt == 800) and ( ph_en > 1500 or ph_en < 15):
         print('energy out of range for 800 l/mm grating (15-1500 eV)')
     elif (grt == 600) and (ph_en > 420 or ph_en <15):
@@ -622,9 +622,11 @@ def esm_grt(grt, ph_en, branch = 'A', EPU = 57):
         sh_close()
 
         GRT_name = str(grt)
-        os.system('caput XF:21IDB-OP{Mono:1-Ax:8_MP}Mtr.OFF '+ off_M2[GRT_name])    # set offset for M2
-        os.system('caput XF:21IDB-OP{Mono:1-Ax:8_GP}Mtr.OFF '+ off_GRT[GRT_name])   # set offset for GRT
-        os.system('caput XF:21IDB-OP{Mono:1}:LINES:SET ' + GRT_name)                # tells to the PGM software which grating                                     
+        yield from mv (PGM.Mirror_Pitch_off, off_M2[GRT_name])  # set offset for M2
+#        os.system('caput XF:21IDB-OP{Mono:1-Ax:8_MP}Mtr.OFF '+ off_M2[GRT_name])    # set offset for M2
+        yield from mv (PGM.Grating_Pitch_off, off_GRT[GRT_name])  # set offset for GRT
+#        os.system('caput XF:21IDB-OP{Mono:1-Ax:8_GP}Mtr.OFF '+ off_GRT[GRT_name])   # set offset for GRT
+#        os.system('caput XF:21IDB-OP{Mono:1}:LINES:SET ' + GRT_name)                # tells to the PGM software which grating                                     
         yield from mv(PGM.Grating_Trans, GRT_TRANSLATION[GRT_name])                 # position the GRT translation 
 
         initial_M2_pitch = PGM.Mirror_Pitch.position         # read in the current M2 pitch
@@ -639,8 +641,7 @@ def esm_grt(grt, ph_en, branch = 'A', EPU = 57):
         for i in range(n_steps):
             yield from mv(PGM.Mirror_Pitch, M2_steps[i])                                   # set position M2 pitch step by step in 10 times 
             yield from mv(PGM.Grating_Pitch, GRT_steps[i])                               # set position GRT pitch step by step in 10 times
-#        yield from mv(PGM_Mirror_motor, M2_angle)                                   # set position M2 pitch directly to theoretical value (speed up the process compared to PGM software) 
-#        yield from mv(PGM_Grt_Pitch_motor, GRT_angle)                               # set position GRT pitch directly to theoretical value (speed up the process compared to PGM software) 
+
         yield from mv(PGM.Focus_Const, c[GRT_name], PGM.Energy, ph_en )       # sets c and photon energy using the software of the PGM (this is necessary to set the experimental c) 
 
         if (EPU == 105):
@@ -655,8 +656,8 @@ def esm_grt(grt, ph_en, branch = 'A', EPU = 57):
 #######################################################
 
 
-def test(p_o =  '83.7681090000'):
-#    yield from bp.mv(PGM.Grating_lines, p_o)
+def test(g_o = 300, p_o =  83.7681090000):
+    yield from bp.mv(PGM.Grating_lines, g_o)
     yield from bp.mv(PGM.Mirror_Pitch_off, p_o)    
 
 

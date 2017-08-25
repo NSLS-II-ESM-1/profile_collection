@@ -331,18 +331,19 @@ class TwoButtonShutter(Device):
             # print('sh', ts, val, st)
             count += 1
             if count > 1:
+
                 cmd_sig.clear_sub(cmd_retry_cb)
                 st._finished(success=False)
             if value == 'None':
                 if not st.done:
-                    time.sleep(.5)
+                    time.sleep(5)
                     cmd_sig.set(1)
                     ts = datetime.datetime.fromtimestamp(timestamp).strftime(_time_fmtstr)
                     print('** ({}) Had to reactuate shutter while {}ing'.format(ts, val))
                 else:
                     cmd_sig.clear_sub(cmd_retry_cb)
 
-        cmd_sig.subscribe(cmd_retry_cb, run=False)
+#        cmd_sig.subscribe(cmd_retry_cb, run=False)
         cmd_sig.set(1)
         self.status.subscribe(shutter_cb)
 
@@ -387,6 +388,5 @@ BTB3_GVB3 = TwoButtonShutter('XF:21IDC-VA{BT:B3-GV:B3_D_1}', name='BTB3_GVB3')
 Mir4B_GVB4 = TwoButtonShutter('XF:21IDC-VA{Mir:4B-GV:B4_D_1}', name='Mir4B_GVB4')
 BTB5_GVB5 = TwoButtonShutter('XF:21IDC-VA{BT:B5-GV:B5_D_1}', name='BTB5_GVB5')
 
-
 #Section D, (A Branch endstation)
-Anal1A_EA1 = TwoButtonShutter('XF:21IDD-VA{ANAL:1A-GV:EA1_1}', name='Anal1A_EA1')
+Anal1A_GVEA1 = TwoButtonShutter('XF:21IDD-VA{ANAL:1A-GV:EA1_1}', name='Anal1A_GVEA1')

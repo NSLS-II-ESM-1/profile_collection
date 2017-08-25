@@ -38,13 +38,12 @@ class ESMQuadEM(QuadEM):
 
     def set_primary(self, n , value=None):
         name_list=[]
-        if n == 'All':
-            self.hints = None
-        else:
-            for channel in n:
+        for channel in n:
+            if channel == 'All':
+                self.hints=None
+            else:
                 name_list.append(getattr(self, f'current{channel}').mean_value.name)
-               
-            self.hints = {'fields':name_list}
+                self.hints = {'fields':name_list}
         
 
 qem01 = ESMQuadEM('XF:21IDA-BI{EM:1}EM180:', name='qem01')

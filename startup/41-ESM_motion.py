@@ -355,8 +355,6 @@ class ESM_motion_device:
  
         '''
 
-        #define the input parameter
-        self.output=output
 
         #define the dictionary of motion axes for the current instance.
         axis_list=self.axes()
@@ -389,8 +387,19 @@ class ESM_motion_device:
                 f_string+='\t '+axis+' -->  %f\n' % getattr(ip.user_ns[obj],attr).position
             f_string+='\n'
         
-        print (f_string)
+        if output.startswith('string'):
+            print (f_string)
 
+        if output.endswith('file'):
+            fl="/home/xf21id1/.ipython/profile_collection/startup/status_files/"
+            fl+=self.name+'_status'
+            f = open(fl, "a")
+            f.write(f_string)
+            f.close()
+
+        if output == 'dict':
+            return status_dict        
+            
         
     def ask_user_continue(self,request_str):
         ''' 
@@ -422,8 +431,8 @@ class ESM_motion_device:
         ''' 
         moves the manipulator to the position given by "location"
         
-        This function moves the manipulator to the location defined by "location". it returns and error message
-        indicating if the sample transfer was succesful, and if not what went wrong.
+        This function moves the manipulator to the location defined by "location". it returns and error 
+        message indicating if the sample transfer was succesful, and if not what went wrong.
 
         PARAMETERS
         ----------
