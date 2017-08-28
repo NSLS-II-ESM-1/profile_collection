@@ -19,23 +19,26 @@ from boltons.iterutils import chunked
 
 
 ###COLLECTING DATA
-###   The following set of "plans" is used to run different types of scans at 21-ID. Using these plans instead of the 
-###   in-built bluesky scans simply allows for customization of the OLOG entries, the metadata and for easier inclusion
-###   of the plotting routines. The system for naming scans(which is used to create an easy to follow process) is:
+###   The following set of "plans" is used to run different types of scans at 21-ID. Using these plan
+###   instead of the in-built bluesky scans simply allows for customization of the OLOG entries, the
+###   metadata and for easier inclusion of the plotting routines. The system for naming scans (which
+###   is used to create an easy to follow process) is:
 ###   
-###          'detector'_('non standard scan identifier'_)'scan dimension'
+###          'scan'_('non standard scan identifier'_)'scan dimension'
 ###             
 ###          With the components:
-###              'detector_' : This is just used at the start to define a 1D(scan) or 2D(image) detector as the live
-###                            display detector. The live display detector should always be the 1st detector in the list.
 ###
-###              'non standard scan identifier' : This is an optional inclusion to define non-standard scan, the list of
-###                            options include:
+###              'scan' : used to indicate that a scan is to be performed.
 ###
-###                  'multi_' : To define a plan that executes a series of scans, each saved as seperate files.
+###              'non standard scan identifier' : This is an optional inclusion to define
+###                                               non-standard scan, the list of options include:
+###
+###                  'multi_' : To define a plan that executes a series of scans, each saved as
+###                             seperate files.
 ###
 ###
-###              'scan dimension' : This defines the number of scan axes that the scan should step through, options include:
+###              'scan dimension' : This defines the number of scan axes that the scan should step
+###                                 through, options include:
 ###
 ###                   'time' : for time axis scans.
 ###                   '1D'   : for 1 dimensional motor scans
@@ -44,8 +47,8 @@ from boltons.iterutils import chunked
 ###
 ###Important Definitions:
 ###        motor: Any variable that can be "set" by bluesky including:
-###                   motors, temperatures (if controlled by a temperature controller), pressures (if controlled by a leak
-###                      valve), voltages, photon energy, etc 
+###                   motors, temperatures (if controlled by a temperature controller),
+###                   pressures (if controlled by a leak valve), voltages, photon energy, etc 
 ###
 ###    detectors: Any device in bluesky that provides readback including:
 ###                   Analyzers, cameras, pico-ammeters, currents, pressures, temperatures, etc.
@@ -59,17 +62,17 @@ from boltons.iterutils import chunked
 
 def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,scan_type=None):
     '''
-    scan over time
-    This scan provides a time measurement of a list of detectors, including live plotting and a live table. The detector to 
-    'display' must be 1D, or have statistics set up so that a 1D attribute exists (such as intengrated 'total' intensity)  
-    and should be first in the list. 
-         
+    Scan over time
+    
+    This scan provides a time measurement of a list of detectors, including live plotting and a live 
+    table. 
     PARAMETERS
     ----------
     detectors : list
         A list of detectors to record at each step.
     num : number, optional
-        Optional input of the number of points to take, default is 1. To capture until stopped using 'ctrl-C' set 'num = None'
+        Optional input of the number of points to take, default is 1. To capture until stopped using 
+        'ctrl-C' set 'num = None'
     delay : number, optional  
         Optional delay time between succesive readings, default is 0.
     DET_channel : list, optional  
@@ -80,16 +83,17 @@ def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,s
             DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
 
     DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
-        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi 
+        channel detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
             To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...]] where "*_val" is 'total', 'max', or 'min'.
-
+            DET_channel=[[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...]] where "*_val" is 'total'
+            , 'max', or 'min'.
 
     scan_type : string, optional 
-        Optional definition of the scan type to include in the metadata, correct use of this will allow searching the 
-        database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database 
-        based on the keyword scan_type = 'XPS' will return all XPS scans).
+        Optional definition of the scan type to include in the metadata, correct use of this will 
+        allow searching the database to be easier (for instance, if all XPS data is given the 
+        scan_type 'XPS' then searching the database based on the keyword scan_type = 'XPS' will 
+        return all XPS scans).
      '''
     #This section ensures that if DET_channel= list is not defined that it has the same length as
     #detectors 
@@ -104,31 +108,19 @@ def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,s
 
     #Setup metadata
     #This section sets up the metadata that should be included in the experiment file.
-    #Users can add/or change the metadata using the md={'keyword1'
-    #:'value1','keyword2':'value2',..... } argument. For instance using md={'scan_type':'measurement type'}
-    #will define the scan_type as a particular
-    #measurement type.
+    #Users can add/or change the metadata using the md={'keyword1':'value1',
+    #'keyword2':'value2',..... } argument. For instance using md={'scan_type':'measurement type'}
         
     #setup standard metadata
     _md = {'scan_name':'scan_time','plot_Xaxis':'sequence_no','plot_Yaxis':Y_axis,
            'scan_type':scan_type,'delay':delay}
 
-    #change the "hints" on the detectors so that only the relevant info is included
+    #change the "hints" on the detectors so that only the relevant info is included in LivePlot
+    #and LiveTable via the builtin bec functionality.
     ESM_setup_hints(detectors,DET_channel,DET_channel_value)
-
-    if num is not 1:
-
-        def inner():
-            return( yield from count(detectors,num,delay,md=_md))
-    else:
-        def inner():
-            return( yield from count(detectors,num,delay,md=_md))
       
-    uid=yield from inner()
-    motors=[]
-#    ESM_save_csv(uid,Y_axis,motors,time=True)
-
-
+    uid=yield from count(detectors,num,delay,md=_md)
+ 
     #change the "hints" on the detectors back to the default
     ESM_setup_hints(detectors,None,None)
 
@@ -137,16 +129,17 @@ def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,s
 
 ###    
 ###1D SCANS
-###These scans are used to scan over 1 "motor" axis, the motor can be any variable that can be "set" via bluesky.
+###   These scans are used to scan over 1 "motor" axis, the motor can be any variable that can be "set"
+###   via bluesky.
 
 
-def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,DET_channel_value=None,scan_type=None,adaptive=None):
+def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=[[1]],DET_channel_value=None,
+            scan_type=None,adaptive=None):
 
     ''' 
     scan over a single axis taking a list of detectors at each point.
-    This scan provides a 1D scan using a list of detectors, including a live plot and a live table. The detector to 
-    "display" must be 1D and should be the first in the list of detectors, or have statistics set up so that a 1D 
-    attribute exists (such as integrated 'total' intensity) and should be first in the list.
+    This scan provides a 1D scan using a list of detectors, including a live plot and a live table. 
+   
         
     PARAMETERS
     ----------   
@@ -157,7 +150,8 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,DET_ch
     start : number
         The start value for the scan axis
     end : number 
-        The end value for the scan axis, the actual end value will be determined from the start and step size.    
+        The end value for the scan axis, the actual end value will be determined from the start and 
+        step size.    
     step_size : number
         The step size for the scan axis
 
@@ -169,66 +163,77 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,DET_ch
             DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
 
     DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
-        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel
+        detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
             To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 
+            max', or 'min'.
 
 
     scan_type : string, optional
-        Optional definition of the scan type to include in the metadata, correct use of this will allow searching the 
-        database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database 
-        based on the keyword scan_type = 'XPS' will return all XPS scans).    
+        Optional definition of the scan type to include in the metadata, correct use of this will 
+        allow searching the database to be easier (for instance, if all XPS data is given the 
+        scan_type 'XPS' then searching the database based on the keyword scan_type = 'XPS' will 
+        return all XPS scans).    
 
     Adaptive scan : list, optional 
         This is a scan where the step size is adaptively set based on a target slope. For instance the 
         step size starts off at steps_max, if the slope between the current point and the preceeding 
-        point is greater/smaller than a target slope then it decreases/increases the step size to achieve 
-        the desired slope. Addtionally 'backstep=True' can be used to allow for the scan to go back and 
-        add more points between preceding points.
+        point is greater/smaller than a target slope then it decreases/increases the step size to 
+        achieve the desired slope. Addtionally 'backstep=True' can be used to allow for the scan to 
+        go back and add more points between preceding points.
 
-        To use this feature include ', adaptive = [steps2_min,steps2_max,target_slope,backstep,threshold] after 
-        step_size in the call. 
+        To use this feature include ', adaptive = [steps2_min,steps2_max,target_slope,backstep,
+        threshold] after step_size in the call. 
         
             NOTE: In this case step_size is not used, but a value must be included.
                            
                  REQUIRED PARAMETERS FOR THIS OPTION 
-                     steps2_min, steps2_max  : Are the minimum and maximum step sizes to use in the adaptive scan.
+                     steps2_min, steps2_max  : Are the minimum and maximum step sizes to use in the 
+                     adaptive scan.
+                     
                      target slope            : Is a target slope to aim for in the scan
-                     backstep                : Is a boolean (either 'True' or 'False') which determines if the scan 
-                                               is allowed to back step to aquire more data in a region of large change.
-                     threshold               : Is a threshold for going back and rescanning a region (default is 0.8).  
+                     backstep                : Is a boolean (either 'True' or 'False') which 
+                                               determines if the scan is allowed to back step to 
+                                               aquire more data in a region of large change.
+                     threshold               : Is a threshold for going back and rescanning a region 
+                                               (default is 0.8).  
                            
      '''
-    # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
+    #This section ensures that if DET_channel= list is not defined that it has the same length as
+    #detectors 
+    if len(DET_channel) < len (detectors):
+        for x in range(len(DET_channel),len(detectors)):
+            DET_channel.append([1])
 
-    #change the "hints" on the detectors so that only the relevant info is included
+
+    #change the "hints" on the detectors so that only the relevant info is included in LivePlot
+    #and LiveTable
     ESM_setup_hints(detectors,DET_channel,DET_channel_value)
-    
+
+    # This section determines the no of steps to include in order to get as close as possible to
+    #the endpoint specified.
     if(  ( start<end and step_size<0 ) or ( start>end and step_size>0 )   ):
         step_size*=-1
     
     steps=abs(round((end-start)/step_size))
     stop=start+step_size*steps
 
-    #This section determines the Y axis and X axis variable to plot for the scan, if the first detector in the list is a
-    #single channel detector then it plots that detector value, if it has multiple single channels it plots the channel
-    #defined by the optional input DET_channel (channel 1 is plotted if DET_channel is not specified), the X_axis is
-    #assumed to be the first motor in the list 'motors'.
-#    Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
-#    motors=[scan_motor]
-#    X_axis = first_key_heuristic(list(motors)[0])
-#    motors_list=[X_axis]
+    #This section determines the Y axis and X axis variable names to plot for the scan, this is
+    #done to allow for them to be saved to the metadata
+    Y_axis = Get_Yaxis_name(detectors, DET_channel,DET_channel_value)
+    X_axis = scan_motor.hints['fields']
+    motors_list=[X_axis]
     
     #Setup metadata
-    #This section sets up the metadata that should be included in the experiment file. Users can add/or change the
-    #metadata using the md={'keyword1':'value1','keyword2':'value2',..... } argument. For instance using
-    #md={'scan_type':'measurement type'} will define the scan_type as a particular measurement type.
+    #This section sets up the metadata that should be included in the experiment file. Users can
+    #add/or change the metadata using the md={'keyword1':'value1','keyword2':'value2',..... }
+    #argument. For instance using md={'scan_type':'measurement type'} will define the scan_type as
+    #a particular measurement type.
         
     #setup standard metadata
-#    _md = {'scan_name':'scan_1D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'scan_type':scan_type,'delta':step_size}
-
-    
+    _md = {'scan_name':'scan_1D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'scan_type':scan_type,
+           'delta':step_size}
 
         
     #Define the scan
@@ -236,14 +241,11 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,DET_ch
       if adaptive is None:
           return( yield from scan(detectors,scan_motor,start,stop,steps+1,md=_md))
       else:
-          return( yield from adaptive_scan(detectors,Y_axis,scan_motor,start,stop,adaptive[0],adaptive[1],adaptive[2],
-                                           adaptive[3],adaptive[4],md=md_))
+          return( yield from adaptive_scan(detectors,Y_axis,scan_motor,start,stop,adaptive[0],
+                                           adaptive[1],adaptive[2],adaptive[3],adaptive[4],md=md_))
 
     #run the scan  
     uid=yield from inner()
-    # save the data to .csv
-    ESM_save_csv(uid,Y_axis,motors_list)
-
 
     #change the "hints" on the detectors back to the default
     ESM_setup_hints(detectors,None,None)
@@ -254,38 +256,47 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=None,DET_ch
 
 ###
 ###2D SCANS
-###These scans are used to scan over 2 "motor" axes, the motors can be any variable that can be "set" via bluesky.
+###   These scans are used to scan over 2 "motor" axes, the motors can be any variable that can be
+###   "set" via bluesky.
 
 
-def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2, step_size2,
-                  snake=False,DET_channel=None,DET_channel_value=None,scan_type=None,adaptive=None):
+def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2,
+                  step_size2,snake=False,DET_channel=[[1]],DET_channel_value=None,scan_type=None,
+                  adaptive=None):
     ''' 
-    run a series of 1D scans over a second motor (each line saved seperately). 
-    Run a 2D scan using a list of detectors, having each step as a new file,the detector to "display" must be 1D, or 
-    have statistics set up so that a 1D attribute exists (such as intengrated 'total' intensity) and should be first 
-    in the list. It must be the first detector in the list 'DETS'.
-        
+    Run a series of 1D scans over a second motor (each line saved seperately). 
+    
+    Run a 2D scan using a list of detectors, having each step as a new file.
     PARAMETERS
     ----------
+
     detectors : list 
         A list of detectors to record at each step
+
     scan_motor1 : motor
-        The outer "motor" to scan (which is different for each file) which has the form Device.motor (eg. 
-        M1D_slit.inboard)
+        The outer "motor" to scan (which is different for each file) which has the form Device.motor 
+        (eg. M1D_slit.inboard)
+
     scan_motor2 : motor 
-        The inner "motor" to scan (x axis for each file) which has the form Device.motor (eg. M1D_slit.inboard)
+        The inner "motor" to scan (x axis for each file) which has the form Device.motor 
+        (eg. M1D_slit.inboard) 
+
     start1,start2 : numbers
         The start values for axis 1 and axis 2 respectively
+
     end1,end2 : numbers
-        The end values axis 1 and axis 2 respectively (this is a suggested value only, real value will be deteremined 
-        using start and step_size.
+        The end values axis 1 and axis 2 respectively (this is a suggested value only, real value will 
+        be determined  using start and step_size.
+
     steps1,steps2 : numbers
         The number of steps for axis 1 and axis 2 respectively.
 
     snake : boolean, optional
-        Optional snake value (ie. have the scan move the scan_motor2 from start2 to end2 on even runs and from end2 
-            to start2 on odd runs. 
-                To use this option in the scan you need to place ',snake=True' after steps in the scan call.                          
+        Optional snake value (ie. have the scan move the scan_motor2 from start2 to end2 on even runs 
+        and from end2 to start2 on odd runs. 
+                To use this option in the scan you need to place ',snake=True' after steps in the scan 
+                call.                          
+
     DET_channel : list, optional  
         Optional channel number, for each detector, to plot for multi channel detectors 
         (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
@@ -294,41 +305,48 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
             DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
 
     DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
-        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel
+        detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
             To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total',
+            'max', or 'min'.
 
 
     scan_type : string, optional
-        Optional definition of the scan type to include in the metadata, correct use of this will allow searching the 
-        database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database 
-        based on the keyword scan_type = 'XPS' will return all XPS scans).   
+        Optional definition of the scan type to include in the metadata, correct use of this will 
+        allow searching the database to be easier (for instance, if all XPS data is given the 
+        scan_type 'XPS' then searching the database based on the keyword scan_type = 'XPS' will 
+        return all XPS scans).   
    
  
     Adaptive scan : boolean, True
-       This is a scan where the step size is adaptively set based on a target slope. For instance the step 
-       size starts off at steps_max, if the slope between the current point and the preceeding point is 
-       greater/smaller than a target slope then it decreases/increases the step size to achieve the desired 
-       slope. Addtionally 'backstep=True' can be used to allow for the scan to go back and add more points 
-       between preceding points.
+       This is a scan where the step size is adaptively set based on a target slope. For instance the 
+       step size starts off at steps_max, if the slope between the current point and the preceeding 
+       point is greater/smaller than a target slope then it decreases/increases the step size to 
+       achieve the desired slope. Addtionally 'backstep=True' can be used to allow for the scan to go 
+       back and add more points between preceding points.
 
-       To use this feature include ', adaptive = [steps2_min,steps2_max,target_slope,backstep,threshold] after 
-       step_size in the call. 
+       To use this feature include ', 
+          adaptive = [steps2_min,steps2_max,target_slope,backstep,threshold] after step_size in the 
+          call. 
                            NOTE: In this case step_size is not used, but a value must be included.
                            
                            REQUIRED PARAMETERS FOR THIS OPTION
-                               steps2_min, steps2_max  : Are the minimum and maximum step sizes to use in the 
-                                                         adaptive scan.
+                               steps2_min, steps2_max  : Are the minimum and maximum step sizes to use
+                                                         in the adaptive scan.
                                target slope            : Is a target slope to aim for in the scan
-                               backstep                : Is a boolean (either 'True' or 'False') which determines 
-                                                         if the scan 
-                                                         is allowed to back step to aquire more data in a region of 
-                                                         large change.
-                               threshold               : Is a threshold for going back and rescanning a region 
-                                                         (default is 0.8).  
+                               backstep                : Is a boolean (either 'True' or 'False') which
+                                                         determines if the scan is allowed to back step
+                                                         to aquire more data in a region of large 
+                                                         change.
+                               threshold               : Is a threshold for going back and rescanning 
+                                                         a region (default is 0.8).  
         '''
-
+    #This section ensures that if DET_channel= list is not defined that it has the same length as
+    #detectors 
+    if len(DET_channel) < len (detectors):
+        for x in range(len(DET_channel),len(detectors)):
+            DET_channel.append([1])
 
         
 
@@ -336,7 +354,8 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
     ESM_setup_hints(detectors,DET_channel,DET_channel_value)
     
 
-    # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
+    # This section determines the no of steps to include in order to get as close as possible to the
+    #endpoint specified.
     if(  ( start1<end1 and step_size1<0 ) or ( start1>end1 and step_size1>0 )   ):
         step_size1*=-1
     
@@ -356,25 +375,21 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
     initial_uid = 'current uid'
     #This value holds the intial uid for the scan.
     
-    #This section determines the Y axis variable to plot for the scan, if the first detector in the list is a single
-    #channel detector then it plots that detector value, if it has multiple single channels it plots the channel
-    #defined by the optional input DET_channel (channel 1 is plotted if DET_channel is not specified.)
-#    Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
-#    motors=[scan_motor2]
-#    X_axis = first_key_heuristic(list(motors)[0])
-#    motors_list=[X_axis]
+    #This section determines the Y axis variable to plot for the scan defined by the optional input
+    #DET_channel (channel 1 is plotted if DET_channel is not specified.)
+    Y_axis = Get_Yaxis_name(detectors, DET_channel, DET_channel_value)
+    X_axis = scan_motor2.hints['fields']
+    motors_list=[X_axis]
     
     #Setup metadata
-    #This section sets up the metadata that should be included in the experiment file. Users can add/or change the
-    #metadata using the md={'keyword1':'value1','keyword2':'value2',..... } argument. For instance using md={'scan_name'
-    #:'measurement type'} will define the scan_name as a particular measurement type.
-        
-    #setup standard metadata
-#    _md = {'scan_name':'scan_multi_1D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'scan_type':scan_type,'delta':step_size2,
-#'multi_axis':scan_motor1.name,'multi_start':start1,'multi_stop':stop1,'multi_num':steps1+1,
-#              'multi_delta':step_size1}
+    #This section sets up the metadata that should be included in the experiment file. Users can
+    #add/or change the metadata using the md={'keyword1':'value1','keyword2':'value2',..... }
+    #argument. For instance using md={'scan_name':'measurement type'} will define the scan_name as
+    #a particular measurement type.
 
-         
+    _md = {'scan_name':'scan_multi_1D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'scan_type':scan_type,
+           'delta':step_size2,'multi_axis':scan_motor1.name,'multi_start':start1,'multi_stop':stop1,
+           'multi_num':steps1+1, 'multi_delta':step_size1}
 
 
     for i,c_val in enumerate(np.linspace(start1, stop1, num=(steps1+1))):
@@ -391,17 +406,17 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
            if adaptive is None:
                return(yield from scan(detectors,scan_motor2,start2,stop2,steps2+1,md=_md))
            else:
-              return( yield from adaptive_scan(detectors,Y_axis,scan_motor2.name,start2,stop2,adaptive[0],adaptive[1],
-                                               adaptive[2],adaptive[3],adaptive[4],md=_md))
-           #defines what the scan at each motor 1 step should be
-
+              return( yield from adaptive_scan(detectors,Y_axis,scan_motor2.name,start2,stop2,
+                                               adaptive[0],adaptive[1], adaptive[2],adaptive[3],
+                                               adaptive[4],md=_md))
+          
        def inner_backward():
            if adaptive is None:
                return (yield from scan(detectors,scan_motor2,stop2,start2,steps2+1,md=_md))
            else:
-              return( yield from adaptive_scan(detectors,Y_axis,scan_motor2,stop2,start2,-1*adaptive[0],-1*adaptive[1],
-                                               adaptive[2],adaptive[3],adaptive[4],md=_md))
-           #defines what the scan at each motor 1 step should be
+              return( yield from adaptive_scan(detectors,Y_axis,scan_motor2,stop2,start2,
+                                               -1*adaptive[0],-1*adaptive[1], adaptive[2],
+                                               adaptive[3],adaptive[4],md=_md))
 
        # performs the next step in the scan
        if snake:
@@ -414,38 +429,40 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
        
        if initial_uid is 'current uid':
            initial_uid = uid
-       
-       #Save the file as a csv file using the scan id as the name
-       ESM_save_csv(uid,Y_axis,motors_list)
-
 
     #change the "hints" on the detectors back to the default
-    ESM_setup_hints(detectors,'All','None')
+    ESM_setup_hints(detectors,None,None)
        
     return initial_uid
 
        
 def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2, step_size2,
-                  snake=False,concurrent=False,normal_spiral=False,fermat_spiral=False,square_spiral=False,
-                  DET_channel=None,DET_channel_value=None,scan_type=None):
+            snake=False,concurrent=False,normal_spiral=False,fermat_spiral=False,
+            square_spiral=False, DET_channel=[[1]],DET_channel_value=None,scan_type=None):
     '''
     Run a 2D scan using a list of detectors.
         
     PARAMETERS
     ----------
+
     detectors : list 
         A list of detectors to record at each step
+
     scan_motor1 : motor
         The outer "motor" to scan (which is different for each file) which has the form Device.motor 
         (eg. M1D_slit.inboard)
+
     scan_motor2 : motor 
         The inner "motor" to scan (x axis for each file) which has the form Device.motor 
         (eg. M1D_slit.inboard)
+
     start1,start2 : numbers
         The start values for axis 1 and axis 2 respectively
+
     end1,end2 : numbers
         The end values axis 1 and axis 2 respectively (this is a suggested value only, real value will 
         be deteremind using start and step_size.
+
     steps1,steps2 : numbers
         The number of steps for axis 1 and axis 2 respectively.
 
@@ -461,37 +478,41 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
             DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
 
     DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
-        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel
+        detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
             To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 
+            'max', or 'min'.
 
 
 
     scan_type : string, optional
-        Optional definition of the scan type to include in the metadata, correct use of this will allow 
-        searching the database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then 
-        searching the database based on the keyword scan_type = 'XPS' will return all XPS scans).   
+        Optional definition of the scan type to include in the metadata, correct use of this will 
+        allow searching the database to be easier (for instance, if all XPS data is given the 
+        scan_type 'XPS' then searching the database based on the keyword scan_type = 'XPS' will 
+        return all XPS scans).   
    
 
     Concurrent motion : boolean, optional
-        This allows for the motion of the first and second motors to occur concurrently. This will map out a
-        1D line though 2D space, with even spaced steps for both axes.
+        This allows for the motion of the first and second motors to occur concurrently. This will 
+        map out a 1D line though 2D space, with even spaced steps for both axes.
             To use this feature include 'concurrent=True ' after step_size2 in the call. 
                            
-            NOTE: In this case step_size2 is not used, but a value must be included. the step size of the second 
-            motor will be determined fro mthe calucalted number of steps for motor one and the range of motor 2.
+            NOTE: In this case step_size2 is not used, but a value must be included. the step size 
+            of the second motor will be determined from the calucalted number of steps for motor 
+            one and the range of motor 2.
                            
            
     spiral : boolean, optional 
-        Optional indicator that the scan should follow a spiral pattern, centered in the middle of the x and y 
-        ranges defined.
+        Optional indicator that the scan should follow a spiral pattern, centered in the middle of 
+        the x and y ranges defined.
   
             To use this feature include ' normal_spiral = True' after step_size2 in the call
                                
-                NOTE: The radius delta is determined from the first motor step size and the number of theta steps is 
-                determined from the radius delta and the motor 2 step size. The pattern for the spiral is a series of 
-                expanding "rings", according to the following relationships:
+                NOTE: The radius delta is determined from the first motor step size and the number 
+                      of theta steps is determined from the radius delta and the motor 2 step size. 
+                      The pattern for the spiral is a series of expanding "rings", according to the 
+                      following relationships:
                                 
                                  Parameters:
 
@@ -501,14 +522,17 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
                                  3. delta_radius = step_size2
 
-                                 4. num_theta = round( (4*pi*delta_radius) / ( range2*atan(2*step_size1) )   ) 
+                                 4. num_theta = round( (4*pi*delta_radius) / 
+                                                             ( range2*atan(2*step_size1) )   ) 
 
-                                 note: this equation ensures that the y axis step size for the largest circle is ~ 
-                                 step_size1
+                                 note: this equation ensures that the y axis step size for the 
+                                 largest circle is ~ step_size1
 
-                                 5. num_rings = 1+int( ( ((range1/2)**2+(range2/2)**2)**(1/2) / (delta_radius)  )**2 )
+                                 5. num_rings = 1+int( ( ((range1/2)**2+(range2/2)**2)**(1/2) / 
+                                                                                 (delta_radius)  )**2 )
 
-                                 6. n = the 'nth' ring in the spiral, i = the 'ith' angle for the 'nth'ring
+                                 6. n = the 'nth' ring in the spiral, i = the 'ith' angle for the 
+                                        'nth'ring
  
                                  Path equations:
  
@@ -527,14 +551,15 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
 
     fermat spiral : boolean, optional
-        Optional indicator that the scan should follow a fermat spiral pattern, centered in the middle of the x and 
-        y ranges, defined.
+        Optional indicator that the scan should follow a fermat spiral pattern, centered in the 
+        middle of the x and y ranges, defined.
 
             To use this feature include ' fermat_spiral = True' after step_size2 in the call.
                                
-                NOTE: The radius delta is determined from the first motor step size and the number of theta steps is 
-                determined from the radius delta and the motor2 step size. The pattern for the spiral maps out a fermat 
-                spiral, according to the following relationships:
+                NOTE: The radius delta is determined from the first motor step size and the number 
+                      of theta steps is determined from the radius delta and the motor2 step size. 
+                      The pattern for the spiral maps out a fermat spiral, according to the 
+                      following relationships:
 
                                  Parameters:
 
@@ -544,11 +569,13 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
                                  3. delta_radius = step_size2
 
-                                 4. num_theta = round( (4*pi*delta_radius) / ( range2*atan(2*step_size1) )   ) 
-                                         note: this equation ensures that the y axis step size for the largest circle is 
-                                         ~ stepsize1
+                                 4. num_theta = round( (4*pi*delta_radius) / 
+                                                               ( range2*atan(2*step_size1) )   ) 
+                                         note: this equation ensures that the y axis step size for 
+                                         the largest circle is ~ stepsize1
 
-                                 5. num_rings = int((1.5*((range1/2)**2+(range2/2)**2)**(1/2) * num_theta/(2*delta_radius))**2)
+                                 5. num_rings = int((1.5*((range1/2)**2+(range2/2)**2)**(1/2) * 
+                                                                       num_theta/(2*delta_radius))**2)
                                  
                                  6. phi = 137.508 * pi/180
 
@@ -570,24 +597,29 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
 
     square spiral : boolean, optional
-        Optional indicator that the scan should follow a square spiral pattern, centered in the middle of the x and y 
-            ranges defined.
+        Optional indicator that the scan should follow a square spiral pattern, centered in the middle 
+        of the x and y ranges defined.
   
             To use this feature include ' square_spiral = True' after step_size2 in the call
 
-                NOTE:  The pattern for the square spiral is a series of expanding square "rings", the number of points in
-                both the x and y ranges needs to be both even or both odd, this will be set in the plan if it is not already
-                true.
+                NOTE:  The pattern for the square spiral is a series of expanding square "rings", 
+                the number of points in both the x and y ranges needs to be both even or both odd, 
+                this will be set in the plan if it is not already true.
 
  
         '''
 
-
+    #This section ensures that if DET_channel= list is not defined that it has the same length as
+    #detectors 
+    if len(DET_channel) < len (detectors):
+        for x in range(len(DET_channel),len(detectors)):
+            DET_channel.append([1])
         
     #change the "hints" on the detectors so that only the relevant info is included
     ESM_setup_hints(detectors,DET_channel,DET_channel_value)
 
-    # This section determines the no of steps to include in order to get as close as possible to the endpoint specified.
+    # This section determines the no of steps to include in order to get as close as possible to the
+    #endpoint specified.
     if(  ( start1<end1 and step_size1<0 ) or ( start1>end1 and step_size1>0 )   ):
         step_size1*=-1
 
@@ -617,18 +649,15 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
         centre2=start2+(range2)/2
         
         range1=end1-start1
-        centre1=start1+(range1)/2
-        #print ( 'end2: '+ str(end2) + ' start2: ' + str(start2) + ' step_size2: ' + str(step_size2)   )  
+        centre1=start1+(range1)/2 
 
         steps2=round((end2-start2)/step_size2)
         steps1=round((end1-start1)/step_size1)
-        #print ( 'steps2: '+ str(steps2) + ' steps1: ' + str(steps1)   )  
         
         
         if ( (steps2%2==1) and (steps1%2!=1) ) or ( (steps2%2!=1) and (steps1%2==1) ) :
             steps1+=1
-            
-        #print ( 'steps2: '+ str(steps2) + ' steps1: ' + str(steps1)   )  
+
         
     else:    
         steps1=abs(round((end1-start1)/step_size1))
@@ -639,142 +668,147 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
     
 
         
-    #This section determines the Z axis variable to plot for the scan, if the first detector in the list is a single channel
-    #detector then it plots that detector value, if it has multiple single channels it plots the channel defined by the
-    #optional input DET_channel (channel 1 is plotted if DET_channel is not specified).
-#    Z_axis = Get_Yaxis_name(detectors[0], DET_channel)
-#    Xmotors=[scan_motor2]
-#    X_axis = first_key_heuristic(list(Xmotors)[0])
-#    Ymotors=[scan_motor1]
-#    Y_axis = first_key_heuristic(list(Ymotors)[0])
+    #This section determines the Z axis variable to plot for the scan.
+    Z_axis = Get_Yaxis_name(detectors, DET_channel,DET_channel_value)
+    X_axis = scan_motor2.hints['fields']
+    Y_axis = scan_motor1.hints['fields']
 
     #Setup metadata
-    #This section sets up the metadata that should be included in the experiment file. Users can add/or change the metadata
-    #using the md={'keyword1':'value1','keyword2':'value2',..... } argument. For instance using md={'scan_name':
-    #'measurement type'} will define the scan_name as a particular measurement type.
-        
-    #setup standard metadata
-
+    #This section sets up the metadata that should be included in the experiment file. Users can
+    #add/or change the metadata using the md={'keyword1':'value1','keyword2':'value2',..... }
+    #argument. For instance using md={'scan_name':'measurement type'} will define the scan_name
+    #as a particular measurement type.
     
     if concurrent is True:
- #       _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_typ#e,
-#             'X_axis':X_axis,'X_start':start2,'X_stop':stop2,'X_num':steps2+1,'X_delta':step_size2,
-#             'Y_axis':Y_axis,'Y_start':start1,'Y_stop':stop1,'Y_num':steps1+1,'Y_delta':step_size1}
-
-        # Define some decorators to perform at each step (table update, plot update etc.)
+        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,
+               'scan_type':scan_type,'X_axis':X_axis,'X_start':start2,'X_stop':stop2,
+               'X_num':steps2+1,'X_delta':step_size2,'Y_axis':Y_axis,'Y_start':start1,
+               'Y_stop':stop1,'Y_num':steps1+1,'Y_delta':step_size1}
 
         def inner_prod():
-            return(yield from inner_product_scan(detectors,steps1+1,scan_motor1,start1,stop1,scan_motor2,start2,stop2,))#md=_md))
+            return(yield from inner_product_scan(detectors,steps1+1,scan_motor1,start1,stop1,
+                                                 scan_motor2,start2,stop2,md=_md))
 
         uid= yield from inner_prod()
         
     elif normal_spiral is True:
-#         _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
-#               'X_axis':X_axis,'X_start':start2,'X_end':end2,'X_centre':centre2,'X_range':range2,'delta_radius':delta#_radius,
-#               'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'num_theta':num_theta}  
+         _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,
+                'scan_type':scan_type, 'X_axis':X_axis,'X_start':start2,'X_end':end2,
+                'X_centre':centre2,'X_range':range2,'delta_radius':delta_radius,
+                'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,
+                'Y_range':range1,'num_theta':num_theta}  
 
 
          # Define some decorators to perform at each step (table update, plot update etc.)
-         mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,
-                                                                                             end1+step_size1) )
+#         mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,
+#                                                                                             end1+step_size1) )
 
-         @subs_decorator(mesh)
+#         @subs_decorator(mesh)
 
 
          
          def spiral_scan():
-             return(yield from spiral(detectors,scan_motor2,scan_motor1,centre2,centre1,range2,range1,delta_radius,
-                                      num_theta))#,md=_md))
+             return(yield from spiral(detectors,scan_motor2,scan_motor1,centre2,centre1,range2,
+                                      range1,delta_radius,num_theta,md=_md))
 
          uid= yield from spiral_scan()
 
          
     elif fermat_spiral is True:
-#        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
-#               'X_axis':X_axis,'X_start':start2,'X_end':end2,'X_centre':centre2,'X_range':range2,'delta_radius':delta_radius,
-#               'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'num_theta':num_theta}
+        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,
+               'scan_type':scan_type, 'X_axis':X_axis,'X_start':start2,'X_end':end2,
+               'X_centre':centre2,'X_range':range2,'delta_radius':delta_radius,'Y_axis':Y_axis,
+               'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,
+               'num_theta':num_theta}
 
 
         
-        mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,
-                                                                                             end1+step_size1) )
+#        mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,
+#                                                                                             end1+step_size1) )
 
-        @subs_decorator(mesh)
+#        @subs_decorator(mesh)
 
 
         def fermat_scan():
-            return(yield from spiral_fermat(detectors,scan_motor2,scan_motor1,centre2,centre1,range2,range1,delta_radius,
-                                            num_theta/2))#,md=_md))
+            return(yield from spiral_fermat(detectors,scan_motor2,scan_motor1,centre2,centre1,range2,
+                                            range1,delta_radius, num_theta/2,md=_md))
     
         uid= yield from fermat_scan()
 
         
     elif square_spiral is True:
- #       _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
-#               'X_axis':X_axis,'X_start':start2,'X_end':end2,'X_centre':centre2,'X_range':range2,'x_num':steps2,
-#               'Y_axis':Y_axis,'Y_start':start1,'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'y_num':steps1}
+        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,
+               'scan_type':scan_type, 'X_axis':X_axis,'X_start':start2,'X_end':end2,
+               'X_centre':centre2,'X_range':range2,'x_num':steps2, 'Y_axis':Y_axis,'Y_start':start1,
+               'Y_end':end1,'Y_centre':centre1,'Y_range':range1,'y_num':steps1}
 
         
-        mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,
-                                                                                              end1+step_size1) )
+#        mesh = LiveMesh(X_axis,Y_axis,Z_axis, xlim=(start2-step_size2,end2+step_size2), ylim=(start1-step_size1,
+#                                                                                              end1+step_size1) )
 
-        @subs_decorator(mesh)
+#        @subs_decorator(mesh)
 
 
         def square_scan():
-            return(yield from spiral_square(detectors,scan_motor2,scan_motor1,centre2,centre1,range2,range1,
-                                            steps2+1,steps1+1,md=_md))
+            return(yield from spiral_square(detectors,scan_motor2,scan_motor1,centre2,centre1,
+                                            range2,range1, steps2+1,steps1+1,md=_md))
     
         uid= yield from square_scan()
 
 
         
     else:
- #       _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,'scan_type':scan_type,
-#               'X_axis':X_axis,'X_start':start2,'X_stop':stop2,'X_num':steps2+1,'X_delta':step_size2,
-#             'Y_axis':Y_axis,'Y_start':start1,'Y_stop':stop1,'Y_num':steps1+1,'Y_delta':step_size1}
+        _md = {'scan_name':'scan_2D','plot_Xaxis':X_axis,'plot_Yaxis':Y_axis,'plot_Zaxis':Z_axis,
+               'scan_type':scan_type, 'X_axis':X_axis,'X_start':start2,'X_stop':stop2,
+               'X_num':steps2+1,'X_delta':step_size2, 'Y_axis':Y_axis,'Y_start':start1,
+               'Y_stop':stop1,'Y_num':steps1+1,'Y_delta':step_size1}
 
-        grid = LiveGrid( (steps1+1,steps2+1) , Z_axis , ylabel= Y_axis, xlabel= X_axis, extent=(start2-step_size2/2,                                                                                                stop2+step_size2/2,start1-step_size1/2,stop1+step_size1/2),
-                         aspect=(abs( (stop2-start2)/(stop1-start1) ) ) ) 
+#        grid = LiveGrid( (steps1+1,steps2+1) , Z_axis , ylabel= Y_axis, xlabel= X_axis, extent=(start2-step_size2/2,                                                                                                stop2+step_size2/2,start1-step_size1/2,stop1+step_size1/2),
+#                         aspect=(abs( (stop2-start2)/(stop1-start1) ) ) ) 
         
-        @subs_decorator(grid)
+#        @subs_decorator(grid)
         # Define some decorators to perform at each step (table update, plot update etc.)
 
         def outer_prod():
-            return(yield from outer_product_scan(detectors,scan_motor1,start1,stop1,steps1+1,scan_motor2,start2,stop2,
-                                                 steps2+1,snake))#,md=_md))
+            return(yield from outer_product_scan(detectors,scan_motor1,start1,stop1,steps1+1,
+                                                 scan_motor2,start2,stop2, steps2+1,snake,md=_md))
 
         uid=yield from outer_prod()
 
 
     #change the "hints" on the detectors back to the default
-    ESM_setup_hints(detectors,'All','None')
+    ESM_setup_hints(detectors,None,None)
         
     return uid
 
 
         
-def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None,scan_type=None):
-    ''' run a 2D scan using a list of detectors,the detector to "display" must be 1D, or have statistics set up so that 
-        a 1D attribute exists (such as intengrated 'total' intensity) and should be first in the list. It must be the 
-        first detector in the list 'DETS'.
+def scan_ND(DETS, *args,concurrent=False,DET_channel=[[1]],DET_channel_value=None,scan_type=None):
+    ''' Run an ND scan using a list of detectors.
         
+    
+
         PARAMETERS
         ----------
 
         detectors : list  
             A list of detectors to record at each step.
         *args : - 
-           This is a patterned like;
-                      ( ''scan_motor1, start1,end1,step_size1,  scan_motor2, start2,end2,step_size2,snake2    ....... 
-                                scan_motorN, startN,endN,step_sizeN,snake3)   
-                scan_motorX  --  The Xth "motor" to scan which has the form Device.motor (eg. M1D_slit.inboard), the 
-                      first motor is the outer most (slowest) motor and the last is the inner (fastest) motor.
-                startX,endX,step_sizeX  -- The start value, end value and number of steps for the Xth motor, the end 
-                      value will actually be >= to endX, to ensure that the step_size is correct.
-                snakeX  -- For all motors but the first motor there is this 'snake' argument that defines if a winding 
-                      trajectory (min -> max, max -> min, ....) or a left-right trajectory (min -> max, min -> max, ....) 
-                      is to be used. This is 'True' for a winding trajectory and 'False' for a left-right trajectory.
+            This is a patterned like;
+              ( ''scan_motor1, start1,end1,step_size1,  scan_motor2, start2,end2,
+            
+            step_size2,snake2    .......    scan_motorN, startN,endN,step_sizeN,snake3)   
+                
+            scan_motorX  --  The Xth "motor" to scan which has the form Device.motor 
+                               (eg. M1D_slit.inboard), the first motor is the outer most (slowest) 
+                               motor and the last is the inner (fastest) motor.
+            startX,endX,step_sizeX  -- The start value, end value and number of steps for the Xth 
+                                       motor, the end value will actually be >= to endX, to ensure 
+                                       that the step_size is correct.
+            snakeX  -- For all motors but the first motor there is this 'snake' argument that defines 
+                       if a winding trajectory (min -> max, max -> min, ....) or a left-right 
+                       trajectory (min -> max, min -> max, ....) is to be used. This is 'True' for 
+                       a winding trajectory and 'False' for a left-right trajectory.
                                       
     DET_channel : list, optional  
         Optional channel number, for each detector, to plot for multi channel detectors 
@@ -784,29 +818,38 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None
             DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
 
     DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel detectors 
-        (eg. for a camera to plot 'stats1_max_value' use "max"). 
+        Optional channel value, for each detector and channel defined abvoe, to plot for multi 
+        channel detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
             To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 'max', or 'min'.
+            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 
+            'max', or 'min'.
 
         
-        scan_type : string optional.
-            Optional definition of the scan type to include in the metadata, correct use of this will allow searching the 
-            database to be easier (for instance, if all XPS data is given the scan_type 'XPS' then searching the database 
-            based on the keyword scan_type = 'XPS' will return all XPS scans).   
+    scan_type : string optional.
+            Optional definition of the scan type to include in the metadata, correct use of this 
+            will allow searching the database to be easier (for instance, if all XPS data is given 
+            the scan_type 'XPS' then searching the database based on the keyword scan_type = 'XPS' 
+            will return all XPS scans).   
 
-        Concurrent motion : Boolean, optional
-                Optional boolean that allows for the motion of the first and second motors to occur concurrently. This will map 
-                out a 1D line though ND space, with even spaced steps for all axes.
+    Concurrent motion : Boolean, optional
+                Optional boolean that allows for the motion of the first and second motors to occur 
+                concurrently. This will map out a 1D line though ND space, with even spaced steps 
+                for all axes.
 
-                           To use this feature include 'concurrent=True ' after step_size2 in the call. 
-                               NOTE: In this case step_size2 is not used, but a value must be included. the step size of the second 
-                               motor will be determined fro mthe calucalted number of steps for motor one and the range of motor 2.
+                    To use this feature include 'concurrent=True ' after step_size2 in the call. 
+                        NOTE: In this case step_size2 is not used, but a value must be included. 
+                        The step size of the second motor will be determined from the calculated 
+                        number of steps for motor one and the range of motor 2.
                            
                            REQUIRED PARAMETERS FOR THIS OPTION
                                no extra parameters are required.
         '''
-
+    #This section ensures that if DET_channel= list is not defined that it has the same length as
+    #detectors 
+    if len(DET_channel) < len (detectors):
+        for x in range(len(DET_channel),len(detectors)):
+            DET_channel.append([1])
+            
     #change the "hints" on the detectors so that only the relevant info is included
     ESM_setup_hints(detectors,DET_channel,DET_channel_value)
     
@@ -836,23 +879,25 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None
         motor=[motor_list[0]]
         motors_list.append(list(motor)[0].hints['fields'])
         
-        if (  (motor_list[1]<motor_list[2] and motor_list[3]<0) or ( motor_list[1]>motor_list[2] and motor_list[3]>0 )   ):
+        if (  (motor_list[1]<motor_list[2] and motor_list[3]<0) or
+              ( motor_list[1]>motor_list[2] and motor_list[3]>0 )   ):
             motor_list[3]*=-1
-            # ensure that the direction defined by the step_size matches that defined by start and stop.
+        # ensure that the direction defined by the step_size matches that defined by start and stop.
 
         
             
         if concurrent is True:
         #if the scan is an inner product scan.
-            Y_axis = Get_Yaxis_name(detectors[0], DET_channel)
+            Y_axis = Get_Yaxis_name(detectors, DET_channel,DET_channel_value)
             new_args.append(motor_list[0])
             new_args.append(motor_list[1])
             if i == 0:   
                 steps=abs(round((motor_list[2]-motor_list[1])/motor_list[3]))+1
                 stop=motor_list[1]+motor_list[3]*(steps-1)
                 new_args.append(stop)
-                _md.update({'steps':steps,'axis'+str(Dim-i): motor_list[0].name,'start'+str(Dim-i): motor_list[1],
-                            'stop'+str(Dim-i):motor_list[2],'delta'+str(Dim-i):motor_list[3]})
+                _md.update({'steps':steps,'axis'+str(Dim-i): motor_list[0].name,
+                            'start'+str(Dim-i): motor_list[1],'stop'+str(Dim-i):motor_list[2],
+                            'delta'+str(Dim-i):motor_list[3]})
                 X_motors = [motor_list[0]]
             else:
                 step_size=(motor_list[2]-motor_list[1])/(steps-1)
@@ -880,11 +925,13 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None
 
 
     #Setup metadata
-    #This section sets up the metadata that should be included in the experiment file. Users can add/or change the metadata using
-    #the md={'keyword1':'value1','keyword2':'value2',..... } argument. For instance using md={'scan_name':'measurement type'} will
-    #define the scan_name as a particular measurement type.
-    _md.update({'axis'+str(Dim-i): motor_list[0].name,'start'+str(Dim-i): motor_list[1],'stop'+str(Dim-i):motor_list[2],
-                    'num'+str(Dim-i):steps,'delta'+str(Dim-i):motor_list[3]})
+    #This section sets up the metadata that should be included in the experiment file. Users can
+    #add/or change the metadata using the md={'keyword1':'value1','keyword2':'value2',..... }
+    #argument. For instance using md={'scan_name':'measurement type'} will define the scan_name
+    #as a particular measurement type.
+    _md.update({'axis'+str(Dim-i): motor_list[0].name,'start'+str(Dim-i): motor_list[1],
+                'stop'+str(Dim-i):motor_list[2],'num'+str(Dim-i):steps,
+                'delta'+str(Dim-i):motor_list[3]})
       
 
 
@@ -910,13 +957,13 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=None,DET_channel_value=None
 
             
         def outer_prod():
-            return(yield from outer_product_scan(detectors,*new_args))#,md=_md))
+            return(yield from outer_product_scan(detectors,*new_args,md=_md))
 
 
         uid=yield from outer_prod()
 
     #change the "hints" on the detectors back to the default
-    ESM_setup_hints(detectors,'All','None')
+    ESM_setup_hints(detectors,None,None)
         
     return uid
 
