@@ -120,8 +120,10 @@ class Monochromator(Device):
     Grating_Trans = Comp(EpicsMotor,"-Ax:8_GT}Mtr")
     Mirror_Pitch = Comp(EpicsMotor,"-Ax:8_MP}Mtr")
     Mirror_Pitch_off = Comp(EpicsSignal,"-Ax:8_MP}Mtr.OFF")
+    Mirror_Pitch_set = Comp(EpicsSignal,"-Ax:8_MP}Mtr.SET")
     Grating_Pitch = Comp(EpicsMotor,"-Ax:8_GP}Mtr")
     Grating_Pitch_off = Comp(EpicsSignal,"-Ax:8_GP}Mtr.OFF")
+    Grating_Pitch_set = Comp(EpicsSignal,"-Ax:8_GP}Mtr.SET")
     Grating_lines = Comp(EpicsSignal,"}:LINES:SET")
 
 PGM = Monochromator("XF:21IDB-OP{Mono:1",name="PGM")
@@ -326,25 +328,33 @@ class TwoButtonShutter(Device):
         count = 0
         def cmd_retry_cb(value, timestamp, **kwargs):
             nonlocal count
+            
+
             value = cmd_enums[int(value)]
             # ts = datetime.datetime.fromtimestamp(timestamp).strftime(_time_fmtstr)
             # print('sh', ts, val, st)
-            count += 1
-            if count > 1:
-
-                cmd_sig.clear_sub(cmd_retry_cb)
-                st._finished(success=False)
             if value == 'None':
                 if not st.done:
-                    time.sleep(5)
-                    cmd_sig.set(1)
-                    ts = datetime.datetime.fromtimestamp(timestamp).strftime(_time_fmtstr)
-                    print('** ({}) Had to reactuate shutter while {}ing'.format(ts, val))
+                    shutter_cb(self.status.get(as_string=False), timestamp)
+                    if not st.done:
+                        time.sleep(.1)
+
+                        cmd_sig.set(1)
+
+                        count += 1
+                        if count > 1:
+                            cmd_sig.clear_sub(cmd_retry_cb)
+                            st._finished(success=False)
+                    else:
+                        cmd_sig.clear_sub(cmd_retry_cb)                            
+                    
                 else:
                     cmd_sig.clear_sub(cmd_retry_cb)
 
-#        cmd_sig.subscribe(cmd_retry_cb, run=False)
-        cmd_sig.set(1)
+                    
+        cmd_sig.put(1)
+        cmd_sig.subscribe(cmd_retry_cb, run=False)
+
         self.status.subscribe(shutter_cb)
 
 

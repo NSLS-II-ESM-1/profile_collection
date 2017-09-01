@@ -28,8 +28,6 @@ RE.preprocessors.append(sd)
 from bluesky.utils import ProgressBarManager
 pbar_manager = ProgressBarManager()
 RE.waiting_hook = pbar_manager
-# HACK to avoid tqdm race condtion in draw
-RE.waiting_hook.delay_draw = 0
 
 # Register bluesky IPython magics.
 from bluesky.magics import BlueskyMagics

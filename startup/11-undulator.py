@@ -46,14 +46,14 @@ class EPU(Device):
     
 EPU57 = EPU('SR:C21-ID:G1A{EPU:1', name='EPU57')
 EPU57.gap.read_attrs = ['setpoint', 'readback']
-EPU57.gap.readback.name='EPU1_gap'
+EPU57.gap.readback.name='EPU57_gap'
 EPU57.phase.read_attrs = ['setpoint', 'readback']
-EPU57.phase.readback.name='EPU1_phase'
+EPU57.phase.readback.name='EPU57_phase'
 EPU57.hints={'fields':[EPU57.gap.name,EPU57.phase.name]}
 
 EPU105 = EPU('SR:C21-ID:G1B{EPU:2', name='EPU105')
 EPU105.gap.read_attrs = ['setpoint', 'readback']
-EPU105.gap.readback.name='EPU2_gap'
+EPU105.gap.readback.name='EPU105_gap'
 EPU105.phase.read_attrs = ['setpoint', 'readback']
-EPU105.phase.readback.name='EPU2_phase'
+EPU105.phase.readback.name='EPU105_phase'
 EPU105.hints={'fields':[EPU105.gap.name,EPU105.phase.name]}

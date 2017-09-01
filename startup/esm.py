@@ -6,7 +6,7 @@ import scipy.optimize as opt
 import os
 from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
 from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
-from pyOlog.SimpleOlogClient import SimpleOlogClient
+#from pyOlog.SimpleOlogClient import SimpleOlogClient
 #from ophyd import EpicSignal
 from cycler import cycler
 from collections import ChainMap

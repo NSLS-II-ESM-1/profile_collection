@@ -13,6 +13,7 @@ from cycler import cycler
 from collections import ChainMap
 import math
 import re
+from builtins import input as pyinput
 from boltons.iterutils import chunked
 import sys
 ip=IPython.get_ipython()
@@ -36,10 +37,10 @@ class ESM_motion_device:
     def __init__(self,definition_file_path,name):
         '''
         Move a series of motors to one of a series of predefined locations.
-        This plan allows the user to move a series of motors to various locations as described in a .csv setup
-        file. There are a number of attribute functions involved that allow the motors to be moved to
-        the various locations from the current location. As described below, optionally the motion can occur via a
-        transfer location
+        This plan allows the user to move a series of motors to various locations as described in a
+        .csv setup file. There are a number of attribute functions involved that allow the motors to
+        be moved to the various locations from the current location. As described below, optionally 
+        the motion can occur via a transfer location
          
  
         Attribute Parameters and Functions
@@ -419,7 +420,7 @@ class ESM_motion_device:
 
         while True:
             sys.stdout.write(request_str + prompt_str)
-            choice = input().lower()
+            choice = pyinput().lower()
             if choice in valid:
                 return valid[choice]
 
@@ -565,7 +566,14 @@ class ESM_motion_device:
 ## Define the instances of the ESM_device class
 
 #The low temperature manipulator
-LT_manip=ESM_motion_device('/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/LT_manip_definition.csv','LOW TEMPERATURE MANIPULATOR')    
+LT_manip=ESM_motion_device(
+    '/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/LT_manip_definition.csv',
+    'LOW TEMPERATURE MANIPULATOR')    
 
 #The beamline as a whole (swap branches, etc).
-Beamline=ESM_motion_device('/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/Beamline_definition.csv','BEAMLINE')  
+Beamline=ESM_motion_device(
+    '/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/Beamline_definition.csv',
+    'BEAMLINE')  
+
+
+

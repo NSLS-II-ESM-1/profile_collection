@@ -101,10 +101,15 @@ def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,s
     if len(DET_channel) < len (detectors):
         for x in range(len(DET_channel),len(detectors)):
             DET_channel.append([1])
-    
-    #This section determines the Y axis variable to plot for the scan
 
-    Y_axis = Get_Yaxis_name(detectors, DET_channel,DET_channel_value)
+    #change the "hints" on the detectors so that only the relevant info is included in LivePlot
+    #and LiveTable via the builtin bec functionality.
+    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
+
+            
+    #This section determines the Y axis variable to plot for the scan
+    Y_axis = []
+    for DET in detectors:   Y_axis+=DET.hints['fields']
 
     #Setup metadata
     #This section sets up the metadata that should be included in the experiment file.
@@ -112,12 +117,10 @@ def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,s
     #'keyword2':'value2',..... } argument. For instance using md={'scan_type':'measurement type'}
         
     #setup standard metadata
-    _md = {'scan_name':'scan_time','plot_Xaxis':'sequence_no','plot_Yaxis':Y_axis,
+    _md = {'scan_name':'scan_time','plot_Xaxis':'time','plot_Yaxis':Y_axis,
            'scan_type':scan_type,'delay':delay}
 
-    #change the "hints" on the detectors so that only the relevant info is included in LivePlot
-    #and LiveTable via the builtin bec functionality.
-    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
+
       
     uid=yield from count(detectors,num,delay,md=_md)
  
@@ -221,7 +224,8 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=[[1]],DET_c
 
     #This section determines the Y axis and X axis variable names to plot for the scan, this is
     #done to allow for them to be saved to the metadata
-    Y_axis = Get_Yaxis_name(detectors, DET_channel,DET_channel_value)
+    Y_axis = []
+    for DET in detectors:   Y_axis+=DET.hints['fields']
     X_axis = scan_motor.hints['fields']
     motors_list=[X_axis]
     
@@ -377,7 +381,8 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
     
     #This section determines the Y axis variable to plot for the scan defined by the optional input
     #DET_channel (channel 1 is plotted if DET_channel is not specified.)
-    Y_axis = Get_Yaxis_name(detectors, DET_channel, DET_channel_value)
+    Y_axis = []
+    for DET in detectors:   Y_axis+=DET.hints['fields']
     X_axis = scan_motor2.hints['fields']
     motors_list=[X_axis]
     
@@ -669,7 +674,8 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
         
     #This section determines the Z axis variable to plot for the scan.
-    Z_axis = Get_Yaxis_name(detectors, DET_channel,DET_channel_value)
+    Z_axis = []
+    for DET in detectors:   Z_axis+=DET.hints['fields']
     X_axis = scan_motor2.hints['fields']
     Y_axis = scan_motor1.hints['fields']
 
@@ -1672,89 +1678,13 @@ def M1_M3_alignment(Branch='A',mv_optimum=False,return_all=True):
 ###UTILITY FUNCTIONS
 ### These are functions that are used in the scan plans above, but are not independent scan plans themselves. 
 
-def Get_Yaxis_name(detectors, DET_channel, DET_channel_value):
-    '''This Routine is used to determine the Y axis name to use for plotting or saving for a given detector and detector 
-       channel, if the detector is an 2D detector it will plot the integrated total intensity, if it is set up to do so.
-       In this case DET_Channel indicates which stats channel to plot.  
-       It assumes that if the given detector channel is none that the first channel is to be used.
-       
-       REQUIRED PARAMETERS
-           det0  --  This is the detector that is to be used
-           DET_channel  -- This is the detector channel to be used
-   
-    '''
-    name_list=[]
-    for i,DET in enumerate(detectors):
-        if DET_channel is None:
-            plot_target = DET
-            name_list.append(plot_target.name)
-        elif DET_channel[i] is None:
-            plot_target = DET
-            name_list.append(plot_target.name)
-        else:
-            for j,channel in enumerate(DET_channel[i]):
-            
-            # if DET_channel is a number
-                try:
-                    read_chan = [r for r in DET.read_attrs if str(channel) in r]
-                    # attempt to find the detector with the number 'DET_channel' in the name.
-                    #if found save the position to read_chan  
-                except ValueError:
- 
-                    # if the channel number is not found set plot_target to det0
-                    plot_target = DET
-                else:
-                    # if the exception is not found read the attribute name from the channel name
-                    #attributes list
-                    if len(read_chan) == 0:
-                        raise ValueError("channel number does not exist for detector")
-                    else:
-                        if DET_channel_value is None:
-                            plot_target = getattr(DET, read_chan[0])
-                            name_list.append(plot_target.name)
-                        elif DET_channel_value[i] is None:
-                            plot_target = getattr(DET, read_chan[0])
-                            name_list.append(plot_target.name)
-                        elif DET_channel_value[i][j] is None:
-                            plot_target = getattr(DET, read_chan[0])
-                            name_list.append(plot_target.name)
-
-                        else:    
-                            for channel_value in DET_channel_value[i][j]:
-                                if channel_value is None:                      
-                                    plot_target = getattr(DET, read_chan[0])
-                                    name_list.append(plot_target.name)
-                                else:
-                                    channel_target=getattr(DET, read_chan[0])
-                                    try:
-                                        read_chan_val = [r for r in channel_target.read_attrs if
-                                                        str(channel_value) in r]
-                                    except ValueError:
-
-                                        plot_target=channel_target
-
-                                    else:
-                                        #print (read_chan_val)
-                                        plot_target = getattr(channel_target, read_chan_val[0])
-
-                                    name_list.append(plot_target.name)
-
-
-                finally:
-                     pass
-                
-    # finally return the name of the channel associated with plot_target.  
-    return name_list 
-#    return first_key_heuristic(plot_target)
-
-
 
 def ESM_setup_hints(detectors,DET_channel,DET_channel_value):
     '''
     This function is used to set the hints to a sub-set of the total value of possible attributes. 
 
-    This function uses the 'set_primary' attribute of our detectors in order to change the list of attributes in the
-    .hints attribute.
+    This function uses the 'set_primary' attribute of our detectors in order to change the list of 
+    attributes in the .hints attribute.
 
     PARAMETERS:
     -----------
@@ -1766,10 +1696,13 @@ def ESM_setup_hints(detectors,DET_channel,DET_channel_value):
         use DET_channel=[1]). 
 
     DET_channel_value : list 
-        A list of Channel values to plot for each detectors and channel (eg. for a camera to plot 'stats1_max_value' 
-        use DET_channel_value=[["max"]]). Can take the values 'total', 'max' or 'min'.
-            
+        A list of Channel values to plot for each detectors and channel (eg. for a camera to plot 
+        'stats1_max_value' use DET_channel_value=[["max"]]). Can take the values 'total', 'max' 
+        or 'min'.
+
     '''
+
+    
     for i,DET in enumerate(detectors):
         if DET_channel is None:
             DET.set_primary(['All'],value=['All'])
@@ -1778,48 +1711,7 @@ def ESM_setup_hints(detectors,DET_channel,DET_channel_value):
                 DET.set_primary(DET_channel[i],value=None)
             else:
                 DET.set_primary(DET_channel[i],value=DET_channel_value[i])
-    
-
-        
-def ESM_save_csv(uid,Y_axis,motors_list,time=False):
-    ''' Save a 1D scan to an X-Y .csv file, used with 1D detectors and 1D scans.
-         
-         REQUIRED PARAMETERS 
-             uid  -- the unique id number for the scan to find it in the databroker
-             Y_axis -- the name of the field to include in the "Y" wave 
-             motors -- a list of motor readback values that need to be included in the table.         
-
-         OPTIONAL PARAMETERS    
-             time -- optional, indicates if the X axis to save should be time, default is to use the scan motor from the uid.
-    '''
-    if uid is not None:
-    #If the uid has a value then perform the save, otherwise do nothing. This is required to ensure that it does not attempt
-    #to execute when using the "print_summary" call to the plan.
-        hdr=db[uid]
-        #load the header file for the given uid
-        f_nm=str(hdr.start.scan_id)+'.csv'
-        # Define the filen name from the scan id number and the  '.csv' suffix
-        if time:
-            df = hdr.table(fields=[Y_axis])
-            #get the table if the X_axis is to be time.
-        else:
-            motor=motors_list[0]
-            df = hdr.table(fields=motors_list+[Y_axis])                
-            del df['time']
-            #if the X axis is not to be time then find the scan motor name from the uid get the table then delete the time
-            #column
-            cols=df.columns.tolist()
-            m=cols.index(motor)
-            cols.pop(m)
-            cols=[motor]+cols
-            df=df[cols]
-            #move the 'motor' column to the first column in the table.
-
-        f_path="/direct/XF21ID1/csv_files/"+f_nm
-        #Define the path to where the file should be saved.
-        
-        df.to_csv(f_path,index=False)
-        #save the table to the .csv file.
+            
 
 
 def _get_obj_fields(fields):
