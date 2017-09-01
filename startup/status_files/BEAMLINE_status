@@ -1,0 +1,134 @@
+************************************************************
+BEAMLINE STATUS:  Thu 24 Aug 2017 02:05:42 PM EDT
+************************************************************
+
+    EPU1:
+	 EPU1_gap -->  220.021700
+
+    EPU2:
+	 EPU2_gap -->  220.005100
+
+    FEslit:
+	 FEslit_h_center -->  0.200030
+	 FEslit_h_gap -->  1.000060
+	 FEslit_v_center -->  0.100005
+	 FEslit_v_gap -->  1.000010
+
+    M1:
+	 M1_X -->  -3.669700
+	 M1_Ry -->  -3639.533800
+	 M1_Rz -->  5432.125500
+
+    PGM:
+	 PGM_Energy -->  374.019000
+	 PGM_Focus_Const -->  3.239400
+	 PGM_Grating_Trans -->  -205.429000
+
+    M3Udiag:
+	 M3Udiag_trans -->  19.999971
+
+    M3:
+	 M3_X -->  0.250000
+	 M3_Y -->  18.000000
+	 M3_Z -->  0.000000
+	 M3_Rx -->  0.000000
+	 M3_Ry -->  -0.707060
+	 M3_Rz -->  -0.250000
+
+    ExitSlitA:
+	 ExitSlitA_h_gap -->  500.117900
+	 ExitSlitA_v_gap -->  100.052600
+
+    ExitSlitB:
+	 ExitSlitB_h_gap -->  99.949700
+	 ExitSlitB_v_gap -->  19.965800
+
+    BTA2diag:
+	 BTA2diag_trans -->  -59.999959
+
+    BTB2diag:
+	 BTB2diag_trans -->  0.000000
+
+    M4A:
+	 M4A_HFM_X -->  -0.999600
+	 M4A_HFM_Z -->  0.999550
+	 M4A_HFM_Au_Mesh -->  -15.998000
+	 M4A_VFM_Y -->  -2.050000
+	 M4A_VFM_Z -->  0.499650
+	 M4A_VFM_Au_Mesh -->  1.253000
+
+    M4B:
+	 M4B_X -->  -2.975000
+	 M4B_Y -->  0.100000
+	 M4B_Z -->  22.500000
+	 M4B_Rx -->  -0.066855
+	 M4B_Ry -->  -0.171130
+	 M4B_Rz -->  1.245000
+
+************************************************************
+BEAMLINE STATUS:  Thu 24 Aug 2017 02:05:54 PM EDT
+************************************************************
+
+    EPU1:
+	 EPU1_gap -->  220.021700
+
+    EPU2:
+	 EPU2_gap -->  220.005100
+
+    FEslit:
+	 FEslit_h_center -->  0.200010
+	 FEslit_h_gap -->  1.000100
+	 FEslit_v_center -->  0.100005
+	 FEslit_v_gap -->  1.000010
+
+    M1:
+	 M1_X -->  -3.669700
+	 M1_Ry -->  -3639.574000
+	 M1_Rz -->  5432.172400
+
+    PGM:
+	 PGM_Energy -->  374.019100
+	 PGM_Focus_Const -->  3.239400
+	 PGM_Grating_Trans -->  -205.429000
+
+    M3Udiag:
+	 M3Udiag_trans -->  19.999971
+
+    M3:
+	 M3_X -->  0.250000
+	 M3_Y -->  18.000000
+	 M3_Z -->  0.000000
+	 M3_Rx -->  0.000000
+	 M3_Ry -->  -0.707060
+	 M3_Rz -->  -0.250000
+
+    ExitSlitA:
+	 ExitSlitA_h_gap -->  500.117900
+	 ExitSlitA_v_gap -->  100.052600
+
+    ExitSlitB:
+	 ExitSlitB_h_gap -->  99.949700
+	 ExitSlitB_v_gap -->  19.965800
+
+    BTA2diag:
+	 BTA2diag_trans -->  -59.999959
+
+    BTB2diag:
+	 BTB2diag_trans -->  0.000000
+
+    M4A:
+	 M4A_HFM_X -->  -0.999600
+	 M4A_HFM_Z -->  0.999550
+	 M4A_HFM_Au_Mesh -->  -15.998000
+	 M4A_VFM_Y -->  -2.050000
+	 M4A_VFM_Z -->  0.499650
+	 M4A_VFM_Au_Mesh -->  1.253000
+
+    M4B:
+	 M4B_X -->  -2.975000
+	 M4B_Y -->  0.100000
+	 M4B_Z -->  22.500000
+	 M4B_Rx -->  -0.066855
+	 M4B_Ry -->  -0.171130
+	 M4B_Rz -->  1.245000
+
