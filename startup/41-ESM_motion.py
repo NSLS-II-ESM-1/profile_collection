@@ -178,7 +178,26 @@ class ESM_motion_device:
 
         return locations_list
         
+    def detectors(self):
+        ''' 
+        Reads through data_dict file and generates a list of 'detector channels'. 
         
+        This function sorts through data_dict and generates a list of detector channel names. This is done assuming
+        that only the detectors in data_dict do not have the suffixare in list form in the column 
+        'detector_list_info'.
+
+        PARAMETERS
+        ----------
+
+        detector_list : 
+            The output list that contains the detector channel names.
+ 
+        '''
+
+        #define the output list
+        detector_list = (self.data_dict[list(self.data_dict.keys())[0]]['detector_list_info'] ).split(',')
+
+        return detector_list
     
     def axes(self):
         ''' 
@@ -355,16 +374,32 @@ class ESM_motion_device:
             a dictionary of axes names and positions.
  
         '''
+        #define the dictionary of motion axes for the current instance.
+        detectors_list=self.detectors()
 
+        temp_list=detectors_list
+
+        det_status_dict={}
+        
+        exit_val=0
+        #continue looping over the list of remaining axes until none exist.
+        while len(temp_list)>0 and exit_val<=20:
+            device_name,_,channel = temp_list[0].partition('_')
+            temp_detector_list = list(det for det in temp_list if det.startswith(device_name) )
+
+            det_status_dict[device_name]=temp_detector_list
+                
+            temp_list = list(det for det in temp_list if not det.startswith(device_name) )
+            exit_val+=1
+            
 
         #define the dictionary of motion axes for the current instance.
         axis_list=self.axes()
-        axis_dict=self.axes_dict(self.locations()[0])
 
         temp_list=axis_list
 
         status_dict={}
-     
+        
         exit_val=0
         #continue looping over the list of remaining axes until none exist.
         while len(temp_list)>0 and exit_val<=20:
@@ -375,11 +410,22 @@ class ESM_motion_device:
                 
             temp_list = list(key for key in temp_list if not key.startswith(device_name) )
             exit_val+=1
+            
 
         f_string='************************************************************\n'
         f_string+=self.name+' STATUS:  '+time.strftime("%c") + '\n'
         f_string+='************************************************************\n\n'
 
+        #step through the detectors and read the values.
+        for key in list(det_status_dict.keys()):
+            f_string+='    '+key+':\n'
+            key_dict = det_status_dict[key]
+            for det in key_dict:
+                obj,_,attr = det.partition('_')
+                f_string+='\t '+det+' -->  %f\n' % getattr(ip.user_ns[obj],attr).value
+            f_string+='\n'           
+            
+        # step through the detectors and read the values
         for key in list(status_dict.keys()):
             f_string+='    '+key+':\n'
             key_dict = status_dict[key]
@@ -432,8 +478,9 @@ class ESM_motion_device:
         ''' 
         moves the manipulator to the position given by "location"
         
-        This function moves the manipulator to the location defined by "location". it returns and error 
-        message indicating if the sample transfer was succesful, and if not what went wrong.
+        This function moves the manipulator to the location defined by "location". it returns 
+        and error message indicating if the sample transfer was succesful, and if not what 
+        went wrong.
 
         PARAMETERS
         ----------

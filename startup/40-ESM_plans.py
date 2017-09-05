@@ -60,7 +60,7 @@ from boltons.iterutils import chunked
 ###These scans are used to scan over time.
 
 
-def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,scan_type=None):
+def scan_time(DETS_str,num=1,delay=0,scan_type=None):
     '''
     Scan over time
     
@@ -68,26 +68,32 @@ def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,s
     table. 
     PARAMETERS
     ----------
-    detectors : list
-        A list of detectors to record at each step.
+    DETS_str : str
+        The input string that is to be "unpacked" into a channel list. This needs to have the 
+                format definitions: 
+                    - DETX is the name of 'Xth' detector.
+                    - every '@' symbol defines a new channel number for the preceeding detector.
+                    - ChX is the channel number of the 'Xth' channel.
+                    -    if ChX is 0 then it returns no channels for this detector.
+                    -    if ChX is -1 then it returns all channels for this detector.
+                    - every '-' symbol defines a new value for the preceeding channel number.
+                    - ValX is the name of the 'Xth' value, and can be 'total', 'max' or 'min'.
+
+                format1:  'DET1@Ch1-Val1-Val2-...@Ch2-Val1-...., DET2@Ch1-Val1-...@.... ,....'
+                    If no '@' is present for a detector then it reverts to the default of channel 1.
+                    If no '-' is present it reverts to the default 'Total'.
+
+                format2: 'DET1,    DET2    ,......,   @Ch1-val1-val2-...@Ch2-val2-...@...'
+                    This returns The channels and values defined by the last list entry for all 
+                    detectors.
+                    If no '-' is present it reverts to the default 'Total'.       
+
     num : number, optional
         Optional input of the number of points to take, default is 1. To capture until stopped using 
         'ctrl-C' set 'num = None'
+
     delay : number, optional  
         Optional delay time between succesive readings, default is 0.
-    DET_channel : list, optional  
-        Optional channel number, for each detector, to plot for multi channel detectors 
-        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
-            To use this option in the scan call you need to place ',
-
-            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
-
-    DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi 
-        channel detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
-            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...]] where "*_val" is 'total'
-            , 'max', or 'min'.
 
     scan_type : string, optional 
         Optional definition of the scan type to include in the metadata, correct use of this will 
@@ -95,22 +101,21 @@ def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,s
         scan_type 'XPS' then searching the database based on the keyword scan_type = 'XPS' will 
         return all XPS scans).
      '''
-    #This section ensures that if DET_channel= list is not defined that it has the same length as
-    #detectors 
- 
-    if len(DET_channel) < len (detectors):
-        for x in range(len(DET_channel),len(detectors)):
-            DET_channel.append([1])
+
 
     #change the "hints" on the detectors so that only the relevant info is included in LivePlot
     #and LiveTable via the builtin bec functionality.
-    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
-
+    DETS=ESM_setup_hints(DETS_str)
+    detectors=[]
+    for DET in DETS.split(','): detectors.append(ip.user_ns[DET])
             
     #This section determines the Y axis variable to plot for the scan
     Y_axis = []
-    for DET in detectors:   Y_axis+=DET.hints['fields']
 
+    for DET in DETS.split(','):   Y_axis+=ip.user_ns[DET].hints['fields']
+
+
+    
     #Setup metadata
     #This section sets up the metadata that should be included in the experiment file.
     #Users can add/or change the metadata using the md={'keyword1':'value1',
@@ -120,12 +125,11 @@ def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,s
     _md = {'scan_name':'scan_time','plot_Xaxis':'time','plot_Yaxis':Y_axis,
            'scan_type':scan_type,'delay':delay}
 
-
       
     uid=yield from count(detectors,num,delay,md=_md)
  
     #change the "hints" on the detectors back to the default
-    ESM_setup_hints(detectors,None,None)
+    DETS=ESM_setup_hints(DETS+',@-1')
 
     return uid
     
@@ -136,8 +140,7 @@ def scan_time(detectors,num=1,delay=0,DET_channel=[[1]],DET_channel_value=None,s
 ###   via bluesky.
 
 
-def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=[[1]],DET_channel_value=None,
-            scan_type=None,adaptive=None):
+def scan_1D(DETS_str, scan_motor, start, end ,step_size,scan_type=None,adaptive=None):
 
     ''' 
     scan over a single axis taking a list of detectors at each point.
@@ -146,8 +149,26 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=[[1]],DET_c
         
     PARAMETERS
     ----------   
-    detectors : list  
-        A list of detectors to record at each step.
+    DETS_str : str
+        The input string that is to be "unpacked" into a channel list. This needs to have the 
+                format definitions: 
+                    - DETX is the name of 'Xth' detector.
+                    - every '@' symbol defines a new channel number for the preceeding detector.
+                    - ChX is the channel number of the 'Xth' channel.
+                    -    if ChX is 0 then it returns no channels for this detector.
+                    -    if ChX is -1 then it returns all channels for this detector.
+                    - every '-' symbol defines a new value for the preceeding channel number.
+                    - ValX is the name of the 'Xth' value, and can be 'total', 'max' or 'min'.
+
+                format1:  'DET1@Ch1-Val1-Val2-...@Ch2-Val1-...., DET2@Ch1-Val1-...@.... ,....'
+                    If no '@' is present for a detector then it reverts to the default of channel 1.
+                    If no '-' is present it reverts to the default 'Total'.
+
+                format2: 'DET1,    DET2    ,......,   @Ch1-val1-val2-...@Ch2-val2-...@...'
+                    This returns The channels and values defined by the last list entry for all 
+                    detectors.
+                    If no '-' is present it reverts to the default 'Total'.   
+
     scan_motor : motor  
         The "motor" to scan which has the form Device.motor (eg. M1D_slit.inboard)
     start : number
@@ -157,22 +178,6 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=[[1]],DET_c
         step size.    
     step_size : number
         The step size for the scan axis
-
-    DET_channel : list, optional  
-        Optional channel number, for each detector, to plot for multi channel detectors 
-        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
-            To use this option in the scan call you need to place ',
-
-            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
-
-    DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel
-        detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
-            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 
-            max', or 'min'.
-
-
     scan_type : string, optional
         Optional definition of the scan type to include in the metadata, correct use of this will 
         allow searching the database to be easier (for instance, if all XPS data is given the 
@@ -203,16 +208,12 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=[[1]],DET_c
                                                (default is 0.8).  
                            
      '''
-    #This section ensures that if DET_channel= list is not defined that it has the same length as
-    #detectors 
-    if len(DET_channel) < len (detectors):
-        for x in range(len(DET_channel),len(detectors)):
-            DET_channel.append([1])
-
 
     #change the "hints" on the detectors so that only the relevant info is included in LivePlot
     #and LiveTable
-    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
+    DETS=ESM_setup_hints(DETS_str)
+    detectors=[]
+    for DET in DETS.split(','): detectors.append(ip.user_ns[DET])
 
     # This section determines the no of steps to include in order to get as close as possible to
     #the endpoint specified.
@@ -225,7 +226,7 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=[[1]],DET_c
     #This section determines the Y axis and X axis variable names to plot for the scan, this is
     #done to allow for them to be saved to the metadata
     Y_axis = []
-    for DET in detectors:   Y_axis+=DET.hints['fields']
+    for DET in DETS.split(','):   Y_axis+=ip.user_ns[DET].hints['fields']
     X_axis = scan_motor.hints['fields']
     motors_list=[X_axis]
     
@@ -252,7 +253,7 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=[[1]],DET_c
     uid=yield from inner()
 
     #change the "hints" on the detectors back to the default
-    ESM_setup_hints(detectors,None,None)
+    DETS=ESM_setup_hints(DETS+',@-1')
     
     return uid
 
@@ -264,18 +265,33 @@ def scan_1D(detectors, scan_motor, start, end ,step_size,DET_channel=[[1]],DET_c
 ###   "set" via bluesky.
 
 
-def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2,
-                  step_size2,snake=False,DET_channel=[[1]],DET_channel_value=None,scan_type=None,
-                  adaptive=None):
+def scan_multi_1D(DETS_str, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2,
+                  step_size2,snake=False,scan_type=None,adaptive=None):
     ''' 
     Run a series of 1D scans over a second motor (each line saved seperately). 
     
     Run a 2D scan using a list of detectors, having each step as a new file.
     PARAMETERS
     ----------
+    DETS_str : str
+        The input string that is to be "unpacked" into a channel list. This needs to have the 
+                format definitions: 
+                    - DETX is the name of 'Xth' detector.
+                    - every '@' symbol defines a new channel number for the preceeding detector.
+                    - ChX is the channel number of the 'Xth' channel.
+                    -    if ChX is 0 then it returns no channels for this detector.
+                    -    if ChX is -1 then it returns all channels for this detector.
+                    - every '-' symbol defines a new value for the preceeding channel number.
+                    - ValX is the name of the 'Xth' value, and can be 'total', 'max' or 'min'.
 
-    detectors : list 
-        A list of detectors to record at each step
+                format1:  'DET1@Ch1-Val1-Val2-...@Ch2-Val1-...., DET2@Ch1-Val1-...@.... ,....'
+                    If no '@' is present for a detector then it reverts to the default of channel 1.
+                    If no '-' is present it reverts to the default 'Total'.
+
+                format2: 'DET1,    DET2    ,......,   @Ch1-val1-val2-...@Ch2-val2-...@...'
+                    This returns The channels and values defined by the last list entry for all 
+                    detectors.
+                    If no '-' is present it reverts to the default 'Total'.   
 
     scan_motor1 : motor
         The outer "motor" to scan (which is different for each file) which has the form Device.motor 
@@ -300,21 +316,6 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
         and from end2 to start2 on odd runs. 
                 To use this option in the scan you need to place ',snake=True' after steps in the scan 
                 call.                          
-
-    DET_channel : list, optional  
-        Optional channel number, for each detector, to plot for multi channel detectors 
-        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
-            To use this option in the scan call you need to place ',
-
-            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
-
-    DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel
-        detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
-            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total',
-            'max', or 'min'.
-
 
     scan_type : string, optional
         Optional definition of the scan type to include in the metadata, correct use of this will 
@@ -346,17 +347,11 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
                                threshold               : Is a threshold for going back and rescanning 
                                                          a region (default is 0.8).  
         '''
-    #This section ensures that if DET_channel= list is not defined that it has the same length as
-    #detectors 
-    if len(DET_channel) < len (detectors):
-        for x in range(len(DET_channel),len(detectors)):
-            DET_channel.append([1])
-
-        
 
     #change the "hints" on the detectors so that only the relevant info is included
-    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
-    
+    DETS=ESM_setup_hints(DETS_str)
+    detectors=[]
+    for DET in DETS.split(','): detectors.append(ip.user_ns[DET])    
 
     # This section determines the no of steps to include in order to get as close as possible to the
     #endpoint specified.
@@ -382,7 +377,7 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
     #This section determines the Y axis variable to plot for the scan defined by the optional input
     #DET_channel (channel 1 is plotted if DET_channel is not specified.)
     Y_axis = []
-    for DET in detectors:   Y_axis+=DET.hints['fields']
+    for DET in DETS.split(','):   Y_axis+=ip.user_ns[DET].hints['fields']
     X_axis = scan_motor2.hints['fields']
     motors_list=[X_axis]
     
@@ -436,21 +431,39 @@ def scan_multi_1D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, 
            initial_uid = uid
 
     #change the "hints" on the detectors back to the default
-    ESM_setup_hints(detectors,None,None)
+    DETS=ESM_setup_hints(DETS+',@-1')
        
     return initial_uid
 
        
-def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2, step_size2,
+def scan_2D(DETS_str, scan_motor1, start1, end1, step_size1,scan_motor2, start2, end2, step_size2,
             snake=False,concurrent=False,normal_spiral=False,fermat_spiral=False,
-            square_spiral=False, DET_channel=[[1]],DET_channel_value=None,scan_type=None):
+            square_spiral=False,scan_type=None):
     '''
     Run a 2D scan using a list of detectors.
         
     PARAMETERS
     ----------
 
-    detectors : list 
+    DETS_str : str
+        The input string that is to be "unpacked" into a channel list. This needs to have the 
+                format definitions: 
+                    - DETX is the name of 'Xth' detector.
+                    - every '@' symbol defines a new channel number for the preceeding detector.
+                    - ChX is the channel number of the 'Xth' channel.
+                    -    if ChX is 0 then it returns no channels for this detector.
+                    -    if ChX is -1 then it returns all channels for this detector.
+                    - every '-' symbol defines a new value for the preceeding channel number.
+                    - ValX is the name of the 'Xth' value, and can be 'total', 'max' or 'min'.
+
+                format1:  'DET1@Ch1-Val1-Val2-...@Ch2-Val1-...., DET2@Ch1-Val1-...@.... ,....'
+                    If no '@' is present for a detector then it reverts to the default of channel 1.
+                    If no '-' is present it reverts to the default 'Total'.
+
+                format2: 'DET1,    DET2    ,......,   @Ch1-val1-val2-...@Ch2-val2-...@...'
+                    This returns The channels and values defined by the last list entry for all 
+                    detectors.
+                    If no '-' is present it reverts to the default 'Total'.       detectors : list 
         A list of detectors to record at each step
 
     scan_motor1 : motor
@@ -475,21 +488,6 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
         Optional snake value (ie. have the scan move the scan_motor2 from start2 to end2 on even runs 
         and from end2 to start2 on odd runs. 
             To use this option in the scan you need to place ',snake=True' after steps in the scan call.                          
-    DET_channel : list, optional  
-        Optional channel number, for each detector, to plot for multi channel detectors 
-        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
-            To use this option in the scan call you need to place ',
-
-            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
-
-    DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi channel
-        detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
-            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 
-            'max', or 'min'.
-
-
 
     scan_type : string, optional
         Optional definition of the scan type to include in the metadata, correct use of this will 
@@ -613,16 +611,12 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
  
         '''
-
-    #This section ensures that if DET_channel= list is not defined that it has the same length as
-    #detectors 
-    if len(DET_channel) < len (detectors):
-        for x in range(len(DET_channel),len(detectors)):
-            DET_channel.append([1])
         
     #change the "hints" on the detectors so that only the relevant info is included
-    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
-
+    DETS=ESM_setup_hints(DETS_str)
+    detectors=[]
+    for DET in DETS.split(','): detectors.append(ip.user_ns[DET])
+    
     # This section determines the no of steps to include in order to get as close as possible to the
     #endpoint specified.
     if(  ( start1<end1 and step_size1<0 ) or ( start1>end1 and step_size1>0 )   ):
@@ -675,7 +669,7 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
         
     #This section determines the Z axis variable to plot for the scan.
     Z_axis = []
-    for DET in detectors:   Z_axis+=DET.hints['fields']
+    for DET in DETS.split(','):   Z_axis+=ip.user_ns[DET].hints['fields']
     X_axis = scan_motor2.hints['fields']
     Y_axis = scan_motor1.hints['fields']
 
@@ -783,13 +777,13 @@ def scan_2D(detectors, scan_motor1, start1, end1, step_size1,scan_motor2, start2
 
 
     #change the "hints" on the detectors back to the default
-    ESM_setup_hints(detectors,None,None)
+    DETS=ESM_setup_hints(DETS+",@-1")
         
     return uid
 
 
         
-def scan_ND(DETS, *args,concurrent=False,DET_channel=[[1]],DET_channel_value=None,scan_type=None):
+def scan_ND(DETS_str, *args,concurrent=False,scan_type=None):
     ''' Run an ND scan using a list of detectors.
         
     
@@ -797,8 +791,25 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=[[1]],DET_channel_value=Non
         PARAMETERS
         ----------
 
-        detectors : list  
-            A list of detectors to record at each step.
+    DETS_str : str
+        The input string that is to be "unpacked" into a channel list. This needs to have the 
+                format definitions: 
+                    - DETX is the name of 'Xth' detector.
+                    - every '@' symbol defines a new channel number for the preceeding detector.
+                    - ChX is the channel number of the 'Xth' channel.
+                    -    if ChX is 0 then it returns no channels for this detector.
+                    -    if ChX is -1 then it returns all channels for this detector.
+                    - every '-' symbol defines a new value for the preceeding channel number.
+                    - ValX is the name of the 'Xth' value, and can be 'total', 'max' or 'min'.
+
+                format1:  'DET1@Ch1-Val1-Val2-...@Ch2-Val1-...., DET2@Ch1-Val1-...@.... ,....'
+                    If no '@' is present for a detector then it reverts to the default of channel 1.
+                    If no '-' is present it reverts to the default 'Total'.
+
+                format2: 'DET1,    DET2    ,......,   @Ch1-val1-val2-...@Ch2-val2-...@...'
+                    This returns The channels and values defined by the last list entry for all 
+                    detectors.
+                    If no '-' is present it reverts to the default 'Total'.   
         *args : - 
             This is a patterned like;
               ( ''scan_motor1, start1,end1,step_size1,  scan_motor2, start2,end2,
@@ -815,21 +826,6 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=[[1]],DET_channel_value=Non
                        if a winding trajectory (min -> max, max -> min, ....) or a left-right 
                        trajectory (min -> max, min -> max, ....) is to be used. This is 'True' for 
                        a winding trajectory and 'False' for a left-right trajectory.
-                                      
-    DET_channel : list, optional  
-        Optional channel number, for each detector, to plot for multi channel detectors 
-        (eg. for qem to plot 'qem01_current1_mean_value' use 1). 
-            To use this option in the scan call you need to place ',
-
-            DET_channel=[[det1_x1,det1_x2...],[det2_x1...],...]' after 'steps' in the scan call
-
-    DET_channel_value : list, optional 
-        Optional channel value, for each detector and channel defined abvoe, to plot for multi 
-        channel detectors (eg. for a camera to plot 'stats1_max_value' use "max"). 
-            To use this option in the scan call you need to place ',DET_channel=x' after 'steps'  and 
-            DET_channel=[[det1_x1_val,det1_x2_val...],[det2_x1_val...],...] where "*_val" is 'total', 
-            'max', or 'min'.
-
         
     scan_type : string optional.
             Optional definition of the scan type to include in the metadata, correct use of this 
@@ -850,14 +846,11 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=[[1]],DET_channel_value=Non
                            REQUIRED PARAMETERS FOR THIS OPTION
                                no extra parameters are required.
         '''
-    #This section ensures that if DET_channel= list is not defined that it has the same length as
-    #detectors 
-    if len(DET_channel) < len (detectors):
-        for x in range(len(DET_channel),len(detectors)):
-            DET_channel.append([1])
-            
+
     #change the "hints" on the detectors so that only the relevant info is included
-    ESM_setup_hints(detectors,DET_channel,DET_channel_value)
+    DETS=ESM_setup_hints(DETS_str)
+    detectors=[]
+    for DET in DETS.split(','): detectors.append(ip.user_ns[DET])
     
     args = list(args)
     #turn the *args entry itno a list
@@ -894,7 +887,7 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=[[1]],DET_channel_value=Non
             
         if concurrent is True:
         #if the scan is an inner product scan.
-            Y_axis = Get_Yaxis_name(detectors, DET_channel,DET_channel_value)
+            for DET in DETS.split(','):   Y_axis+=ip.user_ns[DET].hints['fields']
             new_args.append(motor_list[0])
             new_args.append(motor_list[1])
             if i == 0:   
@@ -969,7 +962,7 @@ def scan_ND(DETS, *args,concurrent=False,DET_channel=[[1]],DET_channel_value=Non
         uid=yield from outer_prod()
 
     #change the "hints" on the detectors back to the default
-    ESM_setup_hints(detectors,None,None)
+    DETS=ESM_setup_hints(DETS+',@-1')
         
     return uid
 
@@ -1679,7 +1672,7 @@ def M1_M3_alignment(Branch='A',mv_optimum=False,return_all=True):
 ### These are functions that are used in the scan plans above, but are not independent scan plans themselves. 
 
 
-def ESM_setup_hints(detectors,DET_channel,DET_channel_value):
+def ESM_setup_hints(DETS_str):
     '''
     This function is used to set the hints to a sub-set of the total value of possible attributes. 
 
@@ -1688,30 +1681,61 @@ def ESM_setup_hints(detectors,DET_channel,DET_channel_value):
 
     PARAMETERS:
     -----------
-    detectors : list
-        A list of detectors
+     DETS_str : str
+            The input string that is to be "unpacked" into a channel list. This needs to have the 
+                format definitions: 
+                    - DETX is the name of 'Xth' detector.
+                    - every '@' symbol defines a new channel number for the preceeding detector.
+                    - ChX is the channel number of the 'Xth' channel.
+                    -    if ChX is 0 then it returns no channels for this detector.
+                    -    if ChX is -1 then it returns all channels for this detector.
+                    - every '-' symbol defines a new value for the preceeding channel number.
+                    - ValX is the name of the 'Xth' value, and can be 'total', 'max' or 'min'.
 
-    DET_channel : list
-        Channel numbers to plot for each detectors (eg. for qem to plot 'qem01_current1_mean_value' 
-        use DET_channel=[1]). 
+                format1:  'DET1@Ch1-Val1-Val2-...@Ch2-Val1-...., DET2@Ch1-Val1-...@.... ,....'
+                    If no '@' is present for a detector then it reverts to the default of channel 1.
+                    If no '-' is present it reverts to the default 'Total'.
 
-    DET_channel_value : list 
-        A list of Channel values to plot for each detectors and channel (eg. for a camera to plot 
-        'stats1_max_value' use DET_channel_value=[["max"]]). Can take the values 'total', 'max' 
-        or 'min'.
+                format2: 'DET1,    DET2    ,......,   @Ch1-val1-val2-...@Ch2-val2-...@...'
+                    This returns The channels and values defined by the last list entry for all 
+                    detectors.
+                    If no '-' is present it reverts to the default 'Total'.               
 
+  
+    DETS : Str, output
+        An output string that returns a list of detectors from the list 
     '''
-
+    #create the empty DETS list.
+    DETS=""
     
-    for i,DET in enumerate(detectors):
-        if DET_channel is None:
-            DET.set_primary(['All'],value=['All'])
-        else:
-            if DET_channel_value is None:
-                DET.set_primary(DET_channel[i],value=None)
-            else:
-                DET.set_primary(DET_channel[i],value=DET_channel_value[i])
+    #split the detectors str into a list of detector strs
+    DET_list=DETS_str.split(',')
+
+    if DET_list[-1].startswith('@'):
+        #if the detector list is of format 2 type.
+        Channel_list=DET_list[-1]    
+        DET_list=DET_list[:-1]     
+
+        #set the hints to the unpacked detector list.
+        for i, DET_str in enumerate(DET_list):
+            if i > 0:
+                DETS+=','
+            DETS+=DET_str.partition('@')[0]
+            ip.user_ns[DET_str].hints={'fields':channel_list_unpack(DET_str+Channel_list)}
+        
+        
+    else:
+        #if the detector list is of format 1 type.
+        
+        #set the hints to the unpacked detector list.
+        for i,DET_str in enumerate(DET_list):
+            if i > 0:
+                DETS+=','
+            DETS+=DET_str.partition('@')[0]
+            ip.user_ns[DET_str.partition('@')[0]].hints={'fields':channel_list_unpack(DET_str)}
             
+    return DETS
+
 
 
 def _get_obj_fields(fields):

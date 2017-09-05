@@ -198,7 +198,7 @@ class ESMSlit_type2(Device):
     h_scan = Comp(EpicsMotor,"-Ax:HS}Mtr")
     h_apperture = Comp(EpicsMotor,"-Ax:HA}Mtr")
     v_scan = Comp(EpicsMotor,"-Ax:VS}Mtr")
-    v_aperture = Comp(EpicsMotor,"-Ax:VA}Mtr")
+    v_apperture = Comp(EpicsMotor,"-Ax:VA}Mtr")
     h_gap = Comp(EpicsMotor,"-Ax:HG}Mtr")
     h_center = Comp(EpicsMotor,"-Ax:HC}Mtr")
     v_gap = Comp(EpicsMotor,"-Ax:VG}Mtr")
