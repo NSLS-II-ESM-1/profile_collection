@@ -645,9 +645,9 @@ def esm_grt(grt, ph_en, branch = 'A', EPU = 57):
         yield from mv(PGM.Focus_Const, c[GRT_name], PGM.Energy, ph_en )       # sets c and photon energy using the software of the PGM (this is necessary to set the experimental c) 
 
         if (EPU == 105):
-            yield from mv(EPU2.gap, GAP_105(ph_en) )       # sets EPU2 (i.e. EPU105) gap according to experimental table 
+            yield from mv(EPU105.gap, GAP_105(ph_en) )       # sets EPU2 (i.e. EPU105) gap according to experimental table 
         if (EPU == 57):
-            yield from mv(EPU1.gap, GAP_57(ph_en) )        # sets EPU1 (i.e. EPU57) gap according to experimental table 
+            yield from mv(EPU57.gap, GAP_57(ph_en) )        # sets EPU1 (i.e. EPU57) gap according to experimental table 
         
         sh_open()
         

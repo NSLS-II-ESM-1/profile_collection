@@ -56,7 +56,7 @@ BlueskyMagics.positioners = [EPU57.gap,EPU57.phase,EPU105.gap,EPU105.phase
 #The following set of commands is used to define the suspenders used for each scan.
 
 #Suspender for beam current.
-suspender_beam_current = SuspendFloor(EpicsSignalRO('SR:OPS-BI{DCCT:1}I:Real-I'), 1.0)
+suspender_beam_current = SuspendFloor(EpicsSignalRO('SR:OPS-BI{DCCT:1}I:Real-I'), 0.0)
 RE.install_suspender(suspender_beam_current)
 
 

@@ -380,8 +380,9 @@ class ESM_monochromator_device:
         '''
         This routine is used to change the grating and M2 mirror offsets using set.
    
-        Given a set of grating and mirror offsets this routine updates the offset PV's but first
-        setting the calibration PV to "set" then returning it to 'use' afterwards.
+        Given a set of grating offset,mirror offset and the number of line per mm used by the PGM software 
+        this routine updates the offset PV's but first setting the calibration PV to "set" then returning 
+        it to 'use' afterwards.
 
         PARAMETERS
         ----------
@@ -398,13 +399,14 @@ class ESM_monochromator_device:
 
         yield from mv(PGM.Mirror_Pitch_off, float(self.M2_Offset[branch][grating]) ,
                       PGM.Grating_Pitch_off, float(self.Grt_Offset[branch][grating]))
-
+#                      PGM.Grating_lines,grating )
+        os.system('caput XF:21IDB-OP{Mono:1}:LINES:SET ' + grating)  # tells to the PGM software which grating 
         yield from mv(PGM.Mirror_Pitch_set, 0 , PGM.Grating_Pitch_set, 0)
 
         return
 
                 
-    def move_to(self,photon_energy,grating='800',branch='A',EPU='EPU57'):
+    def move_to(self,photon_energy,grating='800',branch='A',EPU='EPU57',c='constant'):
         ''' 
         Sets the monochromator and undulator to the correct values for the given photon energy 
         
@@ -425,6 +427,10 @@ class ESM_monochromator_device:
 
         EPU : str
             The undulator to use, can be EPU57 (default, high energy) or EPU105(low energy).
+
+        c : str, optional
+            This is an optional call to define if the c value should be calculated or if the pre-defined
+            dictionary should be used.
 
         '''
 
@@ -448,17 +454,25 @@ class ESM_monochromator_device:
                                PGM.Mirror_Pitch.position)/1  ),
                     round( abs(self.PGM_angles(photon_energy,grating,EPU=EPU)['beta']-
                         PGM.Grating_Pitch.position)/2  )))
-
+        if n_steps == 0: n_steps = 1
         # divide the range of motion of M2 and the grating into 'n_steps' even steps
-        M2_steps=np.linspace(PGM.Mirror_Pitch.position,
-                             self.PGM_angles(photon_energy,grating,EPU=EPU)['gamma'], num=n_steps)  
-        GRT_steps=np.linspace(PGM.Grating_Pitch.position,
-                              self.PGM_angles(photon_energy,grating,EPU=EPU)['beta'], num=n_steps) 
 
+        if c=='calc':
+            c_val = None
+        else:
+            c_val= self.c_value[branch][grating]
+
+        M2_steps=np.linspace(PGM.Mirror_Pitch.position,
+                             self.PGM_angles(photon_energy,grating,EPU=EPU,
+                                             c=c_val)['gamma'], num=n_steps)  
+        GRT_steps=np.linspace(PGM.Grating_Pitch.position,
+                              self.PGM_angles(photon_energy,grating,EPU=EPU,
+                                              c=c_val)['beta'], num=n_steps) 
         for i in range(n_steps):   # set position of M2 pitch and GRT pitch step by step.
             yield from mv(PGM.Mirror_Pitch, M2_steps[i],    PGM.Grating_Pitch, GRT_steps[i])              
         
-        yield from mv(PGM.Focus_Const, self.PGM_angles(photon_energy,grating,EPU=EPU)['c']
+        yield from mv(PGM.Focus_Const, self.PGM_angles(photon_energy,grating,EPU=EPU,
+                                                       c=c_val)['c']
                       , PGM.Energy, photon_energy,
                       getattr(ip.user_ns[EPU],'gap'),self.Und_e2g(photon_energy,EPU=EPU) )
             
