@@ -71,8 +71,7 @@ class Source(Device):
         Yoffset=Comp(EpicsSignalRO,'C31-{AI}Aie21:Offset-y-Cal')
         Yangle=Comp(EpicsSignalRO,'C31-{AI}Aie21:Angle-y-Cal')
         
-#        self.hints = {'fields': [self.name+'_Current',
-#                                 self.name+'_Xoffset',self.name+'_Xangle',
-#                                 self.name+'_Yoffset',self.name+'_Yangle' ] }
 
 BeamSource = Source('SR:',name='BeamSource')
+BeamSource.hints = {'fields': ['BeamSource_Current','BeamSource_Xoffset','BeamSource_Xangle',
+                                 'BeamSource_Yoffset','BeamSource_Yangle' ] }
