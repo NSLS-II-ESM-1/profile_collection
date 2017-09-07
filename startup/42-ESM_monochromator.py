@@ -336,18 +336,20 @@ class ESM_monochromator_device:
         if (self.Range[grating][0]> photon_energy) or (self.Range[grating][1]< photon_energy):
             raise RuntimeError('photon energy out of range for grating,'+
                                'use Eph.Range to determine the correct grating and EPU')
-
-        if (self.Range[EPU][0]> photon_energy) or (self.Range[EPU][1]< photon_energy):
-            raise RuntimeError('photon energy out of range for undulator,'+
-                               'use Eph.Range to determine the correct grating and EPU')
+        if not EPU == None:
+            if (self.Range[EPU][0]> photon_energy) or (self.Range[EPU][1]< photon_energy):
+                raise RuntimeError('photon energy out of range for undulator,'+
+                                   'use Eph.Range to determine the correct grating and EPU')
         
         
         if EPU == 'EPU57':
             ra = 42302.0 #in mm  DISTANCE MONO TO EPU57
         elif EPU == 'EPU105':
             ra = 40000.0 #in mm  DISTANCE MONO TO EPU105
+        elif EPU == None:
+            ra = 40000.0 #in mm  DISTANCE MONO TO EPU105
         else:
-             raise RuntimeError("EPU entry needs to be 'EPU57' or 'EPU105' ") 
+             raise RuntimeError("EPU entry needs to be 'EPU57','EPU105' or None ") 
 
 
         rb = 15000.0 #in mm  DISTANCE MONO TO EXIT-SLITS
@@ -406,7 +408,7 @@ class ESM_monochromator_device:
         return
 
                 
-    def move_to(self,photon_energy,grating='800',branch='A',EPU='EPU57',c='constant'):
+    def move_to(self,photon_energy,grating='800',branch='A',EPU='EPU57',c='constant',shutter='close'):
         ''' 
         Sets the monochromator and undulator to the correct values for the given photon energy 
         
@@ -432,18 +434,23 @@ class ESM_monochromator_device:
             This is an optional call to define if the c value should be calculated or if the pre-defined
             dictionary should be used.
 
+        shutter : str, optional
+            This string is used to to optionally have the shutter remain open during the move.
+
         '''
 
         # check that the requested value is within the range of both the EPU and the grating.
         if (self.Range[grating][0]> photon_energy) or (self.Range[grating][1]< photon_energy):
             raise RuntimeError('photon energy out of range for grating,'+
                                'use Eph.Range to determine the correct grating and EPU')
-        elif(self.Range[EPU][0]> photon_energy) or (self.Range[EPU][1]< photon_energy):       
-            raise RuntimeError('photon energy out of range for EPU,'+
-                               'use Eph.Range to determine the correct grating and EPU')
+        elif not EPU==None:
+            if (self.Range[EPU][0]> photon_energy) or (self.Range[EPU][1]< photon_energy):       
+                raise RuntimeError('photon energy out of range for EPU,'+
+                                   'use Eph.Range to determine the correct grating and EPU')
 
         #shut the front end shutter prior to moving.
-        yield from mv(shutter_FOE, 'Close')
+        if shutter is 'close':
+            yield from mv(shutter_FOE, 'Close')
 
         #Set the offsets and translations for the requested locations.
         yield from self.change_offsets(grating, branch)
@@ -471,12 +478,12 @@ class ESM_monochromator_device:
         for i in range(n_steps):   # set position of M2 pitch and GRT pitch step by step.
             yield from mv(PGM.Mirror_Pitch, M2_steps[i],    PGM.Grating_Pitch, GRT_steps[i])              
         
-        yield from mv(PGM.Focus_Const, self.PGM_angles(photon_energy,grating,EPU=EPU,
-                                                       c=c_val)['c']
-                      , PGM.Energy, photon_energy,
-                      getattr(ip.user_ns[EPU],'gap'),self.Und_e2g(photon_energy,EPU=EPU) )
-            
-        yield from mv(shutter_FOE, 'Open')
+        yield from mv(PGM.Focus_Const, self.PGM_angles(photon_energy,grating,EPU=EPU, c=c_val)['c'],
+                      PGM.Energy, photon_energy)
+        if not EPU==None:
+            yield from mv(getattr(ip.user_ns[EPU],'gap'), self.Und_e2g(photon_energy,EPU=EPU) )
+        if shutter is 'close':    
+            yield from mv(shutter_FOE, 'Open')
         return 
         
 ## Define the instances of the ESM_device class

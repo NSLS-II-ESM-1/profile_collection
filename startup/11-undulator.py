@@ -60,32 +60,19 @@ EPU105.hints={'fields':[EPU105.gap.name,EPU105.phase.name]}
 
 
 
-class BeamSourceDevice:
-    def __init__(self,PV_name,name):
-    #This is a class to be used to define the readback values of the beam source front the front end.
-
-        #define the input PVname suffix and the device name
-        self.PV_name=PV_name
-        self.name=name
+class Source(Device):
+    #This is a class to be used to define the readback values of the beam source front the
+    #front end.
 
         #define the channels in the readback device.
-        self.Current=EpicsSignalRO('SR:OPS-BI{DCCT:1}I:Real-I')
-        self.Xoffset=EpicsSignalRO(PV_name+'Offset-x-Cal')
-        self.Xangle=EpicsSignalRO(PV_name+'Angle-x-Cal')
-        self.Yoffset=EpicsSignalRO(PV_name+'Offset-y-Cal')
-        self.Yangle=EpicsSignalRO(PV_name+'Angle-y-Cal')
-
-        #define the names for each channel.
-        self.Current.name=self.name+'_Current'
-        self.Xoffset.name=self.name+'_Xoffset'
-        self.Xangle.name=self.name+'_Xangle'
-        self.Yoffset.name=self.name+'_Yoffset'
-        self.Yangle.name=self.name+'_Yangle'
+        Current=Comp(EpicsSignalRO,'OPS-BI{DCCT:1}I:Real-I')
+        Xoffset=Comp(EpicsSignalRO,'C31-{AI}Aie21:Offset-x-Cal')
+        Xangle=Comp(EpicsSignalRO,'C31-{AI}Aie21:Angle-x-Cal')
+        Yoffset=Comp(EpicsSignalRO,'C31-{AI}Aie21:Offset-y-Cal')
+        Yangle=Comp(EpicsSignalRO,'C31-{AI}Aie21:Angle-y-Cal')
         
-        self.read_attrs=['BeamCurrent','Xoffset','Xangle','Yoffset','Yangle']
-        
-        self.hints = {'fields': [self.name+'_Current',
-                                 self.name+'_Xoffset',self.name+'_Xangle',
-                                 self.name+'_Yoffset',self.name+'_Yangle' ] }
+#        self.hints = {'fields': [self.name+'_Current',
+#                                 self.name+'_Xoffset',self.name+'_Xangle',
+#                                 self.name+'_Yoffset',self.name+'_Yangle' ] }
 
-BeamSource = BeamSourceDevice('SR:C31-{AI}Aie21:','BeamSource')
+BeamSource = Source('SR:',name='BeamSource')

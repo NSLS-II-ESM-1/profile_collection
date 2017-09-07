@@ -132,3 +132,77 @@ BEAMLINE STATUS:  Thu 24 Aug 2017 02:05:54 PM EDT
 	 M4B_Ry -->  -0.171130
 	 M4B_Rz -->  1.245000
 
+************************************************************
+BEAMLINE STATUS:  Wed 06 Sep 2017 04:28:44 PM EDT
+************************************************************
+
+    BeamSource:
+	 BeamSource_Current -->  0.000000
+	 BeamSource_Xoffset -->  6.864333
+	 BeamSource_Xangle -->  -0.073340
+	 BeamSource_Yoffset -->  3.968120
+	 BeamSource_Yangle -->  -0.036670
+
+    EPU57:
+	 EPU57_gap -->  27.999400
+
+    EPU105:
+	 EPU105_gap -->  220.001200
+
+    FEslit:
+	 FEslit_h_center -->  -0.000010
+	 FEslit_h_gap -->  10.000060
+	 FEslit_v_center -->  0.000005
+	 FEslit_v_gap -->  6.000010
+
+    M1:
+	 M1_X -->  -3.779100
+	 M1_Ry -->  -3639.587400
+	 M1_Rz -->  5423.435600
+
+    PGM:
+	 PGM_Energy -->  50.000000
+	 PGM_Focus_Const -->  3.200000
+	 PGM_Grating_Trans -->  -205.429000
+
+    M3Udiag:
+	 M3Udiag_trans -->  19.999971
+
+    M3:
+	 M3_X -->  0.250000
+	 M3_Y -->  18.000000
+	 M3_Z -->  0.000000
+	 M3_Rx -->  0.000000
+	 M3_Ry -->  -0.705860
+	 M3_Rz -->  -0.250000
+
+    ExitSlitA:
+	 ExitSlitA_h_gap -->  99.956700
+	 ExitSlitA_v_gap -->  19.974700
+
+    ExitSlitB:
+	 ExitSlitB_h_gap -->  99.956400
+	 ExitSlitB_v_gap -->  19.965800
+
+    BTA2diag:
+	 BTA2diag_trans -->  -62.999937
+
+    BTB2diag:
+	 BTB2diag_trans -->  0.000000
+
+    M4A:
+	 M4A_HFM_X -->  -0.999600
+	 M4A_HFM_Z -->  0.999500
+	 M4A_HFM_Au_Mesh -->  -15.998000
+	 M4A_VFM_Y -->  -2.050000
+	 M4A_VFM_Z -->  0.499600
+	 M4A_VFM_Au_Mesh -->  1.253000
+
+    M4B:
+	 M4B_X -->  -2.975000
+	 M4B_Y -->  0.100000
+	 M4B_Z -->  22.500000
+	 M4B_Rx -->  -0.066855
+	 M4B_Ry -->  -0.171130
+	 M4B_Rz -->  1.245000
+
