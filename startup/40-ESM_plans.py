@@ -191,13 +191,13 @@ def scan_1D(DETS_str, scan_motor, start, end ,step_size,scan_type=None,adaptive=
         achieve the desired slope. Addtionally 'backstep=True' can be used to allow for the scan to 
         go back and add more points between preceding points.
 
-        To use this feature include ', adaptive = [steps2_min,steps2_max,target_slope,backstep,
+        To use this feature include ', adaptive = [steps_min,steps_max,target_slope,backstep,
         threshold] after step_size in the call. 
         
             NOTE: In this case step_size is not used, but a value must be included.
                            
                  REQUIRED PARAMETERS FOR THIS OPTION 
-                     steps2_min, steps2_max  : Are the minimum and maximum step sizes to use in the 
+                     steps_min, steps_max  : Are the minimum and maximum step sizes to use in the 
                      adaptive scan.
                      
                      target slope            : Is a target slope to aim for in the scan
@@ -243,18 +243,19 @@ def scan_1D(DETS_str, scan_motor, start, end ,step_size,scan_type=None,adaptive=
         
     #Define the scan
     def inner():
-      if adaptive is None:
-          return( yield from scan(detectors,scan_motor,start,stop,steps+1,md=_md))
-      else:
-          return( yield from adaptive_scan(detectors,Y_axis,scan_motor,start,stop,adaptive[0],
-                                           adaptive[1],adaptive[2],adaptive[3],adaptive[4],md=md_))
+        if adaptive is None:
+            return ( yield from scan(detectors,scan_motor,start,stop,steps+1,md=_md))
+        else:
+            return ( yield from adaptive_scan(detectors,Y_axis,scan_motor,start,stop,adaptive[0],
+                                           adaptive[1],adaptive[2],adaptive[3],adaptive[4],md=_md))
+        return uid
 
+     
     #run the scan  
     uid=yield from inner()
 
     #change the "hints" on the detectors back to the default
     DETS=ESM_setup_hints(DETS+',@-1')
-    
     return uid
 
     
@@ -974,7 +975,7 @@ def scan_ND(DETS_str, *args,concurrent=False,scan_type=None):
 ###Alignment scans
 ###These are scans specifically written for beamline alignment. 
 
-def M3_pitch_alignment(Branch="A"):
+def M3_pitch_alignment(Branch="A",adaptive=False):
     ''' 
     Runs a scan of the M3 mirror pitch to the exit slit to find the maximum and then sets the pitch to this value. 
         
@@ -989,54 +990,67 @@ def M3_pitch_alignment(Branch="A"):
         This allows for the selection of the Branch line for the scan to use. 
                     Allowed values are: A - use the "A" branch.
                                         B - use the "B" branch.
+
+    adaptive : Boolean, optional
+        This allows for the scan to be run as an adaptive scan or not.
                                        
     '''
 
     x_axis = M3.Ry                 # The x axis of the scan
 
     FE_hgap_axis = FEslit.h_gap     # The front end horizontal gap motor
-    FE_hgap_pos  = 0.6               # The front end horizontal gap value
+    FE_hgap_pos  = 1.0               # The front end horizontal gap value
     FE_vgap_axis = FEslit.v_gap     # The front end vertical gap motor
-    FE_vgap_pos  = 0.6               # The front end vertical gap value
+    FE_vgap_pos  = 1.0               # The front end vertical gap value
 
     scan_type_str='M3_pitch_alignment_'+Branch
     
     if Branch is "A":
-        x_start = -0.69              # The x_axis start value of the scan
-        x_end   = -0.73              # The x_axis end value of the scan
-        x_stepsize = -0.00002          # The x_axis step size of the scan
-
+        x_start = -0.718              # The x_axis start value of the scan
+        x_end   = -0.705              # The x_axis end value of the scan
+        stepsize_min = 0.0001        # The minimum x_axis step size of the scan
+        stepsize_max = 0.002         # The maximum x_axis step size of the scan
+        target_delta = 5E-9          # The target delta between each step in the scan
+        backstep = True               # Allow backsteps to complete the peak or not
+        threshold =  0.8              # The threshold for the adaptive scan
+        
         detector = qem07      # The detector to use for the scan.
         det_range = '350 pC'     # The range to use for the scan
         det_vals_reading = 5  # The values per reading to use.
-        det_avg_time = 0.1    # The averaging time to use.
+        det_avg_time = 1    # The averaging time to use.
         det_int_time = 0.0004 # The integration time to use.
 
         Exit_Slit_hgap_motor = ExitSlitA.h_gap # The motor required to move the horizontal exit slit
-        Exit_Slit_hgap_pos = 5                # The horizontal gap opening to use
+        Exit_Slit_hgap_pos = 20                # The horizontal gap opening to use
         Exit_Slit_vgap_motor = ExitSlitA.v_gap # THe motor required to move the vertical exit slit
-        Exit_Slit_vgap_pos = 5                # The vertical gap opening to use
+        Exit_Slit_vgap_pos = 30                # The vertical gap opening to use
 
 
         Diode_motor = BTA2diag.trans    #The motor to move the diode into position.
         Diode_pos = -63                  #The position of the diode motor to be used during the scan
 
 
+        
     elif Branch is "B":
-        x_start = -0.69              # The x_axis start value of the scan
-        x_end   = -0.730              # The x_axis end value of the scan
-        x_stepsize = -0.00002         # The x_axis step size of the scan
+        x_start = -0.75              # The x_axis start value of the scan
+        x_end   = -0.725              # The x_axis end value of the scan
+        stepsize_min = 0.0001        # The minimum x_axis step size of the scan
+        stepsize_max = 0.002         # The maximum x_axis step size of the scan
+        target_delta = 5E-9          # The target delta between each step in the adaptive scan
+        backstep = True               # Allow backsteps to complete the peak or not in the adative scan
+        threshold = 0.8               # the threshold for the adaptive scan
+        
 
         detector = qem12      # The detector to use for the scan.
         det_range = '350 pC'     # The range to use for the scan
         det_vals_reading = 5  # The values per reading to use.
-        det_avg_time = 0.1    # The averaging time to use.
+        det_avg_time = 1      # The averaging time to use.
         det_int_time = 0.0004 # The integration time to use.
 
         Exit_Slit_hgap_motor = ExitSlitB.h_gap # The motor required to move the horizontal exit slit
-        Exit_Slit_hgap_pos = 5                 # The horizontal gap opening to use
+        Exit_Slit_hgap_pos = 10                 # The horizontal gap opening to use
         Exit_Slit_vgap_motor = ExitSlitB.v_gap # The motor required to move the vertical exit slit
-        Exit_Slit_vgap_pos = 5                  # The vertical gap opening to use
+        Exit_Slit_vgap_pos = 10                  # The vertical gap opening to use
         
         Diode_motor = BTB2diag.trans    #The motor to move the diode into position.
         Diode_pos = -63                  #The position of the diode motor to be used during the scan
@@ -1060,7 +1074,7 @@ def M3_pitch_alignment(Branch="A"):
 
     #Move the values to the starting positions for the scan.
     
-    yield from mv( x_axis,x_start, FE_hgap_axis,FE_hgap_pos, FE_vgap_axis,FE_vgap_pos,
+    yield from mv( x_axis,x_start, #FE_hgap_axis,FE_hgap_pos, FE_vgap_axis,FE_vgap_pos,
                    Diode_motor,Diode_pos, Exit_Slit_hgap_motor,Exit_Slit_hgap_pos,
                    Exit_Slit_vgap_motor,Exit_Slit_vgap_pos)
 
@@ -1070,31 +1084,39 @@ def M3_pitch_alignment(Branch="A"):
     detector.integration_time.put(det_int_time)         # The integration time to use.
 
     #Run the scan
-    uid=yield from (scan_1D([detector],x_axis,x_start,x_end,x_stepsize,scan_type=scan_type_str)) 
-
+    if adaptive is False:                        
+        uid= yield from scan_1D(detector.name,x_axis,x_start,x_end,stepsize_min,
+                                scan_type=scan_type_str) 
+    elif adaptive is True:
+        uid= yield from scan_1D(detector.name,x_axis,x_start,x_end,stepsize_min,
+                                scan_type=scan_type_str,
+                                adaptive=[stepsize_min,stepsize_max, target_delta,backstep,threshold])
+    
+    
     #move everything to the initial positions
-    yield from mv(FE_hgap_axis,initial_FE_hgap_pos, FE_vgap_axis,initial_FE_vgap_pos,
-                   Diode_motor,initial_diode_pos, Exit_Slit_hgap_motor,initial_Exit_Slit_hgap_pos,
+    yield from mv( Diode_motor,initial_diode_pos, Exit_Slit_hgap_motor,initial_Exit_Slit_hgap_pos,
                    Exit_Slit_vgap_motor,initial_Exit_Slit_vgap_pos)
+                  #FE_hgap_axis,initial_FE_hgap_pos, FE_vgap_axis,initial_FE_vgap_pos
 
+    
     detector.em_range.put(initial_det_range)                    # The range to use for the scan
     detector.values_per_read.put(initial_det_vals_reading)      # The values per reading to use.
     detector.averaging_time.put(initial_det_avg_time)           # The averaging time to use.
     detector.integration_time.put(initial_det_int_time)         # The integration time to use
 
     #Determine the location of the maximum intensity.
-    if uid is not None:
-        hdr=db[uid]
-        output=max_in_1D(uid)
-
-        max_y=output[1]
-        max_x=output[0]
-
+    
+    if uid is not None: 
+        hdr=db[-1]
+        output=max_in_1D(hdr.start['scan_id'])
+        yield from mv( x_axis,initial_x_pos ) # this move helps with the backlash issue I have noticed
+        yield from mv( x_axis,output[0] )
         #set the scan axis to the new value.
     else:
-        max_x=initial_x_pos
+        yield from mv( x_axis,initial_x_pos )
+        output=None
         
-    yield from mv( x_axis,max_x )
+    return output
     
 
 def FE_slits_alignment(detector_location="Diagon",mv_center=False,return_all=False):
@@ -1361,7 +1383,7 @@ def FE_slits_alignment(detector_location="Diagon",mv_center=False,return_all=Fal
     return [max_x,max_y]
 
 
-def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=False):
+def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=True,return_all=True):
     ''' 
     Aligns the M1 and/or M3 mirrors to the exit slit but looking at the intensity and/or linewidth after
     the exit slit. 
@@ -1587,18 +1609,19 @@ def Mirror_alignment(axes='M1_Ry_M3_Ry',Branch='A',mv_optimum=False,return_all=F
 
     if uid is not None: 
         hdr=db[uid]
-        output=max_in_2D(uid)
-
-        max_y=db.get_table(hdr,[hdr.start.plot_Yaxis])[x_num*popt_amp[1]]
-        max_x=position[popt_amp[1]]
+        output=max_in_2D(hdr.start.scan_id)
+        print (output)
+        
+        max_y=output[0]
+        max_x=output[1]
 
 
         if abs(max_x/initial_x_axis_pos-1) <= accuracy_level and abs(max_y/initial_y_axis_pos-1) <= accuracy_level:
             print ("The fitted x axis positions at the ",Branch," ",x_axis_motor.name, " motor are: ",max_x,
                    ". The fitted y axis positions at the ",Branch," ",y_axis_motor.name, " motor are: ",max_y)
-            output=[max_x,max_y]
+
         else:
-            mv_center=False
+            mv_optimum=False
             print ("WARNING:: THE NEW FITTED POSITION IS DIFFERENT FROM THE OLD POSITION BY ",max(abs(max_x-initial_x_axis_pos),
                     abs(max_y-initial_y_axis_pos) ),"(The fitted x axis positions at the ",Branch," ",x_axis_motor.name, " motor are: ",max_x,
                    ". The fitted y axis positions at the ",Branch," ",y_axis_motor.name, " motor are: ",max_y,". The new position has not been set")

@@ -247,7 +247,7 @@ class ESM_monochromator_device:
     
     #Define the information functions here
     
-    def Und_g2e(self,gap,EPU='EPU57'):
+    def Und_g2e(self,gap,EPU='57'):
         '''
         This function returns the photon energy value required for a given undulator gap and undulator.
 
@@ -259,7 +259,7 @@ class ESM_monochromator_device:
    
 
         EPU : str
-            The undulator to use, can be EPU57 (default, high energy) or EPU105(low energy).
+            The undulator to use, can be '57' (default, high energy) or '105'(low energy).
 
         photon_energy : float, output
             The photon energy value that is returned.
@@ -267,17 +267,17 @@ class ESM_monochromator_device:
         '''
 
         # check that the gap value is within the range of the undulator
-        if gap<min(self.Und_Energy[EPU]['Gap']) or gap>max(self.Und_Energy[EPU]['Gap']):
+        if gap<min(self.Und_Energy['EPU'+EPU]['Gap']) or gap>max(self.Und_Energy['EPU'+EPU]['Gap']):
             raise RuntimeError('gap value out of range of undulator')    
         else:
         #return the photon energy
-            gtoe=interp1d(self.Und_Energy[EPU]['Gap'],self.Und_Energy[EPU]['Energy'])
+            gtoe=interp1d(self.Und_Energy['EPU'+EPU]['Gap'],self.Und_Energy['EPU'+EPU]['Energy'])
             photon_energy=float(gtoe(gap))
             return photon_energy
 
 
         
-    def Und_e2g(self,photon_energy,EPU='EPU57'):
+    def Und_e2g(self,photon_energy,EPU='57'):
         '''
         This function returns the photon energy value required for a given undulator gap and undulator.
 
@@ -287,7 +287,7 @@ class ESM_monochromator_device:
             The photon energy value in eV.
    
         EPU : str, optional
-            The undulator to use, can be EPU57 (default, high energy) or EPU105(low energy).
+            The undulator to use, can be '57' (default, high energy) or '105'(low energy).
         gap : float, output
             The undulator gap in mm.
 
@@ -296,16 +296,16 @@ class ESM_monochromator_device:
         '''
 
         # check that the gap value is within the range of the undulator
-        if photon_energy<min(self.Und_Energy[EPU]['Energy']) or photon_energy>max(self.Und_Energy[EPU]['Energy']):
+        if photon_energy<min(self.Und_Energy['EPU'+EPU]['Energy']) or photon_energy>max(self.Und_Energy['EPU'+EPU]['Energy']):
             raise RuntimeError('energy value out of range of undulator')    
         else:
         #return the photon energy
-            gtoe=interp1d(self.Und_Energy[EPU]['Energy'],self.Und_Energy[EPU]['Gap'])
+            gtoe=interp1d(self.Und_Energy['EPU'+EPU]['Energy'],self.Und_Energy['EPU'+EPU]['Gap'])
             gap = float(gtoe(photon_energy))
             return gap
         
 
-    def PGM_angles(self, photon_energy,grating,EPU='EPU57',c=None):
+    def PGM_angles(self, photon_energy,grating,EPU='57',c=None):
         '''
         This function returns the mirror angles required for a given grating and photon energy.
 
@@ -319,7 +319,7 @@ class ESM_monochromator_device:
 
 
         EPU : str
-            The undulator to use, can be EPU57 (default, high energy) or EPU105(low energy).
+            The undulator to use, can be '57' (default, high energy) or '105'(low energy).
 
         c : float, optional
             The c value required, if it is omitted or set to 'None' then it is calculated from the
@@ -337,19 +337,19 @@ class ESM_monochromator_device:
             raise RuntimeError('photon energy out of range for grating,'+
                                'use Eph.Range to determine the correct grating and EPU')
         if not EPU == None:
-            if (self.Range[EPU][0]> photon_energy) or (self.Range[EPU][1]< photon_energy):
+            if (self.Range['EPU'+EPU][0]> photon_energy) or (self.Range['EPU'+EPU][1]< photon_energy):
                 raise RuntimeError('photon energy out of range for undulator,'+
                                    'use Eph.Range to determine the correct grating and EPU')
         
         
-        if EPU == 'EPU57':
+        if EPU == '57':
             ra = 42302.0 #in mm  DISTANCE MONO TO EPU57
-        elif EPU == 'EPU105':
+        elif EPU == '105':
             ra = 40000.0 #in mm  DISTANCE MONO TO EPU105
         elif EPU == None:
             ra = 40000.0 #in mm  DISTANCE MONO TO EPU105
         else:
-             raise RuntimeError("EPU entry needs to be 'EPU57','EPU105' or None ") 
+             raise RuntimeError("EPU entry needs to be '57','105' or None ") 
 
 
         rb = 15000.0 #in mm  DISTANCE MONO TO EXIT-SLITS
@@ -400,21 +400,20 @@ class ESM_monochromator_device:
         yield from mv(PGM.Mirror_Pitch_set, 1 , PGM.Grating_Pitch_set, 1)
 
         yield from mv(PGM.Mirror_Pitch_off, float(self.M2_Offset[branch][grating]) ,
-                      PGM.Grating_Pitch_off, float(self.Grt_Offset[branch][grating]))
-#                      PGM.Grating_lines,grating )
-        os.system('caput XF:21IDB-OP{Mono:1}:LINES:SET ' + grating)  # tells to the PGM software which grating 
+                      PGM.Grating_Pitch_off, float(self.Grt_Offset[branch][grating]),
+                      PGM.Grating_lines,float(grating) )
+
         yield from mv(PGM.Mirror_Pitch_set, 0 , PGM.Grating_Pitch_set, 0)
 
         return
 
                 
-    def move_to(self,photon_energy,grating='800',branch='A',EPU='EPU57',c='constant',shutter='close'):
+    def move_to(self,photon_energy,grating='800',branch='A',EPU='57',c='constant',shutter='close'):
         ''' 
         Sets the monochromator and undulator to the correct values for the given photon energy 
         
         This function reads the definition .csv file and writes the information to data_dict in order to 
         be used in the future motion.
-
         PARAMETERS
         ----------
 
@@ -428,7 +427,7 @@ class ESM_monochromator_device:
             The beamline branch which is to be used, can be 'A' (default) or 'B'.
 
         EPU : str
-            The undulator to use, can be EPU57 (default, high energy) or EPU105(low energy).
+            The undulator to use, can be '57' (default, high energy) or '105'(low energy).
 
         c : str, optional
             This is an optional call to define if the c value should be calculated or if the pre-defined
@@ -444,7 +443,7 @@ class ESM_monochromator_device:
             raise RuntimeError('photon energy out of range for grating,'+
                                'use Eph.Range to determine the correct grating and EPU')
         elif not EPU==None:
-            if (self.Range[EPU][0]> photon_energy) or (self.Range[EPU][1]< photon_energy):       
+            if (self.Range['EPU'+EPU][0]> photon_energy) or (self.Range['EPU'+EPU][1]< photon_energy):       
                 raise RuntimeError('photon energy out of range for EPU,'+
                                    'use Eph.Range to determine the correct grating and EPU')
 
@@ -461,7 +460,9 @@ class ESM_monochromator_device:
                                PGM.Mirror_Pitch.position)/1  ),
                     round( abs(self.PGM_angles(photon_energy,grating,EPU=EPU)['beta']-
                         PGM.Grating_Pitch.position)/2  )))
-        if n_steps == 0: n_steps = 1
+        if n_steps == 0: n_steps = 1 # if the number of steps is 0 set it to 1
+
+        
         # divide the range of motion of M2 and the grating into 'n_steps' even steps
 
         if c=='calc':
@@ -469,19 +470,27 @@ class ESM_monochromator_device:
         else:
             c_val= self.c_value[branch][grating]
 
-        M2_steps=np.linspace(PGM.Mirror_Pitch.position,
+
+        if n_steps==1:
+            M2_steps=[(self.PGM_angles(photon_energy,grating,EPU=EPU,
+                                             c=c_val)['gamma'])]
+            GRT_steps=[(self.PGM_angles(photon_energy,grating,EPU=EPU,
+                                             c=c_val)['beta'])]
+        else:
+            M2_steps=np.linspace(PGM.Mirror_Pitch.position,
                              self.PGM_angles(photon_energy,grating,EPU=EPU,
                                              c=c_val)['gamma'], num=n_steps)  
-        GRT_steps=np.linspace(PGM.Grating_Pitch.position,
+            GRT_steps=np.linspace(PGM.Grating_Pitch.position,
                               self.PGM_angles(photon_energy,grating,EPU=EPU,
                                               c=c_val)['beta'], num=n_steps) 
+
         for i in range(n_steps):   # set position of M2 pitch and GRT pitch step by step.
             yield from mv(PGM.Mirror_Pitch, M2_steps[i],    PGM.Grating_Pitch, GRT_steps[i])              
         
         yield from mv(PGM.Focus_Const, self.PGM_angles(photon_energy,grating,EPU=EPU, c=c_val)['c'],
                       PGM.Energy, photon_energy)
         if not EPU==None:
-            yield from mv(getattr(ip.user_ns[EPU],'gap'), self.Und_e2g(photon_energy,EPU=EPU) )
+            yield from mv(getattr(ip.user_ns['EPU'+EPU],'gap'), self.Und_e2g(photon_energy,EPU=EPU) )
         if shutter is 'close':    
             yield from mv(shutter_FOE, 'Open')
         return 

@@ -124,35 +124,106 @@ class Monochromator(Device):
     Grating_Pitch = Comp(EpicsMotor,"-Ax:8_GP}Mtr")
     Grating_Pitch_off = Comp(EpicsSignal,"-Ax:8_GP}Mtr.OFF")
     Grating_Pitch_set = Comp(EpicsSignal,"-Ax:8_GP}Mtr.SET")
-    Grating_lines = Comp(EpicsSignal,"}:LINES:SET")
+    Grating_lines = Comp(EpicsSignal,"}:LINES:RBV",write_pv="}:LINES:SET",put_complete=False)
+    
 
 PGM = Monochromator("XF:21IDB-OP{Mono:1",name="PGM")
 # define what is displayed from the PGM during quieries using PGM.hints.
 PGM.hints = {'fields': [PGM.Energy.name,PGM.Focus_Const.name,PGM.Grating_lines.name]}
 
 
+
+class BEST_Xaxis(Device):
+    readback = Comp(EpicsSignal,"FM}:BPM0:PosX")  # Make these EpicsSignal, 'PV:...'
+    setpoint = Comp(EpicsSignal,"FM}:PID:SetpointX")
+    tolerance = 0.1
+
+    def read_val(self):
+        return self.get()[-1]
+    
+    position='yes'
+    
+
+    
+    def set(self, value):
+        desired_value = value
+        status = DeviceStatus(self)
+
+        def are_we_there_yet(value, *args, **kwargs):
+            if abs(value[-1] - desired_value) < self.tolerance:
+                # This alerts the RunEngine that it can move on.
+                status._finished()
+        
+        # Start us moving.
+        self.setpoint.put(desired_value)
+        # The function are_we_there_yet will receive
+        # updates from pyepics as the readback changes.
+        self.readback.subscribe(are_we_there_yet)
+        # Hand this back the RunEngine immediately.
+        return status
+
+class BEST_Yaxis(Device):
+
+    readback = Comp(EpicsSignal,"FM}:BPM0:PosY")  # Make these EpicsSignal, 'PV:...'
+    setpoint = Comp(EpicsSignal,"FM}:PID:SetpointY")
+    tolerance = 0.1
+
+    def read_val(self):
+        return self.get()[-1]
+    
+    position='yes'   
+        
+    def set(self, value):
+        desired_value = value
+        status = DeviceStatus(self)
+        
+        def are_we_there_yet(value, *args, **kwargs):
+            if abs(value[-1] - desired_value) < self.tolerance:
+                # This alerts the RunEngine that it can move on.
+                status._finished()
+        
+        # Start us moving.
+        self.setpoint.put(desired_value)
+        # The function are_we_there_yet will receive
+        # updates from pyepics as the readback changes.
+        self.readback.subscribe(are_we_there_yet)
+        # Hand this back the RunEngine immediately.
+        return status
+
+
 class KB_pair(Device):
-    VFM_Y = Comp(EpicsMotor,"VFMTy}Mtr")
-    VFM_Mirror_InOut = Comp(EpicsMotor,"VFMTy}Mtr")
-    VFM_Mirror_Trans = Comp(EpicsMotor,"VFMTy}Mtr")
-    VFM_Z = Comp(EpicsMotor,"VFMTz}Mtr")
-    VFM_Mirror_Astig = Comp(EpicsMotor,"VFMTz}Mtr")
-    VFM_Mirror_Horizontal = Comp(EpicsMotor,"VFM_Astig}Mtr")
-    VFM_Mirror_Incline = Comp(EpicsMotor,"VFM_IO}Mtr")
+    VFM_Y = Comp(EpicsMotor,"Ax:A4_VFMTy}Mtr")
+    VFM_Mirror_InOut = Comp(EpicsMotor,"Ax:A4_VFMTy}Mtr")
+    VFM_Mirror_Trans = Comp(EpicsMotor,"Ax:A4_VFMTy}Mtr")
+    VFM_Z = Comp(EpicsMotor,"Ax:A4_VFMTz}Mtr")
+    VFM_Mirror_Astig = Comp(EpicsMotor,"Ax:A4_VFMTz}Mtr")
+    VFM_Mirror_Horizontal = Comp(EpicsMotor,"Ax:A4_VFM_Astig}Mtr")
+    VFM_Mirror_Incline = Comp(EpicsMotor,"Ax:A4_VFM_IO}Mtr")
 
-    HFM_Z = Comp(EpicsMotor,"HFM_Astig}Mtr")
-    HFM_X = Comp(EpicsMotor,"HFM_IO}Mtr")
-    HFM_Mirror_Astig = Comp(EpicsMotor,"HFM_Astig}Mtr")
-    HFM_Mirror_InOut = Comp(EpicsMotor,"HFM_IO}Mtr")
-    HFM_Mirror_Trans = Comp(EpicsMotor,"HFM_IO}Mtr")
+    HFM_Z = Comp(EpicsMotor,"Ax:A4_HFM_Astig}Mtr")
+    HFM_X = Comp(EpicsMotor,"Ax:A4_HFM_IO}Mtr")
+    HFM_Mirror_Astig = Comp(EpicsMotor,"Ax:A4_HFM_Astig}Mtr")
+    HFM_Mirror_InOut = Comp(EpicsMotor,"Ax:A4_HFM_IO}Mtr")
+    HFM_Mirror_Trans = Comp(EpicsMotor,"Ax:A4_HFM_IO}Mtr")
     
-    HFM_Au_Mesh = Comp(EpicsMotor,"HGM}Mtr")
-    VFM_Au_Mesh = Comp(EpicsMotor,"VGM}Mtr")
-    
+    HFM_Au_Mesh = Comp(EpicsMotor,"Ax:A4_HGM}Mtr")
+    VFM_Au_Mesh = Comp(EpicsMotor,"Ax:A4_VGM}Mtr")
 
-M4A = KB_pair("XF:21IDC-OP{Mir:4A-Ax:A4_",name="M4A")
+    VFM_Rx = Comp(BEST_Xaxis,"") 
+    VFM_Pitch = Comp(BEST_Xaxis,"")
+    HFM_Ry = Comp(BEST_Yaxis,"")
+    HFM_Pitch = Comp(BEST_Yaxis,"") 
+
+
+M4A = KB_pair("XF:21IDC-OP{Mir:4A-",name="M4A")
 # define what is displayed from M4A during quieries using M4A.hints.
-M4A.hints = {'fields': [M4A.VFM_Y.name,M4A.VFM_Z.name,M4A.HFM_Z.name,M4A.HFM_X.name]}
+M4A.hints = {'fields': [M4A.VFM_Y.name,M4A.VFM_Z.name,M4A.VFM_Rx.name,
+                        M4A.HFM_Z.name,M4A.HFM_X.name,M4A.HFM_Ry.name]}
+
+
+
+
+
 
 #
 #

@@ -7,8 +7,8 @@ import scipy.optimize as opt
 import os
 from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
 from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
-from pyOlog.SimpleOlogClient import SimpleOlogClient
-from esm import ss_csv
+#from pyOlog.SimpleOlogClient import SimpleOlogClient
+#from esm import ss_csv
 from cycler import cycler
 from collections import ChainMap
 import math
@@ -18,6 +18,8 @@ import sys
 from suitcase import hdf5
 from builtins import input as pyinput
 ip=IPython.get_ipython()
+import datetime
+import time
 
 
 ###Utilities
@@ -280,7 +282,7 @@ def SiC2F(photon_energy, current):
                              1377.41,1432.51,1487.6,1542.7,1597.8,1652.89]}
         SiCtoF = interp1d(SiC2F_data['E_eV'],SiC2F_data['QY'])
         
-        if (photon_energy < min(SiC2F_data('E_eV')) or photon_energy > max(SiC2F_data('E_eV'))):
+        if (photon_energy < min(SiC2F_data['E_eV']) or photon_energy > max(SiC2F_data['E_eV'])):
                 raise RuntimeError('photon energy outside of range of conversion data')
         else:
             flux =  (current)/(1.6E-19)/SiCtoF(photon_energy)
@@ -396,8 +398,8 @@ def fit_Gauss_1Dseries(uid,initial_guess):
     hdr=db[uid]
     
     #find out the shape of the data
-    x_num = hdr.start.X_num
-    y_num = hdr.start.Y_num
+    x_num = hdr.start['X_num']
+    y_num = hdr.start['Y_num']
         
     #Load the data from the databroker.
    
@@ -409,11 +411,13 @@ def fit_Gauss_1Dseries(uid,initial_guess):
         
     #step through each "row" and fit a gaussian.
     for y_step in range(0,y_num):
-        x = db.get_table(hdr,[hdr.start.plot_Xaxis])[x_num*y_step:x_num*(y_step+1)-1] 
+        x = db.get_table(hdr,[hdr.start['plot_Xaxis']])[x_num*y_step:x_num*(y_step+1)-1] 
         y_seq.append(y_step)
-        data = db.get_table(hdr,[hdr.start.plot_Zaxis])[x_num*y_step:x_num*(y_step+1)-1]
+        data = db.get_table(hdr,[hdr.start['plot_Zaxis']])[x_num*y_step:x_num*(y_step+1)-1]
 
-        popt_row, pcov_row = opt.leastsq(gaussian_1D_error,x0=initial_guess,args=(data[hdr.start.plot_Zaxis],x[hdr.start.plot_Xaxis]))
+        popt_row, pcov_row = opt.leastsq(gaussian_1D_error,x0=initial_guess,
+                                         args=(data[hdr.start['plot_Zaxis']],
+                                               x[hdr.start['plot_Xaxis']]))
         amplitude.append(popt_row[0])
         position.append(popt_row[1])
         linewidth.append(popt_row[2])
@@ -428,7 +432,7 @@ def fit_Gauss_1Dseries(uid,initial_guess):
     return [amplitude,linewidth,position,background,y_seq]
     
 
-def max_in_1D(uid):
+def max_in_1D(scan_id):
     ''' 
     This scan is used to find the maximum value in a 1D data set and return the max value, and the x co-ordinate.
         
@@ -437,26 +441,26 @@ def max_in_1D(uid):
 
     Parameters
     ----------
-    uid : number
+    scan_id : number
         This is the uid used to extract the data from the databroker.
 
     '''
     
     scan = db[scan_id]
-    if scan.start.plot_Xaxis.startswith('FE'):
-        Xname = scan.start.plot_Xaxis.replace('_readback', '_setpoint')
+    if scan.start['plot_Xaxis'][0].startswith('FE'):
+        Xname = scan.start['plot_Xaxis'][0].replace('_readback', '_setpoint')
     else:
-        Xname = scan.start.plot_Xaxis+'_user_setpoint'
+        Xname = scan.start['plot_Xaxis'][0]
         
-    data2D = db.get_table(scan,[Xname, scan.start.plot_Yaxis])
-    del data2D['time']
+    data2D = db.get_table(scan)[[Xname, scan.start['plot_Yaxis'][0]]]
+#    del data2D['time']
 
-    max_idx = np.argmax(data3D[scan.start.plot_Yaxis], axis=None)
+    max_idx = np.argmax(data2D[scan.start['plot_Yaxis'][0]], axis=None)
 
-    return [data2D[Xname][max_idx],data2D[scan.start.plot_Yaxis][max_idx]]
+    return [data2D[Xname][max_idx],data2D[scan.start['plot_Yaxis'][0]][max_idx]]
 
 
-def max_in_2D(uid):
+def max_in_2D(scan_id):
     ''' 
     This scan is used to find the maximum value in a 2D data set and return the max value, and the x and y co-ordinates.
         
@@ -465,22 +469,153 @@ def max_in_2D(uid):
 
     Parameters
     ----------
-    uid : number
+    scan_id : number
         This is the uid used to extract the data from the databroker.
 
     '''
     
     scan = db[scan_id]
-    if scan.start.plot_Xaxis.startswith('FE'):
-        Xname = scan.start.plot_Xaxis.replace('_readback', '_setpoint')
-        Yname = scan.start.plot_Yaxis.replace('_readback', '_setpoint')
+    if scan.start.plot_Xaxis[0].startswith('FE'):
+        Xname = scan.start['plot_Xaxis'][0].replace('_readback', '_setpoint')
+        Yname = scan.start['plot_Yaxis'][0].replace('_readback', '_setpoint')
     else:
-        Xname = scan.start.plot_Xaxis+'_user_setpoint'
-        Yname = scan.start.plot_Yaxis+'_user_setpoint'
+        Xname = scan.start['plot_Xaxis'][0]+'_user_setpoint'
+        Yname = scan.start['plot_Yaxis'][0]+'_user_setpoint'
         
-    data3D = db.get_table(scan,[Xname, Yname, scan.start.plot_Zaxis])
+    data3D = db.get_table(scan)[[Xname, Yname, scan.start['plot_Zaxis'][0]]]
     del data3D['time']
 
-    max_idx = np.argmax(data3D[scan.start.plot_Zaxis], axis=None)
+    max_idx = np.argmax(data3D[scan.start['plot_Zaxis'][0]], axis=None)
 
-    return [data3D[Xname][max_idx],data3D[Yname][max_idx],data3D[scan.start.plot_Zaxis][max_idx]]
+    return [data3D[Xname][max_idx],data3D[Yname][max_idx],data3D[scan.start['plot_Zaxis'][0]][max_idx]]
+
+
+def scan_info(scan_id_list,Baseline=False,Detector=False):
+    ''' 
+    This routine is used to return a formatted string containing the relevant information from the 
+    for the scan defined by scan_id.
+    
+    This scan looks up metadata and prints out some relevant info from this, it can also optionally 
+    include the baseline state stream from scan_id and removes everything but the readback
+    values. It then returns a formatted string containing these values to make finding the information
+    required easier.    
+
+    Parameters
+    ----------
+    scan_id_list : number
+        This is a list of the uid, scan id or previous scan number (-1,-2 etc.) used to extract the 
+        data from the databroker.
+
+     Baseline : Boolean, optional
+            Used to include baseline readings (i.e. data recorded that is not directly part of the 
+            scan). to include baseline data use Baseline=True)
+
+     detector : Boolean, optional
+            Used to include detectro configuration readings (i.e. detector settings that is not directly 
+            part ofset prior to the scan). to include detector settings use Baseline=True)
+
+     f_string : str
+         Possible output string for formatting.
+
+    '''
+
+    #define the output string
+    f_string=''
+    
+    for scan_id in scan_id_list:
+        #Load up the baseline data stream and extract out the list of keys that are not setpoints or
+        #done indicators
+        data=db.get_table(db[scan_id],stream_name='baseline')   
+        key_list=[key for key in data.keys() if '_setpoint' not in key and '_done' not in key ]
+
+        #Extract out a list of devices from the list of keys.
+        temp_list=key_list
+        if 'time' in temp_list: temp_list.remove('time')
+        device_dict={}
+        exit_val=0
+
+        #continue looping over the list of remaining axes until none exist.
+        while len(temp_list)>0 and exit_val<=200:
+            device_name,_,channel = temp_list[0].partition('_')
+            axis_list=list(key for key in temp_list if key.startswith(device_name))
+            temp_device_dict = {key:data[key] for  key in axis_list}
+            device_dict[device_name]=temp_device_dict
+                
+            temp_list = list(dev for dev in temp_list if not dev.startswith(device_name) )
+            exit_val+=1
+
+        # calculate how long the scan took
+        scan_time=(db[scan_id].stop['time']-db[scan_id].start['time'])
+            
+        #create the formatted string heading
+        f_string+='\n\n************************************************************\n'
+        f_string+='Scan id '+str(db[scan_id].start['scan_id'])+' ,  '
+        f_string+=datetime.datetime.fromtimestamp(int(db[scan_id].start['time'])).strftime('%Y-%m-%d %H:%M:%S') +'\n'
+        f_string+='************************************************************\n\n'
+
+        f_string+='***** Scan Data *****\n\n'
+        f_string+='Scan type : '+str(db[scan_id].start['scan_type'])
+        f_string+=' , Scan name : '+str(db[scan_id].start['scan_name'])
+        f_string+=' , Plan name : '+str(db[scan_id].start['plan_name'])+'\n'    
+        f_string+='Detector(s) : '+str(db[scan_id].start['detectors'])+'\n'
+        f_string+='num_points : '+str(db[scan_id].start['num_points'])
+        f_string+=', scan time : '+time.strftime("%H:%M:%S", time.gmtime(scan_time))
+        f_string+=', time/point : '+time.strftime("%H:%M:%S", time.gmtime(scan_time/db[scan_id].start['num_points']))+'\n'
+
+        if db[scan_id].start['scan_name'].endswith('_2D'):
+            f_string+='Plotted channel(s) : '+str(db[scan_id].start['plot_Zaxis'])+'\n'
+            f_string+='X axis : '+str(db[scan_id].start['plot_Xaxis'])+'( '
+            f_string+= str(db[scan_id].start['X_start'])+' , '+str(db[scan_id].start['X_stop'])
+            f_string+=' , '+str(db[scan_id].start['X_delta'])+' )'+'\n'
+            f_string+='Y axis : '+str(db[scan_id].start['plot_Yaxis'])+' ( '
+            f_string+= str(db[scan_id].start['Y_start'])+' , '+str(db[scan_id].start['Y_stop'])
+            f_string+=' , '+str(db[scan_id].start['Y_delta'])+' )'+'\n\n'
+        elif db[scan_id].start['scan_name'].endswith('_1D'):
+            f_string+='Plotted channel(s) : '+str(db[scan_id].start['plot_Yaxis'])+'\n'
+            f_string+='X axis : '+str(db[scan_id].start['plot_Xaxis'])+' ( '
+            f_string+= str(db[scan_id].start['plan_args']['start'])+' , '
+            f_string+= str(db[scan_id].start['plan_args']['stop'])+' , '
+            f_string+= str(db[scan_id].start['delta'])+' ) '+'\n\n'
+
+
+        if Detector is True:
+            #If the user asked for detector info
+            dets=db[scan_id].start['detectors']
+            f_string+='***** Detector Settings *****\n\n'
+
+            for det in dets:
+                f_string+='    '+det+':\n'
+                keys=list(hdr.config_data(det)['primary'][0].keys())
+                #extract out the list of configuration items for this detector and step through them.
+                for key in keys:
+                    set_list = key.split('_')
+                    del set_list[0]
+                    f_string+='\t '
+                    n_string=''
+                    for set in set_list:
+                            n_string+=set+' '
+                    f_string+=n_string.ljust(25)
+                    f_string+=':\t '+ str(hdr.config_data(det)['primary'][0][key])+'\n'   
+                    
+            f_string+='\n\n'
+
+            
+        if Baseline is True:
+            f_string+='***** Baseline Readings *****\n\n'
+            #step through each of the 'devices' and print out the axes associated with it
+            device_list=list(device_dict.keys())
+            device_list.sort()
+    
+            for dev in device_list:
+                f_string+='    '+dev+':\n'
+                axis_dict = device_dict[dev]
+                for axis in axis_dict:
+                    f_string+='\t '+axis.ljust(30)+':  start = %f\t , end = %f\n ' % (axis_dict[axis][1],axis_dict[axis][2])
+
+                f_string+='\n'             
+
+
+                
+    print (f_string)
+
+  

@@ -38,7 +38,8 @@ BlueskyMagics.positioners = [EPU57.gap,EPU57.phase,EPU105.gap,EPU105.phase
                              BTA2diag.trans,BTB2diag.trans,M4AUdiag.trans,
                              M4AUslit.h_gap, M4AUslit.h_center,M4AUslit.v_gap,M4AUslit.v_center,
                              M4AUslit.h_scan,M4AUslit.h_apperture,M4AUslit.v_scan,M4AUslit.v_apperture,
-                             M4A.VFM_Y,M4A.VFM_Z,M4A.HFM_X,M4A.HFM_Z,M4A.HFM_Au_Mesh,M4A.VFM_Au_Mesh,
+                             M4A.VFM_Y,M4A.VFM_Z,M4A.VFM_Rx,M4A.HFM_X,M4A.HFM_Z,M4A.HFM_Ry,
+                             M4A.HFM_Au_Mesh,M4A.VFM_Au_Mesh,
                              M4B.X,M4B.Y,M4B.Z,M4B.Rx,M4B.Ry,M4B.Rz,
                              M4BDslit.h_gap, M4BDslit.h_center,M4BDslit.v_gap,M4BDslit.v_center,
                              M4BDslit.h_scan,M4BDslit.h_apperture,M4BDslit.v_scan,M4BDslit.v_apperture,
@@ -56,8 +57,20 @@ BlueskyMagics.positioners = [EPU57.gap,EPU57.phase,EPU105.gap,EPU105.phase
 #The following set of commands is used to define the suspenders used for each scan.
 
 #Suspender for beam current.
-suspender_beam_current = SuspendFloor(EpicsSignalRO('SR:OPS-BI{DCCT:1}I:Real-I'), 0.0)
+suspender_beam_current = SuspendFloor(EpicsSignalRO('SR:OPS-BI{DCCT:1}I:Real-I'), 5.0)
 RE.install_suspender(suspender_beam_current)
+
+
+
+#Suspender for photon shutters.
+    #FE photon shutter
+suspender_FE_photon_shutter = SuspendBoolHigh(EpicsSignalRO('XF:21ID-PPS{Sh:FE}Pos-Sts'))
+RE.install_suspender(suspender_FE_photon_shutter)
+
+    #FOE photon shutter
+suspender_FOE_photon_shutter = SuspendBoolHigh(EpicsSignalRO('XF:21IDA-PPS{PSh}Pos-Sts'))
+RE.install_suspender(suspender_FOE_photon_shutter)
+
 
 
 #Suspender for EPU57/EPU1.

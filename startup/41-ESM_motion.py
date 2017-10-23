@@ -415,30 +415,39 @@ class ESM_motion_device:
         f_string='************************************************************\n'
         f_string+=self.name+' STATUS:  '+time.strftime("%c") + '\n'
         f_string+='************************************************************\n\n'
-
+  
+               
         #step through the detectors and read the values.
-        for key in list(det_status_dict.keys()):
+        f_string+='EPICS SIGNAL COMPONENTS\n'
+        f_string+='-----------------------\n'
+        device_list=list(det_status_dict.keys())
+        device_list.sort()
+        for key in device_list:
             f_string+='    '+key+':\n'
             key_dict = det_status_dict[key]
             for det in key_dict:
                 obj,_,attr = det.partition('_')
-                f_string+='\t '+det+' -->  %f\n' % getattr(ip.user_ns[obj],attr).value
+                f_string+='\t '+det.ljust(25)+' -->  %f\n' % getattr(ip.user_ns[obj],attr).value
             f_string+='\n'           
             
-        # step through the detectors and read the values
-        for key in list(status_dict.keys()):
+        # step through the motors and read the values
+        f_string+='EPICS MOTOR COMPONENTS\n'
+        f_string+='-----------------------\n'
+        device_list=list(status_dict.keys())
+        device_list.sort()
+        for key in device_list:
             f_string+='    '+key+':\n'
             key_dict = status_dict[key]
             for axis in key_dict:
                 obj,_,attr = axis.partition('_')
-                f_string+='\t '+axis+' -->  %f\n' % getattr(ip.user_ns[obj],attr).position
+                f_string+='\t '+axis.ljust(25)+' -->  %f\n' % getattr(ip.user_ns[obj],attr).position
             f_string+='\n'
         
         if output.startswith('string'):
             print (f_string)
 
         if output.endswith('file'):
-            fl="/home/xf21id1/.ipython/profile_collection/startup/status_files/"
+            fl="/direct/XF21ID1/status_files/"
             fl+=self.name+'_status'
             f = open(fl, "a")
             f.write(f_string)
@@ -537,10 +546,10 @@ class ESM_motion_device:
                 elif chamber_dict[to_chamber]['gate_valve_open_info'] == 'Manual' :
                     if self.ask_user_continue('gate valve must be opened manually. "IS GATE VALVE OPEN"') ==0:
                         raise RuntimeError('user quit move')
-                else:
-                    from_axes_list= list(key for key in chamber_dict[from_chamber].keys() if not key.endswith('_info') )
-                    from_axis_list=list(axis for axis in from_axes_list if not np.isnan(chamber_dict[from_chamber][axis]) )
-                    ####MOVE TO 'FROM CHAMBER' TRANSFER POSITION####
+                    else:
+                        from_axes_list= list(key for key in chamber_dict[from_chamber].keys() if not key.endswith('_info') )
+                        from_axis_list=list(axis for axis in from_axes_list if not np.isnan(chamber_dict[from_chamber][axis]) )
+                     ####MOVE TO 'FROM CHAMBER' TRANSFER POSITION####
                     for axis in from_axis_list:
                         if not axis.endswith('_info'):
                             #define the motor record and axis attribute for the transfer axis
