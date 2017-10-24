@@ -582,7 +582,8 @@ def scan_info(scan_id_list,Baseline=False,Detector=False):
             #If the user asked for detector info
             dets=db[scan_id].start['detectors']
             f_string+='***** Detector Settings *****\n\n'
-
+            hdr=db[scan_id]
+            
             for det in dets:
                 f_string+='    '+det+':\n'
                 keys=list(hdr.config_data(det)['primary'][0].keys())
