@@ -132,17 +132,29 @@ PGM = Monochromator("XF:21IDB-OP{Mono:1",name="PGM")
 PGM.hints = {'fields': [PGM.Energy.name,PGM.Focus_Const.name,PGM.Grating_lines.name]}
 
 
+class EpicsSignalLastElement(EpicsSignal):
+    def get(self):
+        return float(super().get()[-1])
+
 
 class BEST_Xaxis(Device):
-    readback = Comp(EpicsSignal,"FM}:BPM0:PosX")  # Make these EpicsSignal, 'PV:...'
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.readback.name = self.name
+
+    readback = Comp(EpicsSignalLastElement,"FM}:BPM0:PosX")  # Make these EpicsSignal, 'PV:...'
     setpoint = Comp(EpicsSignal,"FM}:PID:SetpointX")
     tolerance = 0.1
 
+        
+    # Define the class properties here
+    @property
     def read_val(self):
-        return self.get()[-1]
-    
-    position='yes'
-    
+        return self.get()
+
+    @property
+    def hints(self):
+        return{'fields':[self.readback.name]}
 
     
     def set(self, value):
@@ -163,15 +175,24 @@ class BEST_Xaxis(Device):
         return status
 
 class BEST_Yaxis(Device):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.readback.name = self.name
 
-    readback = Comp(EpicsSignal,"FM}:BPM0:PosY")  # Make these EpicsSignal, 'PV:...'
+        
+    readback = Comp(EpicsSignalLastElement,"FM}:BPM0:PosY")  # Make these EpicsSignal, 'PV:...'
     setpoint = Comp(EpicsSignal,"FM}:PID:SetpointY")
     tolerance = 0.1
 
-    def read_val(self):
-        return self.get()[-1]
+    # Define the class properties here
+
+    @property    
+    def position(self):
+        return self.read_val.get()
     
-    position='yes'   
+    @property
+    def hints(self):
+        return{'fields':[self.readback.name]}
         
     def set(self, value):
         desired_value = value
@@ -209,13 +230,28 @@ class KB_pair(Device):
     HFM_Au_Mesh = Comp(EpicsMotor,"Ax:A4_HGM}Mtr")
     VFM_Au_Mesh = Comp(EpicsMotor,"Ax:A4_VGM}Mtr")
 
-    VFM_Rx = Comp(BEST_Xaxis,"") 
+    VFM_Rx = Comp(BEST_Xaxis,"")
     VFM_Pitch = Comp(BEST_Xaxis,"")
     HFM_Ry = Comp(BEST_Yaxis,"")
     HFM_Pitch = Comp(BEST_Yaxis,"") 
 
 
 M4A = KB_pair("XF:21IDC-OP{Mir:4A-",name="M4A")
+
+#This defines the hints and postion attributes for the pitch motion
+#TRY TO DO THIS IN THE AXIS CLASS DEFINITION.
+#M4A.VFM_Rx.hints={'fields': ['M4A_VFM_Rx_setpoint']}
+#M4A.VFM_Pitch.hints={'fields': ['M4A_VFM_Pitch_setpoint']}
+#M4A.HFM_Ry.hints={'fields': ['M4A_HFM_Ry_setpoint']}
+#M4A.HFM_Ry.hints={'fields': ['M4A_HFM_Pitch_setpoint']}
+
+#M4A.VFM_Rx.position=M4A.VFM_Rx.read_val
+#M4A.VFM_Pitch.position=M4A.VFM_Pitch.read_val
+#M4A.HFM_Ry.position=M4A.HFM_Ry.read_val
+#M4A.HFM_Pitch.position=M4A.HFM_Pitch.read_val
+
+
+
 # define what is displayed from M4A during quieries using M4A.hints.
 M4A.hints = {'fields': [M4A.VFM_Y.name,M4A.VFM_Z.name,M4A.VFM_Rx.name,
                         M4A.HFM_Z.name,M4A.HFM_X.name,M4A.HFM_Ry.name]}
