@@ -1021,9 +1021,9 @@ def M3_pitch_alignment(Branch="A",adaptive=False):
         det_int_time = 0.0004 # The integration time to use.
 
         Exit_Slit_hgap_motor = ExitSlitA.h_gap # The motor required to move the horizontal exit slit
-        Exit_Slit_hgap_pos = 20                # The horizontal gap opening to use
+        Exit_Slit_hgap_pos = 10                # The horizontal gap opening to use
         Exit_Slit_vgap_motor = ExitSlitA.v_gap # THe motor required to move the vertical exit slit
-        Exit_Slit_vgap_pos = 30                # The vertical gap opening to use
+        Exit_Slit_vgap_pos = 10                # The vertical gap opening to use
 
 
         Diode_motor = BTA2diag.trans    #The motor to move the diode into position.
