@@ -622,13 +622,13 @@ class ESM_motion_device:
 ## Define the instances of the ESM_device class
 
 #The low temperature manipulator
-LT_manip=ESM_motion_device(
-    '/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/LT_manip_definition.csv',
+LT_manip=ESM_motion_device(os.getcwd()+
+    '/.ipython/profile_collection/startup/motion_definition_files/LT_manip_definition.csv',
     'LOW TEMPERATURE MANIPULATOR')    
 
 #The beamline as a whole (swap branches, etc).
-Beamline=ESM_motion_device(
-    '/home/xf21id1/.ipython/profile_collection/startup/motion_definition_files/Beamline_definition.csv',
+Beamline=ESM_motion_device(os.getcwd()+
+    '/.ipython/profile_collection/startup/motion_definition_files/Beamline_definition.csv',
     'BEAMLINE')  
 
 
