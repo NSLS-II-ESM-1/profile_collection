@@ -1,5 +1,6 @@
 from bluesky import Msg
-from bluesky.plans import stage_decorator, separate_devices, run_decorator
+from bluesky.preprocessors import stage_decorator, run_decorator
+from bluesky.utils import separate_devices
 
 def adaptive_scan(detectors, target_field, motor, start, stop,
                   min_step, max_step, target_delta, backstep,

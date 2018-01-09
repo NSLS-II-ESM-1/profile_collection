@@ -4,8 +4,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import os
-from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
-from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
+from bluesky.plans import scan, adaptive_scan, spiral_fermat, spiral,scan_nd 
+from bluesky.plan_stubs import abs_set, mv
+from bluesky.preprocessors import baseline_decorator, subs_decorator
+# from bluesky.callbacks import LiveTable, LivePlot, CallbackBase
 from pyOlog.SimpleOlogClient import SimpleOlogClient
 from esm import ss_csv
 from cycler import cycler
@@ -244,6 +246,7 @@ def scan_1D(DETS_str, scan_motor, start, end ,step_size,scan_type=None,adaptive=
     #Define the scan
     def inner():
         if adaptive is None:
+            print (str(detectors)+","+str(scan_motor)+","+ str(start)+","+str(stop)+","+str(_md))
             return ( yield from scan(detectors,scan_motor,start,stop,steps+1,md=_md))
         else:
             return ( yield from adaptive_scan(detectors,Y_axis,scan_motor,start,stop,adaptive[0],

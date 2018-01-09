@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import os
-from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
-from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
+from bluesky.plans import scan, adaptive_scan, spiral_fermat, spiral,scan_nd 
+from bluesky.plan_stubs import abs_set, mv
+from bluesky.preprocessors import baseline_decorator, subs_decorator
+# from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
 from pyOlog.SimpleOlogClient import SimpleOlogClient
 from esm import ss_csv
 from cycler import cycler
@@ -99,8 +101,9 @@ class ESM_motion_device:
         prefix '_Tr'. In addition to the motion axes these locations should also include the 'optional' columns: 
         
         chamber_info - To give a name to the chamber (all transfer locations should include a chamber).
-        gate_valve_name_info - The name of the gate-valve that seperates the 2 chambers (can be "None").
-        gate_valve_open_info - Should be "Yes", "No" or "Manual" to indicate if the gate valve should be opened, 
+        gate_valve_list_info - The list of the gate-valves to open and close during motion (i.e. the gate valve 
+                               that seperates 2 chambers (can be "None").
+        gate_valve_open_list - Should be "Yes", "No" or "Manual" to indicate if the gate valve should be opened, 
                                closed or if the gatevale should be opened manually prior to moving to this chamber
         transfer_axis_name -  should be the name of the motor axis that transfers the manipulator from one chamber to 
                               another
@@ -515,7 +518,7 @@ class ESM_motion_device:
                     move_axis=getattr(ip.user_ns[obj],attr)
                     #move the axis to the new location
                     yield from mv(move_axis, axis_dict[axis] )
-
+                    
         #if the transfer has multiple chambers.
         else:
 
@@ -540,16 +543,19 @@ class ESM_motion_device:
                         yield from mv(move_axis, axis_dict[axis] )
                 
             elif chamber_dict[to_chamber]['gate_valve_open_info'] in ('Yes','Manual') :
-                if self.ask_user_continue('This will move the manipulator and open a gate valve,'+
+                if self.ask_user_continue('This will move the manipulator and open or close gate valves,'+
                                           ' unless print_summary was used to call it') ==0:
                     raise RuntimeError('user quit move')
                 elif chamber_dict[to_chamber]['gate_valve_open_info'] == 'Manual' :
-                    if self.ask_user_continue('gate valve must be opened manually. "IS GATE VALVE OPEN"') ==0:
+                    if self.ask_user_continue('one or more gate valves must be opened or closed  manually. "ARE GATE VALVES OPEN"') ==0:
                         raise RuntimeError('user quit move')
+
                     else:
+        
                         from_axes_list= list(key for key in chamber_dict[from_chamber].keys() if not key.endswith('_info') )
                         from_axis_list=list(axis for axis in from_axes_list if not np.isnan(chamber_dict[from_chamber][axis]) )
-                     ####MOVE TO 'FROM CHAMBER' TRANSFER POSITION####
+
+                    ####MOVE TO 'FROM CHAMBER' TRANSFER POSITION####
                     for axis in from_axis_list:
                         if not axis.endswith('_info'):
                             #define the motor record and axis attribute for the transfer axis
@@ -622,12 +628,12 @@ class ESM_motion_device:
 ## Define the instances of the ESM_device class
 
 #The low temperature manipulator
-LT_manip=ESM_motion_device(os.getcwd()+
+LT_manip=ESM_motion_device(os.environ['HOME']+
     '/.ipython/profile_collection/startup/motion_definition_files/LT_manip_definition.csv',
     'LOW TEMPERATURE MANIPULATOR')    
 
 #The beamline as a whole (swap branches, etc).
-Beamline=ESM_motion_device(os.getcwd()+
+Beamline=ESM_motion_device(os.environ['HOME']+
     '/.ipython/profile_collection/startup/motion_definition_files/Beamline_definition.csv',
     'BEAMLINE')  
 

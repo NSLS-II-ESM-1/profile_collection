@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import os
-from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
-from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
+from bluesky.plans import scan, adaptive_scan, spiral_fermat, spiral,scan_nd  
+from bluesky.plan_stubs import abs_set, mv 
+from bluesky.preprocessors import baseline_decorator, subs_decorator 
+# from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
 #from pyOlog.SimpleOlogClient import SimpleOlogClient
 #from esm import ss_csv
 from cycler import cycler
@@ -411,9 +413,9 @@ def fit_Gauss_1Dseries(uid,initial_guess):
         
     #step through each "row" and fit a gaussian.
     for y_step in range(0,y_num):
-        x = db.get_table(hdr,[hdr.start['plot_Xaxis']])[x_num*y_step:x_num*(y_step+1)-1] 
+        x = hdr.table()[hdr.start['plot_Xaxis']][x_num*y_step:x_num*(y_step+1)-1] 
         y_seq.append(y_step)
-        data = db.get_table(hdr,[hdr.start['plot_Zaxis']])[x_num*y_step:x_num*(y_step+1)-1]
+        data = hdr.table()[hdr.start['plot_Zaxis']][x_num*y_step:x_num*(y_step+1)-1]
 
         popt_row, pcov_row = opt.leastsq(gaussian_1D_error,x0=initial_guess,
                                          args=(data[hdr.start['plot_Zaxis']],
@@ -452,7 +454,7 @@ def max_in_1D(scan_id):
     else:
         Xname = scan.start['plot_Xaxis'][0]
         
-    data2D = db.get_table(scan)[[Xname, scan.start['plot_Yaxis'][0]]]
+    data2D = scan.table()[[Xname, scan.start['plot_Yaxis'][0]]]
 #    del data2D['time']
 
     max_idx = np.argmax(data2D[scan.start['plot_Yaxis'][0]], axis=None)
@@ -482,7 +484,7 @@ def max_in_2D(scan_id):
         Xname = scan.start['plot_Xaxis'][0]+'_user_setpoint'
         Yname = scan.start['plot_Yaxis'][0]+'_user_setpoint'
         
-    data3D = db.get_table(scan)[[Xname, Yname, scan.start['plot_Zaxis'][0]]]
+    data3D = scan.table()[[Xname, Yname, scan.start['plot_Zaxis'][0]]]
     del data3D['time']
 
     max_idx = np.argmax(data3D[scan.start['plot_Zaxis'][0]], axis=None)
@@ -525,7 +527,7 @@ def scan_info(scan_id_list,Baseline=False,Detector=False):
     for scan_id in scan_id_list:
         #Load up the baseline data stream and extract out the list of keys that are not setpoints or
         #done indicators
-        data=db.get_table(db[scan_id],stream_name='baseline')   
+        data = db[scan_id].table(stream_name='baseline')   
         key_list=[key for key in data.keys() if '_setpoint' not in key and '_done' not in key ]
 
         #Extract out a list of devices from the list of keys.
