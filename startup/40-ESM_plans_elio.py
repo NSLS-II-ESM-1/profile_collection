@@ -4,8 +4,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import os
-from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
-from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
+from bluesky.plans import scan, adaptive_scan, spiral_fermat, spiral,scan_nd
+from bluesky.plan_stubs import abs_set, mv
+from bluesky.preprocessors import baseline_decorator, subs_decorator
+# from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
 from pyOlog.SimpleOlogClient import SimpleOlogClient
 #from ophyd import EpicSignal
 from esm import ss_csv
@@ -473,7 +475,7 @@ def sh_test():
     caput('XF:21ID-PPS{Sh:FE}Cmd:Cls-Cmd', 1)
     #caput XF:21IDC-BI{EM:7}EM180:Acquire 0
     uid=yield from (scan_time([detector],num=1, scan_type=scan_type_str))  
-    value = db.get_table(db[-1]).qem07_current2_mean_value
+    value = db[-1].table().qem07_current2_mean_value
     caput('XF:21IDC-BI{EM:7}EM180:CurrentOffset1', value)
     caput('XF:21ID-PPS{Sh:FE}Cmd:Opn-Cmd', 1)
     return 

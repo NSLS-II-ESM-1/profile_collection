@@ -1,10 +1,6 @@
 # We assume this is being run in a namespace (e.g. an IPython profile startup
 # script) where an instance of databroker.Broker named `db` is already defined.
 
-
-
-
-
 search_result = lambda h: "{start[plan_name]} ['{start[uid]:.6}']".format(**h)
 text_summary = lambda h: "This is a {start[plan_name]}.".format(**h)
 
@@ -14,7 +10,7 @@ def fig_dispatch(header, factory):
     if 'image_det' in header['start']['detectors']:
         fig = factory('Image Series')
         cs = CrossSection(fig)
-        sv = StackViewer(cs, db.get_images(header, 'image'))
+        sv = StackViewer(cs, header.data('image'))
     elif len(header['start'].get('motors', [])) == 1:
         motor, = header['start']['motors']
         main_det, *_ = header['start']['detectors']

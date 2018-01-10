@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import os
-from bluesky.plans import scan, baseline_decorator, subs_decorator,abs_set,adaptive_scan,spiral_fermat,spiral,scan_nd,mv
-from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
+from bluesky.plans import scan, adaptive_scan, spiral_fermat, spiral,scan_nd  
+from bluesky.plan_stubs import abs_set, mv 
+from bluesky.preprocessors import baseline_decorator, subs_decorator 
+# from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
 from pyOlog.SimpleOlogClient import SimpleOlogClient
 from esm import ss_csv
 from cycler import cycler
@@ -132,3 +134,17 @@ def macro4():
 
  
         
+def macro5():
+    #This macro is used to map the energy of the harmonics of EPU57. Using B-branch. Linear Vertical:phase,-28
+
+    yield from mv(FEslit.h_gap, 1, FEslit.v_gap, 1)
+    yield from mv(EPU57.phase,-28)
+    yield from mv(ExitSlitA.h_gap,300)
+    yield from mv(ExitSlitA.v_gap,10)
+    yield from mv(BTA2diag.trans,-63)
+
+    yield from scan_multi_1D('qem07@1', PGM.Energy, 130, 300, 10.0, EPU57.gap, 20, 30, .1, snake = True)    
+    yield from scan_multi_1D('qem07@1', PGM.Energy, 250, 1000, 50.0, EPU57.gap, 20, 50, .1, snake = True)  
+    yield from scan_multi_1D('qem07@1', PGM.Energy, 1000, 1500, 50.0, EPU57.gap, 20, 70, .11, snake = True)
+
+    yield from mv(shutter_FOE,'close')    
