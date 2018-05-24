@@ -6,6 +6,19 @@ from ophyd import DeviceStatus
 
 MR_attrs = "'user_readback','user_setpoint','motor_is_moving','motor_done_move','motor_stop'"
 
+
+# ---------------------------- Polarimeter -----------------------------
+# Polarimeter
+#
+class Pol_mtr(Device):
+    Rz = Comp(EpicsMotor,'Mtr')
+
+Pol = Pol_mtr('XF:21IDC-OP{Slt:1B-Pol:B1_1-Ax:B1_Rz}', name='Pol')
+# define what is displayed from the Pol during quieries using Pol.hints.
+Pol.hints = {'fields': [Pol.Rz.name]}
+
+
+
 # ---------------------------- Load Lock -----------------------------
 # Load Lock
 #

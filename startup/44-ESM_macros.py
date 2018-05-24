@@ -125,6 +125,8 @@ def macro3():
     yield from mv(shutter_FOE,'close')
 
 
+
+
 def macro4():
     #This macro is to run series of 2D scans over 100 um x 100 um with 2 micron step size.
 
@@ -148,3 +150,38 @@ def macro5():
     yield from scan_multi_1D('qem07@1', PGM.Energy, 1000, 1500, 50.0, EPU57.gap, 20, 70, .11, snake = True)
 
     yield from mv(shutter_FOE,'close')    
+
+def macro_pol1():
+#   yield from mv(Pol.Rz,180)   yield from scan_multi_1D('qem12@3', EPU57.phase, 14, 28, 2, EPU57.gap, 16, 32, .1)
+    yield from mv(Pol.Rz,90)
+    yield from scan_multi_1D('qem12@3', EPU57.phase, 4, 14, 2, EPU57.gap, 25, 32, .1)
+  
+        
+def macro_pol():
+
+    phase = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28]
+    gap = [29.7, 29.6, 29.4, 29.0, 28.4, 27.7, 26.8, 25.9, 24.9, 23.9, 22.9, 22.1, 21.4, 21.0, 20.8]
+
+    
+    for i in range(len(gap)):
+        yield from mv(EPU57.phase,phase[i])
+        yield from mv(EPU57.gap,gap[i])
+        yield from scan_1D('qem12@3', Pol.Rz, 0, 360, 5)
+
+
+
+def macro_LV_105_maps():
+
+    yield from mv(FEslit.h_gap, 1, FEslit.v_gap, 1)
+    yield from mv(EPU105.phase,-52.5)
+    yield from mv(ExitSlitB.h_gap,300)
+    yield from mv(ExitSlitB.v_gap,10)
+    yield from mv(BTB2diag.trans,-63)
+
+    yield from Eph.move_to(80, grating='300', EPU=None, shutter='open')
+
+    yield from scan_multi_1D('qem12@1', PGM.Energy, 80, 500, 10.0, EPU105.gap, 20, 100, .1, snake = True)    
+#    yield from scan_multi_1D('qem12@1', PGM.Energy, 250, 1000, 50.0, EPU57.gap, 20, 50, .1, snake = True)  
+#    yield from scan_multi_1D('qem12@1', PGM.Energy, 1000, 1500, 50.0, EPU57.gap, 20, 70, .11, snake = True)
+    yield from mv(shutter_FE,'Close')
+

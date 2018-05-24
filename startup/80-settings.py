@@ -18,8 +18,8 @@ This section is used to define a few settings values that are used for all scans
 #This defines which motor devices to measure at the start and end of each scan. The axes that
 #are measured are defined at the initialization of the motor device in the '.hints.' attribute.
 
-sd.baseline = [BeamSource, EPU105, FEslit, M1, PGM, M3, ExitSlitA, ExitSlitB, M4A, M4B, LT, SP]
-#sd.baseline = [BeamSource,EPU57, EPU105, FEslit, M1, PGM, M3, ExitSlitA, ExitSlitB, M4A, M4B, LT, SP]
+#sd.baseline = [BeamSource, EPU105, FEslit, M1, PGM, M3, ExitSlitA, ExitSlitB, M4A, M4B, LT, SP]
+sd.baseline = [BeamSource,EPU57, EPU105, FEslit, M1, PGM, M3, ExitSlitA, ExitSlitB, M4A, M4B, LT, SP]
 
 #This line command defines the list of motor axes that are to be displayed when using the magics
 # command %wa.

@@ -122,6 +122,10 @@ Diag1_CamV.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam02/'
 #Lock23A_CamEA3_1 = MyDetector('XF:21IDC-BI{BT:B2-Diag:B2_1}', name='Lock23A_CamEA3_1')
 #Lock23A_CamEA3_1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam03/'
 
+Lock23A_CamEA3_1 = MyDetector('XF:21IDD-BI{Lock2:3A-Cam:EA3_1}', name='Lock23A_CamEA3_1')
+Lock23A_CamEA3_1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam03/'
+
+
 Lock14A_CamEA4_1 = MyDetector('XF:21IDD-BI{Lock1:4A-Cam:EA4_1}', name='Lock14A_CamEA4_1')
 Lock14A_CamEA4_1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam04/'
 
@@ -131,23 +135,46 @@ Prep2A_CamEA2_1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam05/'
 Mir3_Cam10_U_1 = MyDetector('XF:21IDB-BI{Mir:3-Cam:10_U_1}', name='Mir3_Cam10_U_1')
 Mir3_Cam10_U_1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam06/'
 
+
+
 #BC1_Diag1_U_1 = MyDetector('XF:21IDA-BI{BC:1-Diag:1_U_1}', name='BC1_Diag1_U_1')
 #BC1_Diag1_U_1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam07/'
 
-#BTA2_Cam1 = MyDetector('XF:21IDD-OP{BT:A2-Cam:2}', name='BTA2_Cam2')
-#BTA2_Cam1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam08/'
-
-#BTB2_Cam1 = MyDetector('XF:21IDD-OP{BT:B2-Cam:1}', name='B2BT_Cam1')
-#BTB2_Cam_1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam09/'
-
 Anal1A_Camlens = MyDetector('XF:21IDD-BI{Anal:1A-Cam:lens}', name='Anal1A_Camlens')
-Anal1A_Camlens.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam10/'
+Anal1A_Camlens.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam07/'
 
 Anal1A_Cambeam = MyDetector('XF:21IDD-BI{Anal:1A-Cam:beam}', name='Anal1A_Cambeam')
-Anal1A_Cambeam.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam11/'
+Anal1A_Cambeam.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam08/'
 
+Prep2A_CamLEED = MyDetector('XF:21IDD-BI{Prep:2A-Cam:LEED}', name='Prep2A_CamLEED')
+Prep2A_CamLEED.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam09/'
 
-all_standard_pros = [Diag1_CamH,Diag1_CamV,Lock14A_CamEA4_1,Prep2A_CamEA2_1,Mir3_Cam10_U_1,Anal1A_Camlens,Anal1A_Cambeam]
+Prep2A_Camevap1 = MyDetector('XF:21IDD-BI{Prep:2A-Cam:evap1}', name='Prep2A_Camevap1')
+Prep2A_Camevap1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam10/'
+
+Prep2A_Camevap2 = MyDetector('XF:21IDD-BI{Prep:2A-Cam:evap2}', name='Prep2A_Camevap2')
+Prep2A_Camevap2.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam11/'
+
+LOWT_5A_Cam1 = MyDetector('XF:21IDD-OP{LOWT:5A-Cam:1}', name='LOWT_5A_Cam1')
+LOWT_5A_Cam1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam14/'
+
+LOWT_5A_Cam2 = MyDetector('XF:21IDD-OP{LOWT:5A-Cam:2}', name='LOWT_5A_Cam2')
+LOWT_5A_Cam2.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam15/'
+
+BTA2_Cam1 = MyDetector('XF:21IDD-OP{BT:A2-Cam:1}', name='BTA2_Cam1')
+BTA2_Cam1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam16/'
+
+BTB2_Cam1 = MyDetector('XF:21IDD-OP{BT:B2-Cam:1}', name='B2BT_Cam1')
+BTB2_Cam1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam17/'
+
+PEEM1B_Cam1 = MyDetector('XF:21IDD-OP{PEEM:1B-Cam:1}', name='PEEM1B_Cam1')
+PEEM1B_Cam1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam18/'
+
+BTB5_Cam1 = MyDetector('XF:21IDD-OP{BT:B5-Cam:1}', name='BTB5_Cam1')
+BTB5_Cam1.hdf5.write_path_template = '/direct/XF21ID1/image_files/cam19/'
+
+all_standard_pros = [Diag1_CamH,Diag1_CamV,Lock23A_CamEA3_1,Lock14A_CamEA4_1,Prep2A_CamEA2_1,Mir3_Cam10_U_1,Anal1A_Camlens,Anal1A_Cambeam,Prep2A_CamLEED,Prep2A_Camevap1,Prep2A_Camevap2,LOWT_5A_Cam1, LOWT_5A_Cam2,BTA2_Cam1, BTB2_Cam1,PEEM1B_Cam1,BTB5_Cam1]
+
 for camera in all_standard_pros:
     camera.read_attrs = ['stats1', 'stats2','stats3','stats4','stats5', 'hdf5']
     camera.hdf5.read_attrs = []
