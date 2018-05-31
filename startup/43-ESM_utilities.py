@@ -77,7 +77,7 @@ def ESM_export(scan_ID,filename):
         # return the file path and file name so the user can find it.
         return filestring
 
-def channel_list_unpack(DETS_str):
+def channel_list_unpack(DETS_str, dot=false):
         ''' 
         This function is used to unpack the detector input string and return a list of channels
 
@@ -107,8 +107,10 @@ def channel_list_unpack(DETS_str):
                     This returns The channels and values defined by the last list entry for all 
                     detectors.
                     If no '-' is present it reverts to the default 'Total'.               
-
-
+        dot : Boolean, optional
+            A boolean that indicates if the attribute separator in the returned string should be '.' (True)
+            or '_' (False). Default is False.
+                
                             
  
         name_list : list, output
@@ -138,11 +140,11 @@ def channel_list_unpack(DETS_str):
    
             if len(Channel_list[0]) == 0:
                 #if no channels are defined for this detector.
-                name_list.append(format_channel_name(DET,1,Value='total'))
+                name_list.append(format_channel_name(DET,1,Value='total',dot= dot))
 
             elif '-1' in Channel_list:
                 #if all channels are defined. for this detector.
-                name_list+= format_channel_name(DET,-1).split(',')
+                name_list+= format_channel_name(DET,-1, dot = dot).split(',')
                     
             elif '0' not in Channel_list:
                 #if some channels are defined for this detector. 
@@ -152,17 +154,17 @@ def channel_list_unpack(DETS_str):
 
                     if len(Value_list[0]) == 0:
                         #if no valuess are defined for this detector.
-                        name_list.append(format_channel_name(DET,Channel))
+                        name_list.append(format_channel_name(DET,Channel,dot = dot))
                     else:
                         #if there are values listed for this channel.
                         for k,Value in enumerate(Value_list):
-                            name_list.append(format_channel_name(DET,Channel,Value))
+                            name_list.append(format_channel_name(DET,Channel,Value, dot = dot))
                             
 
 
         return name_list
 
-def format_channel_name(DET,Channel,Value='total'):
+def format_channel_name(DET,Channel,Value='total', dot = False):
         ''' 
         This function formats the channel name for a given detector type.
         
@@ -181,11 +183,17 @@ def format_channel_name(DET,Channel,Value='total'):
 
         Value: str,optional
             The optional "value" for the channel number. 
+        dot : Boolean, optional
+            A boolean that indicates if the attribute separator in the returned string should be '.' (True)
+            or '_' (False). Default is False.
 
         channel_name : str
             The output string that is the formatted channel name.
         '''
-
+        if dot:
+            sep = '.'
+        else:
+            sep = '_'
 
         if 'qem' in DET.lower():
             #if the detector is a qem.
@@ -193,10 +201,10 @@ def format_channel_name(DET,Channel,Value='total'):
                 channel_name=''
                 for i in range(1,5):
                     if i > 1: channel_name+=','
-                    channel_name+=DET+'_current'+str(i)+'_mean_value'
+                    channel_name+=DET+sep+'current'+str(i)+sep+'mean_value'
 
             else:        
-                channel_name=DET+'_current'+str(Channel)+'_mean_value'
+                channel_name=DET+sep+'current'+str(Channel)+sep+'mean_value'
             
         elif 'cam' in DET.lower():
             #if the detctor is a camera.
@@ -204,13 +212,13 @@ def format_channel_name(DET,Channel,Value='total'):
                 channel_name=''
                 for i in range(1,5):
                     if i > 1: channel_name+=','
-                    channel_name+=DET+'_stats'+str(i)+'_total,'
-                    channel_name+=DET+'_stats'+str(i)+'_max_value,'
-                    channel_name+=DET+'_stats'+str(i)+'_min_value'
+                    channel_name+=DET+sep+'stats'+str(i)+sep+'total,'
+                    channel_name+=DET+sep+'stats'+str(i)+sep+'max_value,'
+                    channel_name+=DET+sep+'stats'+str(i)+sep+'min_value'
             else:
                 if 'max' in Value or 'min' in Value:
                     Value+='_value'
-                channel_name=DET+'_stats'+str(Channel)+'_'+Value
+                channel_name=DET+sep+'stats'+str(Channel)+sep+Value
 
         else:
             #If the detcor type has not been determined.
