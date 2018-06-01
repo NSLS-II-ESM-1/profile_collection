@@ -1747,7 +1747,7 @@ def ESM_setup_hints(DETS_str):
             if i > 0:
                 DETS+=','
             DETS+=DET_str.partition('@')[0]
-            ip.user_ns[DET_str].hints={'fields':channel_list_unpack(DET_str+Channel_list)}
+            getattr(ip.user_ns[DET_str], channel_list_unpack(DET_str+Channel_list, dot = True)).kind='hinted'
         
         
     else:
@@ -1758,7 +1758,7 @@ def ESM_setup_hints(DETS_str):
             if i > 0:
                 DETS+=','
             DETS+=DET_str.partition('@')[0]
-            ip.user_ns[DET_str.partition('@')[0]].hints={'fields':channel_list_unpack(DET_str)}
+            getattr(ip.user_ns[DET_str.partition('@')[0]], channel_list_unpack(DET_str, dot = True)).kind='hinted'
             
     return DETS
 
