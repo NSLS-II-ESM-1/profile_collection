@@ -73,8 +73,10 @@ suspender_FE_photon_shutter = SuspendBoolHigh(EpicsSignalRO('XF:21ID-PPS{Sh:FE}P
 RE.install_suspender(suspender_FE_photon_shutter)
 
     #FOE photon shutter
-suspender_FOE_photon_shutter = SuspendBoolHigh(EpicsSignalRO('XF:21IDA-PPS{PSh}Pos-Sts'))
-RE.install_suspender(suspender_FOE_photon_shutter)
+# DAMA (mrakitin): commenting out on 06/04/2018 due to some scans
+#                  need to be run with the closed FOE shutter
+# suspender_FOE_photon_shutter = SuspendBoolHigh(EpicsSignalRO('XF:21IDA-PPS{PSh}Pos-Sts'))
+# RE.install_suspender(suspender_FOE_photon_shutter)
 
 
 

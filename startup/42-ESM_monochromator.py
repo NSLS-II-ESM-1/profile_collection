@@ -450,8 +450,10 @@ class ESM_monochromator_device:
                                    'use Eph.Range to determine the correct grating and EPU')
 
         #shut the front end shutter prior to moving.
-        if shutter is 'close':
-            yield from mv(shutter_FOE, 'Close')
+        # DAMA (mrakitin): commenting it out on 06/02/2018
+        # since TwoButtonShutter does not behave well. Have to revisit it.
+        # if shutter is 'close':
+        #     yield from mv(shutter_FOE, 'Close')
 
         #Set the offsets and translations for the requested locations.
         yield from self.change_offsets(grating, branch)
@@ -493,8 +495,8 @@ class ESM_monochromator_device:
                       PGM.Energy, photon_energy)
         if not EPU==None:
             yield from mv(getattr(ip.user_ns['EPU'+EPU],'gap'), self.Und_e2g(photon_energy,EPU=EPU) )
-        if shutter is 'close':    
-            yield from mv(shutter_FOE, 'Open')
+        # if shutter is 'close':
+        #     yield from mv(shutter_FOE, 'Open')
         return 
         
 ## Define the instances of the ESM_device class
