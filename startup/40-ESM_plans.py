@@ -1036,7 +1036,7 @@ def M3_pitch_alignment(Branch="A",adaptive=False):
 
     elif Branch is "B":
         x_start = -0.75              # The x_axis start value of the scan
-        x_end   = -0.725              # The x_axis end value of the scan
+        x_end   = -0.725             # The x_axis end value of the scan
         stepsize_min = 0.0001        # The minimum x_axis step size of the scan
         stepsize_max = 0.002         # The maximum x_axis step size of the scan
         target_delta = 5E-9          # The target delta between each step in the adaptive scan
@@ -1745,25 +1745,34 @@ def ESM_setup_hints(DETS_str):
         #set the hints to the unpacked detector list.
         for i, DET_str in enumerate(DET_list):
             if i > 0:
-                DETS+=','
-            DETS+=DET_str.partition('@')[0]
-            getattr(ip.user_ns[DET_str], channel_list_unpack(DET_str+Channel_list, dot = True)).kind='hinted'
-
+                DETS += ','
+            DETS += DET_str.partition('@')[0]
+            # DAMA (mrakitin) 20180606: channel_list_unpack() returns
+            # a list of values, e.g:
+            #   ['qem12.current1.mean_value',
+            #    'qem12.current2.mean_value',
+            #    'qem12.current3.mean_value',
+            #    'qem12.current4.mean_value']
+            # that's why we need to loop through them.
+            # Also, we need to cut the name of the device
+            # ('qem12' in the example) from the string.
+            for channel in channel_list_unpack(DET_str + Channel_list, dot=True):
+                getattr(ip.user_ns[DET_str], channel.partition('.')[-1]).kind = 'hinted'
 
     else:
         #if the detector list is of format 1 type.
 
         #set the hints to the unpacked detector list.
-        for i,DET_str in enumerate(DET_list):
+        for i, DET_str in enumerate(DET_list):
             if i > 0:
-                DETS+=','
-            DETS+=DET_str.partition('@')[0]
+                DETS += ','
+            DETS += DET_str.partition('@')[0]
             det = ip.user_ns[DET_str.partition('@')[0]]
             # set everytrhing unhinted
             for c in det.read_attrs:
                 getattr(det, c).kind = 'normal'
             # hint what we asked for
-            for c in channel_list_unpack(DET_str, dot = True):
+            for c in channel_list_unpack(DET_str, dot=True):
                 getattr(det, c.partition('.')[-1]).kind = 'hinted'
 
     return DETS
