@@ -22,6 +22,7 @@ from builtins import input as pyinput
 ip=IPython.get_ipython()
 import datetime
 import time
+from ophyd import EpicsSignal
 
 
 ###Utilities
@@ -629,3 +630,35 @@ def scan_info(scan_id_list,Baseline=False,Detector=False):
 
 
     print (f_string)
+
+
+
+
+#import time
+
+def fil_degas(current, voltage, enable, pressure, target, max_pressure, max_voltage):
+    """
+    fil_degas(fug_current, fug_voltage, fug_enable, prep_pressure, 10 (in mA), 1*10**-8, 10 (in Volts))
+    """
+    voltage.put(max_voltage)
+    enable.put(1)
+    while(target > current.value):
+        incr = 100
+        print("Current value: " + str(round(current.value,2)) + ". Going to " + str(round(current.value+incr,2))) 
+        while(pressure.value >= max_pressure):
+            time.sleep(10)
+        current.put(current.value + incr)
+        time.sleep(10)
+    current.put(0)
+    voltage.put(0)
+    enable.put(0)
+    
+    
+
+fug_current = EpicsSignal(name="fug_current",read_pv="XF:21IDA-ES{FUG:Fil}I-I_units",write_pv="XF:21IDA-ES{FUG:Fil}I:OutMain-SP_units")
+fug_voltage = EpicsSignal(name="fug_voltage",read_pv="XF:21IDA-ES{FUG:Fil}E-I_units",write_pv="XF:21IDA-ES{FUG:Fil}E:OutMain-SP_units")
+fug_enable = EpicsSignal(name="fug_enable",read_pv="XF:21IDA-ES{FUG:Fil}Enbl:OutMain-Sts",write_pv="XF:21IDA-ES{FUG:Fil}Enbl:OutMain-Cmd")
+#prep_pressure = EpicsSignal(name="prep_pressure",read_pv="XF:21IDA-VA{BT:5-IP:5_1}P-I")
+prep_pressure = EpicsSignal(name="prep_pressure",read_pv="XF:21IDD-VA{PREP:2A-CCG:EA5_1}P-I")
+
+#fil_degas(fug_current, prep_pressure, 10, 1*10**-8)
