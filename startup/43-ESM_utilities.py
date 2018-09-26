@@ -585,8 +585,8 @@ def scan_info(scan_id_list,Baseline=False,Detector=False):
         elif db[scan_id].start['scan_name'].endswith('_1D'):
             f_string+='Plotted channel(s) : '+str(db[scan_id].start['plot_Yaxis'])+'\n'
             f_string+='X axis : '+str(db[scan_id].start['plot_Xaxis'])+' ( '
-            f_string+= str(db[scan_id].start['plan_args']['start'])+' , '
-            f_string+= str(db[scan_id].start['plan_args']['stop'])+' , '
+            f_string+= str(db[scan_id].start['plan_args']['args'][-2])+' , '
+            f_string+= str(db[scan_id].start['plan_args']['args'][-1])+' , '
             f_string+= str(db[scan_id].start['delta'])+' ) '+'\n\n'
 
 
