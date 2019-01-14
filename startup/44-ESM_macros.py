@@ -185,3 +185,60 @@ def macro_LV_105_maps():
 #    yield from scan_multi_1D('qem12@1', PGM.Energy, 1000, 1500, 50.0, EPU57.gap, 20, 70, .11, snake = True)
     yield from mv(shutter_FE,'Close')
 
+
+
+
+def macro_exposure_V_ast(X_init = 10.8):
+    Ast_V = [-2, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
+    X = np.arange(X_init+2, X_init+0.2, -0.2 )
+        
+    for i in range(len(X)):
+        yield from mv(LT.X ,X[i])
+        yield from mv(M4A.VFM_Mirror_Astig,Ast_V[i])
+        gv_temp_open('XF:21IDC-VA{BT:A2-GV:A2_D_1}',3)
+
+def macro_exposure_time_H(X_init = 10.8):    
+    time = [1,2,3,4,5,7,9,11,13,16]
+    step = -0.2
+    X = np.arange(X_init+2, X_init+2+step*len(time), step)        
+    for i in range(len(X)):
+        yield from mv(LT.X ,X[i])
+        gv_temp_open('XF:21IDC-VA{BT:A2-GV:A2_D_1}',time[i])
+
+def macro_exposure_square(X_init = 10.8, Y_init = 68.4):
+    step = 0.02
+    X = np.arange(X_init-step*5,X_init, step)
+    Y = np.arange(Y_init, Y_init+step*5, step)
+    for i in X:
+        for j in Y:
+            yield from mv(LT.X ,i)
+            yield from mv(LT.Y ,j)
+            gv_temp_open('XF:21IDC-VA{BT:A2-GV:A2_D_1}',16)
+
+
+
+
+
+
+    
+def macro_exposure_H_ast(X_init = 10.8, Y_init=68.2):
+    Ast_H = [-2.1, -1.6, -1.1, -0.6, -0.1, 0.4, 0.9, 1.4, 1.9, 2.4 ]
+    X = np.arange(X_init, X_init-1.8, -0.2 )
+    H_inout= [-2.5, -2.75, -3.0, -3.25, -3.5]
+    Y=Y_init
+    for j in range(len(H_inout)):
+        yield from mv(LT.Y ,Y+j*0.2)
+        yield from mv(M4A.HFM_Mirror_InOut, H_inout[j])
+        for i in range(len(X)):
+            yield from mv(LT.X ,X[i])
+            yield from mv(M4A.HFM_Mirror_Astig,Ast_H[i])
+            gv_temp_open('XF:21IDC-VA{BT:A2-GV:A2_D_1}',3)
+
+
+
+#def macro_exposure(time =  1, V = 10, H = 10, j=0):
+    #for i in range(V):
+    #    for j in range(H):
+    #yield from mv(M4A.HFM_Ry ,j)
+    #        yield from mv(M4A.VFM_Rx ,i)
+    #        yield from gv_temp_open('XF:21IDD-VA{ANAL:1A-GV:EA1_1}',3)

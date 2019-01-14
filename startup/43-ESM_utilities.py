@@ -662,3 +662,21 @@ fug_enable = EpicsSignal(name="fug_enable",read_pv="XF:21IDA-ES{FUG:Fil}Enbl:Out
 prep_pressure = EpicsSignal(name="prep_pressure",read_pv="XF:21IDD-VA{PREP:2A-CCG:EA5_1}P-I")
 
 #fil_degas(fug_current, prep_pressure, 10, 1*10**-8)
+
+
+
+
+from ophyd import EpicsSignal
+import time
+
+def gv_temp_open(sysdev, duration):
+    """
+    gv_temp_open("XF:21IDB-VA{BT:10-GV:10_D_1}", 1.5 (seconds))
+    """
+    open_pv_str = sysdev + "Cmd:Opn-Cmd"
+    close_pv_str = sysdev + "Cmd:Cls-Cmd"
+    open_cmd = EpicsSignal(name="open_cmd",read_pv=open_pv_str,write_pv=open_pv_str)
+    close_cmd = EpicsSignal(name="close_cmd",read_pv=close_pv_str,write_pv=close_pv_str)
+    open_cmd.put(1)
+    time.sleep(duration)
+    close_cmd.put(1)
