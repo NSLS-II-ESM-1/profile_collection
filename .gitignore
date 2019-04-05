@@ -2,6 +2,8 @@
 __pycache__/
 *.swp
 *.swo
-history.sqlite
+history*.sqlite
 .~lock*
 db/
+static/
+startup/.42-ESM_monochromator.py
