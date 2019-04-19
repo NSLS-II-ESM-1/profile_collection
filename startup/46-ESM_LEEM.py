@@ -16,7 +16,7 @@ class LEEMDetector(Device):
         def check_if_done(value, old_value, **kwargs):
             st = self.st
             if st is not None:
-                if value == 1 and old_value == 0:
+                if value == 0 and old_value == 1:
                     st._finished()
                     self.st = None
 
