@@ -12,20 +12,20 @@ class LEEMDetector(Device):
     filepath = Cpt(EpicsSignal, 'filepath')
     filename = Cpt(EpicsSignal, 'filename')
 
-    def __init__(*args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        def check_if_done(value, old_value, **kwargs):
+            st = self.st
+            if st is not None:
+                if value == 1 and old_value == 0:
+                    st._finished()
+                    self.st = None
+
         super().__init__(*args, **kwargs)
-        self.st = None
-
-    def check_if_done(self, value, old_value, **kwargs):
-        st = self.st
-        if st is not None:
-            if value == 1 and old_value == 0:
-                st._finished()
-                self.st = None
-
-    def trigger(self):
         # On a background thread, listen for the server's response.
         self.start_acq.subscribe(check_if_done)
+        self.st = None
+
+    def trigger(self):
         # Write to server.
         self.st = self.start_acq.set(1)
         return self.st
