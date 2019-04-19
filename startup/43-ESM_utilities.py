@@ -636,16 +636,36 @@ def scan_info(scan_id_list,Baseline=False,Detector=False):
 
 #import time
 
-def fil_degas(current, voltage, enable, pressure, target, max_pressure, max_voltage):
+fug_current = EpicsSignal(name="fug_current",read_pv="XF:21IDA-ES{FUG:Fil}I-I_units",write_pv="XF:21IDA-ES{FUG:Fil}I:OutMain-SP_units")
+fug_voltage = EpicsSignal(name="fug_voltage",read_pv="XF:21IDA-ES{FUG:Fil}E-I_units",write_pv="XF:21IDA-ES{FUG:Fil}E:OutMain-SP_units")
+fug_enable = EpicsSignal(name="fug_enable",read_pv="XF:21IDA-ES{FUG:Fil}Enbl:OutMain-Sts",write_pv="XF:21IDA-ES{FUG:Fil}Enbl:OutMain-Cmd")
+#prep_pressure = EpicsSignal(name="prep_pressure",read_pv="XF:21IDA-VA{BT:5-IP:5_1}P-I")
+prep_pressure = EpicsSignal(name="prep_pressure",read_pv="XF:21IDD-VA{PREP:2A-CCG:EA5_1}P-I")
+
+
+
+def fug_fil_degas(I_target, pressure_pv, max_pressure, max_voltage, current=fug_current, voltage=fug_voltage, enable=fug_enable):
     """
-    fil_degas(fug_current, fug_voltage, fug_enable, prep_pressure, 10 (in mA), 1*10**-8, 10 (in Volts))
+    fug_fil_degas(1 (in A), prep_pressure, 1*10**-8, 10 (in Volts))
     """
+
+#    pressure_pv_dict = {
+#            ['Load_Lock_1']= 'XF:21IDD-VA{LOCK1:4A-CCG:EA4_1}P-I',
+#            ['Load_Lock_2']= 'XF:21IDD-VA{LOCK2:3A-CCG:EA3_1}P-I',
+#            ['Preparation']= 'XF:21IDD-VA{PREP:2A-CCG:EA5_1}P-I',
+#            ['Low_Temp']= 'XF:21IDD-VA{LOWT:5A-CCG:EA5_1}P-I',
+#            ['Analysis']= 'XF:21IDD-VA{ANAL:1A-CCG:EA1_1}P-I' }
+
+
+    pressure_pv = EpicsSignal(pressure_pv_dict[pressure_pv])
+
     voltage.put(max_voltage)
+    current.put(0)
     enable.put(1)
-    while(target > current.value):
-        incr = 100
+    while(I_target > current.value):
+        incr = .1
         print("Current value: " + str(round(current.value,2)) + ". Going to " + str(round(current.value+incr,2))) 
-        while(pressure.value >= max_pressure):
+        while(pressure_pv.value >= max_pressure):
             time.sleep(10)
         current.put(current.value + incr)
         time.sleep(10)
@@ -654,12 +674,6 @@ def fil_degas(current, voltage, enable, pressure, target, max_pressure, max_volt
     enable.put(0)
     
     
-
-fug_current = EpicsSignal(name="fug_current",read_pv="XF:21IDA-ES{FUG:Fil}I-I_units",write_pv="XF:21IDA-ES{FUG:Fil}I:OutMain-SP_units")
-fug_voltage = EpicsSignal(name="fug_voltage",read_pv="XF:21IDA-ES{FUG:Fil}E-I_units",write_pv="XF:21IDA-ES{FUG:Fil}E:OutMain-SP_units")
-fug_enable = EpicsSignal(name="fug_enable",read_pv="XF:21IDA-ES{FUG:Fil}Enbl:OutMain-Sts",write_pv="XF:21IDA-ES{FUG:Fil}Enbl:OutMain-Cmd")
-#prep_pressure = EpicsSignal(name="prep_pressure",read_pv="XF:21IDA-VA{BT:5-IP:5_1}P-I")
-prep_pressure = EpicsSignal(name="prep_pressure",read_pv="XF:21IDD-VA{PREP:2A-CCG:EA5_1}P-I")
 
 #fil_degas(fug_current, prep_pressure, 10, 1*10**-8)
 
