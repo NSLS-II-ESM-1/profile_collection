@@ -7,28 +7,30 @@ from ophyd import Device, EpicsSignal, EpicsMotor, Component as Cpt
 
 
 class LEEMDetector(Device):
-    start_acq = Cpt(EpicsSignal, 'start_acq')
+    acquire = Cpt(EpicsSignal, 'start_acq')
     fileinc = Cpt(EpicsSignal, 'fileinc')
     filepath = Cpt(EpicsSignal, 'filepath')
     filename = Cpt(EpicsSignal, 'filename')
 
-    def __init__(self, *args, **kwargs):
-        def check_if_done(value, old_value, **kwargs):
-            st = self.st
-            if st is not None:
-                if value == 0 and old_value == 1:
-                    st._finished()
-                    self.st = None
-
-        super().__init__(*args, **kwargs)
+#    def __init__(self, *args, **kwargs):
+#        super().__init__(*args, **kwargs)
         # On a background thread, listen for the server's response.
-        self.start_acq.subscribe(check_if_done)
-        self.st = None
+#        self.st = None
 
     def trigger(self):
+        init = 0
+        status = DeviceStatus(self)
         # Write to server.
-        self.st = self.start_acq.set(1)
-        return self.st
+        def check_if_done(old_value, value, **kwargs):
+            if init == 1:
+                if value == 0 and old_value == 1:
+                    status._finished()
+                    self.acquire.clear_sub(check_if_done)
+
+        self.acquire.subscribe(check_if_done)
+        self.acquire.set(1)
+        init = 1
+        return status
 
 
 leem_det = LEEMDetector('XF:21ID2{LEEM}:', name='leem_det')
