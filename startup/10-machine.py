@@ -82,7 +82,7 @@ SA = Analyzer_mtr("XF:21IDD-ES", name='SA')
 #---------------------------Mirrors------------------------------
 class M1_mirror(Device):
     X = Comp(EpicsMotor,"Trans}Mtr", kind='hinted')
-    Mirror_Trans = Comp(EpicsMotor,"Trans}Mtr")
+#    Mirror_Trans = Comp(EpicsMotor,"Trans}Mtr")
     Mirror_InOut = Comp(EpicsMotor,"Trans}Mtr")
     Ry = Comp(EpicsMotor,"Pitch}Mtr", kind='hinted')
     Mirror_Pitch = Comp(EpicsMotor,"Pitch}Mtr")
@@ -93,7 +93,7 @@ M1 = M1_mirror("XF:21IDA-OP{Mir:1-Ax:4_",name="M1")
 
 class Hexapod_Mir(Device):
     X = Comp(EpicsMotor,"_X}Mtr", kind='hinted')
-    Mirror_Trans = Comp(EpicsMotor,"_X}Mtr")
+#    Mirror_Trans = Comp(EpicsMotor,"_X}Mtr")
     Mirror_InOut = Comp(EpicsMotor,"_X}Mtr")
     Y = Comp(EpicsMotor,"_Y}Mtr", kind='hinted')
     Mirror_Stripe = Comp(EpicsMotor,"_Y}Mtr")
