@@ -435,9 +435,13 @@ class ESM_motion_device:
             
         # step through the motors and read the values
         f_string+='EPICS MOTOR COMPONENTS\n'
-        f_string+='-----------------------\n'
+        f_string+='-----------------------\n' 
         device_list=list(status_dict.keys())
         device_list.sort()
+        print(device_list)
+        ln = len(device_list)
+        device_list = device_list[:-3] + device_list[ln-2:]
+        print(device_list)
         for key in device_list:
             f_string+='    '+key+':\n'
             key_dict = status_dict[key]
@@ -448,6 +452,7 @@ class ESM_motion_device:
         
         if output.startswith('string'):
             print (f_string)
+            return f_string
 
         if output.endswith('file'):
             fl="/direct/XF21ID1/status_files/"
@@ -504,20 +509,22 @@ class ESM_motion_device:
 
         #define the axes that need to be moved in the transfer.
         axis_dict=self.axes_dict(location)
+        #print(axis_dict)
+        #print(list(axis for axis in list(axis_dict.keys())))
         axis_list = list(axis for axis in list(axis_dict.keys()) if not np.isnan(axis_dict[axis]) )
 
         #check if the transfer goes between chambers
         if self.current_chamber() == 'No chamber':
-            if self.ask_user_continue('This will move the manipulator, unless print_summary was used to call it') ==0:
-                raise RuntimeError('user quit move')
-            else:
-                for axis in axis_list:
-                    #define the motor record and axis attribute for the ttransfer axis
-                    obj,_,attr = axis.partition('_')
-                    #define the transfer axis object
-                    move_axis=getattr(ip.user_ns[obj],attr)
-                    #move the axis to the new location
-                    yield from mv(move_axis, axis_dict[axis] )
+            #if self.ask_user_continue('This will move the manipulator, unless print_summary was used to call it') ==0:
+            #    raise RuntimeError('user quit move')
+            #else:
+            for axis in axis_list:
+                #define the motor record and axis attribute for the ttransfer axis
+                obj,_,attr = axis.partition('_')
+                #define the transfer axis object
+                move_axis=getattr(ip.user_ns[obj],attr)
+                #move the axis to the new location
+                yield from mv(move_axis, axis_dict[axis] )
                     
         #if the transfer has multiple chambers.
         else:

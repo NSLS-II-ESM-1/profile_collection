@@ -259,7 +259,7 @@ def SiC2F(photon_energy, current):
         '''
         This routine is used to convert an XUV Si-diode current to flux.
 
-        Given the photon energy (in eV) and the XUV Si-diode current (in microAmp), returns the flux
+        Given the photon energy (in eV) and the XUV Si-diode current (in Amp), returns the flux
         (ph/sec). It uses the QY for a typical XUV Si-diode.
 
         PARAMETERS

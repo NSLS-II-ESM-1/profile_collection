@@ -76,6 +76,10 @@ class ESMQuadEM(QuadEM):
             cur.mean_value = Kind.hinted
 
 
+class ESMbpm(ESMQuadEM):
+    conf = Cpt(QuadEMPort, port_name="NSLS2_EM")
+
+
 qem01 = ESMQuadEM("XF:21IDA-BI{EM:1}EM180:", name="qem01")
 qem02 = ESMQuadEM("XF:21IDB-BI{EM:2}EM180:", name="qem02")
 qem03 = ESMQuadEM("XF:21IDB-BI{EM:3}EM180:", name="qem03")
@@ -95,9 +99,7 @@ qem13 = ESMQuadEM("XF:21IDC-BI{EM:13}EM180:", name="qem13")
 qem15 = ESMQuadEM("XF:21IDC-BI{EM:15}EM180:", name="qem15")
 qem16 = ESMQuadEM("XF:21IDC-BI{EM:16}EM180:", name="qem16")
 
-#xbpm01 = ESMQuadEM("XF:21IDA-BI{EM:01}", name="xbpm01")
-
-
+xqem01 = ESMbpm("XF:21IDA-BI{EM:BPM01}", name="xqem01")
 
 
 class MyDetector(SingleTrigger, AreaDetector):
