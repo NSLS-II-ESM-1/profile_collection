@@ -95,11 +95,11 @@ class Source(Device):
             '''
             #Define the list of EPICS signal status values.
             det_status_dict={}
-            det_status_dict[self.name]={self.name+'_Current':self.Current.get()
-                                        self.name+'_Xoffset':self.Xoffset.get()
-                                        self.name+'_Xangle':self.Xangle.get()
-                                        self.name+'_Yoffset':self.Yoffset.get()
-                                        self.name+'_Yangle':self.Yangle.get()
+            det_status_dict[self.name]={self.name+'_Current':self.Current.get(),
+                                        self.name+'_Xoffset':self.Xoffset.get(),
+                                        self.name+'_Xangle':self.Xangle.get(),
+                                        self.name+'_Yoffset':self.Yoffset.get(),
+                                        self.name+'_Yangle':self.Yangle.get()}
 
             #Define the list of EPICS motor status values.
             status_dict={}
