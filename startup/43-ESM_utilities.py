@@ -662,12 +662,12 @@ def fug_fil_degas(I_target, pressure_pv, max_pressure, max_voltage, current=fug_
     voltage.put(max_voltage)
     current.put(0)
     enable.put(1)
-    while(I_target > current.value):
+    while(I_target > current.get()):
         incr = .1
-        print("Current value: " + str(round(current.value,2)) + ". Going to " + str(round(current.value+incr,2))) 
-        while(pressure_pv.value >= max_pressure):
+        print("Current value: " + str(round(current.get(),2)) + ". Going to " + str(round(current.get()+incr,2))) 
+        while(pressure_pv.get() >= max_pressure):
             time.sleep(10)
-        current.put(current.value + incr)
+        current.put(current.get() + incr)
         time.sleep(10)
     current.put(0)
     voltage.put(0)
