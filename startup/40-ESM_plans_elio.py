@@ -85,10 +85,10 @@ def ESM_check(return_all=False):
 
                            # Read the initial values for the 'Gas_cell' detector settings,
  
-    initial_det_range = detector.em_range.value                # The initial detector range
-    initial_det_vals_reading = detector.values_per_read.value  # The initial values per reading.
-    initial_det_avg_time = detector.averaging_time.value       # The initial averaging time.
-    initial_det_int_time = detector.integration_time.value     # The initial integration time.
+    initial_det_range = detector.em_range.get()               # The initial detector range
+    initial_det_vals_reading = detector.values_per_read.get() # The initial values per reading.
+    initial_det_avg_time = detector.averaging_time.get()      # The initial averaging time.
+    initial_det_int_time = detector.integration_time.get()    # The initial integration time.
 
 
             ############  define the REFERENCE beamline configuration #########   
@@ -389,10 +389,10 @@ def ESM_check_test(return_all=True):
     
        # Read the initial values for the 'Gas_cell' detector settings, PGM slits, PGM energy and diode position
 
-    initial_det_range = detector.em_range.value                # The initial detector range
-    initial_det_vals_reading = detector.values_per_read.value  # The initial values per reading.
-    initial_det_avg_time = detector.averaging_time.value       # The initial averaging time.
-    initial_det_int_time = detector.integration_time.value     # The initial integration time.
+    initial_det_range = detector.em_range.get()               # The initial detector range
+    initial_det_vals_reading = detector.values_per_read.get() # The initial values per reading.
+    initial_det_avg_time = detector.averaging_time.get()      # The initial averaging time.
+    initial_det_int_time = detector.integration_time.get()    # The initial integration time.
 
     initial_Exit_Slit_hgap_pos = Exit_Slit_hgap_motor.position # The initial horizontal gap opening
     initial_Exit_Slit_vgap_pos = Exit_Slit_vgap_motor.position # The initial vertical gap opening
