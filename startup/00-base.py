@@ -9,7 +9,6 @@ def wait_for_connection(self, timeout=0):
         timeout = self.connection_timeout
     self._ensure_connected(self._read_pv, self._write_pv, timeout=timeout)
 
-EpicsSignalBase.wait_for_connection = wait_for_connection
 EpicsSignal.wait_for_connection = wait_for_connection
 
 from ophyd.utils.epics_pvs import set_and_wait
