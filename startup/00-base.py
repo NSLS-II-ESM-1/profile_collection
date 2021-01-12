@@ -3,13 +3,27 @@ from functools import partial
 from ophyd.signal import EpicsSignalBase, EpicsSignal
 EpicsSignalBase.set_defaults(connection_timeout=4)
 
+
 def wait_for_connection(self, timeout=0):
     '''Wait for the underlying signals to initialize or connect'''
     if timeout == 0:
         timeout = self.connection_timeout
     self._ensure_connected(self._read_pv, self._write_pv, timeout=timeout)
 
+
+def wait_for_connection_ro(self, timeout=0):
+    '''Wait for the underlying signals to initialize or connect'''
+    if timeout == 0:
+        timeout = self.connection_timeout
+    try:
+        self._ensure_connected(self._read_pv, timeout=timeout)
+    except TimeoutError:
+        if self._destroyed:
+            raise DestroyedError('Signal has been destroyed')
+        raise
+
 EpicsSignal.wait_for_connection = wait_for_connection
+EpicsSignalRO.wait_for_connection = wait_for_connection_ro
 
 
 import nslsii
