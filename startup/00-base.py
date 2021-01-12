@@ -1,6 +1,6 @@
 from functools import partial
 
-from ophyd.signal import EpicsSignalBase, EpicsSignal
+from ophyd.signal import EpicsSignalBase, EpicsSignal, EpicsSignalRO
 EpicsSignalBase.set_defaults(connection_timeout=4)
 
 
