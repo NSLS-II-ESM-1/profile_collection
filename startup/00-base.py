@@ -11,9 +11,6 @@ def wait_for_connection(self, timeout=0):
 
 EpicsSignal.wait_for_connection = wait_for_connection
 
-from ophyd.utils.epics_pvs import set_and_wait
-set_and_wait = partial(set_and_wait, timeout=60)
-
 
 import nslsii
 
