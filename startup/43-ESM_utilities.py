@@ -17,7 +17,10 @@ import math
 import re
 from boltons.iterutils import chunked
 import sys
-from suitcase import hdf5
+try:
+    from suitcase import hdf5
+except:
+    print("Cannot import hdf5 from suitcase")
 from builtins import input as pyinput
 ip=IPython.get_ipython()
 import datetime
@@ -694,3 +697,143 @@ def gv_temp_open(sysdev, duration):
     open_cmd.put(1)
     time.sleep(duration)
     close_cmd.put(1)
+
+
+
+def XY_max(scan_id):
+    ''' 
+    finds the max value (Y) of a scan (scan_id) and returns it toghether with the correponding X value
+    '''
+    hdr = db[scan_id]
+    Y = hdr.table(fields = hdr.start['plot_Yaxis'])
+    Y_max = Y.max()[1]
+    index_max = Y.loc[ Y[ hdr.start['plot_Yaxis'][0] ]== Y_max ].index[0]
+    X = hdr.table(fields = hdr.start['plot_Xaxis'])
+    X_max = X.loc[index_max][1]
+    return(X_max, Y_max) 
+    
+
+from six.moves import cPickle as pickle #for performance
+
+def save_dict(di_, filename_):
+    try:
+        with open(filename_, 'wb') as f:
+            pickle.dump(di_, f)
+    except IOError as e:
+        print(e)
+def load_dict(filename_):
+    with open(filename_, 'rb') as f:
+        ret_di = pickle.load(f)
+    return ret_di
+
+
+
+def pv_time(t = '2019-02-15 08:25:03',
+            pv = 'XF:21IDB-OP{Mono:1-Ax:8_Eng}Mtr.VAL', 
+            archiver_addr = "http://xf21id1-ca1.cs.nsls2.local:17668/retrieval/data/getData.json"):
+    
+    
+    import pytz
+    import time
+    import datetime as dt
+    import pandas as pd
+    import requests
+    import numpy as np
+
+
+    since = dt.datetime.strptime(t , '%Y-%m-%d %H:%M:%S') - dt.timedelta(seconds=0)
+    until = dt.datetime.strptime(t , '%Y-%m-%d %H:%M:%S')
+
+
+# request data from archiver
+
+    timezone = 'US/Eastern'
+    since = pytz.timezone(timezone).localize(since).replace(microsecond=0).isoformat()
+    until = pytz.timezone(timezone).localize(until).replace(microsecond=0).isoformat()
+
+    params = {'pv': pv, 'from': since, 'to': until}
+
+
+    req = requests.get(archiver_addr, params=params, stream=True)
+    req.raise_for_status() 
+
+# process data
+
+    raw, = req.json()
+
+    secs = [x['secs'] for x in raw['data']]
+    nanos = [x['nanos'] for x in raw['data']]
+    data = [x['val'] for x in raw['data']]
+
+    asecs = np.asarray(secs)
+    ananos = np.asarray(nanos)
+
+    times = asecs*1.0e+3 + ananos*1.0e-6
+
+    datetimes = pd.to_datetime(times, unit='ms')
+
+ 
+
+# create and print the DataFrame
+ 
+    df = pd.DataFrame()
+
+    df['time'] = datetimes
+    df['data'] = data
+
+    df.time = df.time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
+
+                            
+    return df['data'].values[-1]
+
+
+def esm_status(t= '', comp=False):
+    ''' time format= 'YYYY-m-d H:M:S'
+    usage: 
+    1) esm_status() --> prints the current status
+    2) esm_status(t='2020-01-15 15:30:00') --> prints status at specified time
+    3) esm_status(t='2020-05-17 19:30:45', comp=True) --> prints pvs with more than 5% difference between now and at time t 
+    '''
+    DT_now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    if t == '':
+        DT = DT_now
+
+    else:
+        DT = t
+        
+    print('Now: {}, then:{}'.format(DT_now, DT))
+
+    pv_dict = load_dict('/home2/xf21id1/.ipython/profile_collection/startup/status_files/mtr_pv_dict.npy') 
+
+    for k in pv_dict.keys():
+        try:
+                value = pv_time(t = DT, pv = pv_dict[k],
+                                archiver_addr = "http://xf21id1-ca1.cs.nsls2.local:17668/retrieval/data/getData.json")
+        except:
+                value = pv_time(t = DT, pv = pv_dict[k],
+                                archiver_addr = 'http://arcapp01.cs.nsls2.local:17668/retrieval/data/getData.json')
+        try:
+                value = value[-1]
+        except:
+                None
+
+        if comp:
+            try:
+                    value_now = pv_time(t = DT_now, pv = pv_dict[k],
+                                        archiver_addr = "http://xf21id1-ca1.cs.nsls2.local:17668/retrieval/data/getData.json")
+            except:
+                    value_now = pv_time(t = DT_now, pv = pv_dict[k],
+                                        archiver_addr = 'http://arcapp01.cs.nsls2.local:17668/retrieval/data/getData.json')
+
+            try:
+                value_now = value_now[-1]
+            except:
+                None
+
+            if value == None and value_now == None:
+                print('No values for {}'.format(k))
+            elif np.abs((value - value_now)) > 0.01:
+                print('{0:20}: then = {1:10.4f}\t now = {2:10.4f}\t diff = {3:10.4f}'.format(k, value, value_now, np.abs((value - value_now))))
+        else:
+            print('{0:20} {1:10.4f}'.format(k, value))

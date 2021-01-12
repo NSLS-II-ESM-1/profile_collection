@@ -14,6 +14,70 @@ import math
 import re
 from boltons.iterutils import chunked
 
+
+
+def pv_time(t = '2019-02-15 08:25:03',
+            pv = 'XF:21IDB-OP{Mono:1-Ax:8_Eng}Mtr.VAL', 
+            archiver_addr = "http://xf21id1-ca1.cs.nsls2.local:17668/retrieval/data/getData.json"):
+    
+    
+    import pytz
+    import time
+    import datetime as dt
+    import pandas as pd
+    import requests
+    import numpy as np
+
+
+    since = dt.datetime.strptime(t , '%Y-%m-%d %H:%M:%S') - dt.timedelta(seconds=0)
+    until = dt.datetime.strptime(t , '%Y-%m-%d %H:%M:%S')
+
+
+# request data from archiver
+
+    timezone = 'US/Eastern'
+    since = pytz.timezone(timezone).localize(since).replace(microsecond=0).isoformat()
+    until = pytz.timezone(timezone).localize(until).replace(microsecond=0).isoformat()
+
+    params = {'pv': pv, 'from': since, 'to': until}
+
+    req = requests.get(archiver_addr, params=params, stream=True)
+    req.raise_for_status()
+
+ 
+
+# process data
+
+    raw, = req.json()
+
+    secs = [x['secs'] for x in raw['data']]
+    nanos = [x['nanos'] for x in raw['data']]
+    data = [x['val'] for x in raw['data']]
+
+    asecs = np.asarray(secs)
+    ananos = np.asarray(nanos)
+
+    times = asecs*1.0e+3 + ananos*1.0e-6
+
+    datetimes = pd.to_datetime(times, unit='ms')
+
+ 
+
+# create and print the DataFrame
+ 
+    df = pd.DataFrame()
+
+    df['time'] = datetimes
+    df['data'] = data
+
+    df.time = df.time.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
+
+#    print(list(df['time'].tail(10))[-1])
+#    print(list(df['data'].tail(10))[-1])
+#    return list(df['data'].tail(10))[-1]
+    return list(df['data'].tail(10))[0]
+
+
 def ESM_check(return_all=False):
 
     
@@ -214,8 +278,8 @@ def ESM_status(f_nm = None):
     import time
 
                        ############# Define the Beamline Motors 
-    Und1 = EPU1.gap
-    Und2 = EPU2.gap
+    Und1 = EPU57.gap
+    Und2 = EPU105.gap
     
     FE_h_center = FEslit.h_center             # The front end horizontal center motor
     FE_v_center = FEslit.v_center             # The front end vertical gap motor
@@ -283,9 +347,9 @@ def ESM_status(f_nm = None):
             ############ PRINT THE BEAMLINE STATUS FILE ######
     
     if f_nm == None: 
-        fl="/direct/XF21ID1/csv_files/STATUS.txt"
+        fl="/nsls2/xf21id1/csv_files/STATUS.txt"
     else:
-        fl='/direct/XF21ID1/csv_files/'+ f_nm +'_STATUS.txt'
+        fl='/nsls2/xf21id1/csv_files/'+ f_nm +'_STATUS.txt'
         
     f = open(fl, "a")
 
