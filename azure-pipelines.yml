@@ -9,4 +9,4 @@ resources:
 jobs:
 - template: azure-linux.yml@templates  # Template reference
   parameters:
-    beamline_acronym: ESM-1
+    beamline_acronym: ARPES
