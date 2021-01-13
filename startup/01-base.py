@@ -1,8 +1,7 @@
-import os
-
-from ophyd.signal import (DEFAULT_CONNECTION_TIMEOUT, EpicsSignalBase,
-                          EpicsSignal, EpicsSignalRO)
-
+###############################################################################
+# TODO: remove this block once https://github.com/bluesky/ophyd/pull/959 is
+# merged/released.
+from ophyd.signal import EpicsSignalBase, EpicsSignal, DEFAULT_CONNECTION_TIMEOUT
 
 def wait_for_connection_base(self, timeout=DEFAULT_CONNECTION_TIMEOUT):
     '''Wait for the underlying signals to initialize or connect'''
@@ -23,10 +22,14 @@ def wait_for_connection(self, timeout=DEFAULT_CONNECTION_TIMEOUT):
 
 EpicsSignalBase.wait_for_connection = wait_for_connection_base
 EpicsSignal.wait_for_connection = wait_for_connection
+###############################################################################
+
+from ophyd.signal import EpicsSignalBase
 
 EpicsSignalBase.set_defaults(connection_timeout=8)
 
 
+import os
 import nslsii
 
 nslsii.configure_base(get_ipython().user_ns, 'arpes')
