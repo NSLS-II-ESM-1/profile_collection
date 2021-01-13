@@ -1,20 +1,12 @@
 import os
 
-from ophyd.signal import EpicsSignalBase, EpicsSignal, EpicsSignalRO
+from ophyd.signal import (DEFAULT_CONNECTION_TIMEOUT, EpicsSignalBase,
+                          EpicsSignal, EpicsSignalRO)
 
 
-EpicsSignalBase.set_defaults(connection_timeout=8)
-
-def wait_for_connection(self, timeout=0):
+def wait_for_connection_base(self, timeout=DEFAULT_CONNECTION_TIMEOUT):
     '''Wait for the underlying signals to initialize or connect'''
-    if timeout == 0:
-        timeout = self.connection_timeout
-    self._ensure_connected(self._read_pv, self._write_pv, timeout=timeout)
-
-
-def wait_for_connection_ro(self, timeout=0):
-    '''Wait for the underlying signals to initialize or connect'''
-    if timeout == 0:
+    if timeout is DEFAULT_CONNECTION_TIMEOUT:
         timeout = self.connection_timeout
     try:
         self._ensure_connected(self._read_pv, timeout=timeout)
@@ -23,8 +15,16 @@ def wait_for_connection_ro(self, timeout=0):
             raise DestroyedError('Signal has been destroyed')
         raise
 
+def wait_for_connection(self, timeout=DEFAULT_CONNECTION_TIMEOUT):
+    '''Wait for the underlying signals to initialize or connect'''
+    if timeout is DEFAULT_CONNECTION_TIMEOUT:
+        timeout = self.connection_timeout
+    self._ensure_connected(self._read_pv, self._write_pv, timeout=timeout)
+
+EpicsSignalBase.wait_for_connection = wait_for_connection_base
 EpicsSignal.wait_for_connection = wait_for_connection
-EpicsSignalRO.wait_for_connection = wait_for_connection_ro
+
+EpicsSignalBase.set_defaults(connection_timeout=8)
 
 
 import nslsii
