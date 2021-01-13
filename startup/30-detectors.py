@@ -23,7 +23,10 @@ from ophyd.areadetector import (
     ProcessPlugin,
     TransformPlugin,
 )
-
+from ophyd.areadetector.plugins import (
+    ImagePlugin_V33,
+    StatsPlugin_V33
+)
 
 class HDF5PluginWithFileStore(HDF5Plugin, FileStoreHDF5IterativeWrite):
 
@@ -51,6 +54,14 @@ class QuadEMPort(ADBase):
 class ESMQuadEM(QuadEM):
     conf = Cpt(QuadEMPort, port_name="EM180")
     em_range = Cpt(EpicsSignalWithRBV, "Range", string=True)
+
+    image = Cpt(ImagePlugin_V33, 'image1:')
+    current1 = Cpt(StatsPlugin_V33, 'Current1:')
+    current2 = Cpt(StatsPlugin_V33, 'Current2:')
+    current3 = Cpt(StatsPlugin_V33, 'Current3:')
+    current4 = Cpt(StatsPlugin_V33, 'Current4:')
+
+    sum_all = Cpt(StatsPlugin_V33, 'SumAll:')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -108,12 +119,12 @@ class MyDetector(SingleTrigger, AreaDetector):
     #               write_path_template='/nsls2/xf21id1/image_files/',  # trailing slash!
     #               read_path_template='/nsls2/xf21id1/image_files/',
     #               root='/direct'    )
-    image = Cpt(ImagePlugin, "image1:")
-    stats1 = Cpt(StatsPlugin, "Stats1:")
-    stats2 = Cpt(StatsPlugin, "Stats2:")
-    stats3 = Cpt(StatsPlugin, "Stats3:")
-    stats4 = Cpt(StatsPlugin, "Stats4:")
-    stats5 = Cpt(StatsPlugin, "Stats5:")
+    image = Cpt(ImagePlugin_V33, "image1:")
+    stats1 = Cpt(StatsPlugin_V33, "Stats1:")
+    stats2 = Cpt(StatsPlugin_V33, "Stats2:")
+    stats3 = Cpt(StatsPlugin_V33, "Stats3:")
+    stats4 = Cpt(StatsPlugin_V33, "Stats4:")
+    stats5 = Cpt(StatsPlugin_V33, "Stats5:")
     trans1 = Cpt(TransformPlugin, "Trans1:")
     roi1 = Cpt(ROIPlugin, "ROI1:")
     roi2 = Cpt(ROIPlugin, "ROI2:")
