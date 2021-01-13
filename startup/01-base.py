@@ -3,7 +3,7 @@ import os
 from ophyd.signal import EpicsSignalBase, EpicsSignal, EpicsSignalRO
 
 
-EpicsSignalBase.set_defaults(connection_timeout=5)
+EpicsSignalBase.set_defaults(connection_timeout=8)
 
 def wait_for_connection(self, timeout=0):
     '''Wait for the underlying signals to initialize or connect'''
