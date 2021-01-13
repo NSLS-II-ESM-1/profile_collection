@@ -1,8 +1,9 @@
-from functools import partial
+import os
 
 from ophyd.signal import EpicsSignalBase, EpicsSignal, EpicsSignalRO
-EpicsSignalBase.set_defaults(connection_timeout=10)
 
+
+EpicsSignalBase.set_defaults(connection_timeout=10)
 
 def wait_for_connection(self, timeout=0):
     '''Wait for the underlying signals to initialize or connect'''
@@ -29,6 +30,9 @@ EpicsSignalRO.wait_for_connection = wait_for_connection_ro
 import nslsii
 
 nslsii.configure_base(get_ipython().user_ns, 'arpes')
+
+# Set ipython startup dir variable (used in some modules):
+PROFILE_STARTUP_PATH = os.path.abspath(get_ipython().profile_dir.startup_dir)
 
 from pathlib import Path
 
