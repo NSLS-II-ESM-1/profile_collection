@@ -14,9 +14,14 @@ class Lakeshore336Setpoint(PVPositioner):
     done = Cpt(EpicsSignalRO, 'Sts:Ramp-Sts')
     ramp_enabled = Cpt(EpicsSignal, 'Enbl:Ramp-Sel')
     range_sel = Cpt(EpicsSignal, 'Val:Range-Sel')
+    mode_sel = Cpt(EpicsSignal, 'Mode-Sel')
+    out_sel = Cpt(EpicsSignal, 'Out-Sel')
     enabled = Cpt(EpicsSignal, 'Enbl-Sts')
     current = Cpt(EpicsSignal, 'Out-I')
     done_value = 0
+    ramp_rate = Cpt(EpicsSignal, read_pv='Val:Ramp-RB',
+                    write_pv='Val:Ramp-SP',
+                    add_prefix=('read_pv', 'write_pv'))
 
 
 class Lakeshore336Channel(Device):

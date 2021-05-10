@@ -476,14 +476,14 @@ class ESM_monochromator_device:
             The beamline branch which is to be used, can be 'A' (default) or 'B'.
 
         '''
-
-        yield from mv(PGM.Mirror_Pitch_set, 1 , PGM.Grating_Pitch_set, 1)
+        #3/17/21 Note - commented out changing USE/SET, which should not be needed and may cause loss of home pos
+        #yield from mv(PGM.Mirror_Pitch_set, 1 , PGM.Grating_Pitch_set, 1)
 
         yield from mv(PGM.Mirror_Pitch_off, float(self.M2_Offset[branch][grating]) ,
                       PGM.Grating_Pitch_off, float(self.Grt_Offset[branch][grating]),
                       PGM.Grating_lines,float(grating) )
 
-        yield from mv(PGM.Mirror_Pitch_set, 0 , PGM.Grating_Pitch_set, 0)
+        #yield from mv(PGM.Mirror_Pitch_set, 0 , PGM.Grating_Pitch_set, 0)
 
         return
 

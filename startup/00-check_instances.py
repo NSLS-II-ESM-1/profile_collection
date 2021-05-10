@@ -1,6 +1,6 @@
 import os
 import sys
-cmd = "ps -aux | grep -i bsui | wc -l"
+cmd = "ps -a | grep -i 'bsui' | wc -l"
 max_instances = 5
 num_instances = int(os.popen(cmd).read()) - 1
 

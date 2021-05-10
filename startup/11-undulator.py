@@ -3,6 +3,11 @@ from ophyd import (PVPositioner, Component as Cpt, EpicsSignal, EpicsSignalRO,
 from ophyd.utils import ReadOnlyError
 import time as ttime
 
+def safe_to_actuate_epu57():
+    return EPU105.gap.position>219
+
+def safe_to_actuate_epu105():
+    return EPU57.gap.position>219
 
 class UgapPositioner(PVPositioner):
     readback = Cpt(EpicsSignalRO, '-Ax:Gap}Mtr.RBV')
@@ -20,6 +25,44 @@ class UgapPositioner(PVPositioner):
     safety_device_fail = Cpt(EpicsSignalRO, '}Sts:Safety-Sts', string=True)
     emergency_open_gap = Cpt(EpicsSignalRO, '}Sts:OpenGapCmd-Sts', string=True)
     # TODO subscribe kill switch pressed and stop motion
+
+    def safe_to_actuate(self):
+        #return True
+        return self.other.position > 219
+
+    def safe_actuate(self):
+        if self.safe_to_actuate():
+            self.actuate.put(1)
+
+    def force_move(self, val):
+        print("Moving ", self, " to ", val)
+        self.setpoint.put(val)
+        self.actuate.put(1)
+
+    def move_other_out(self):
+        self.other.force_move(220)
+
+    def wait_until_other_out(self):
+        while not self.safe_to_actuate():
+            time.sleep(1)
+            print("waiting for other epu to move out...")
+        
+    def move_other_out_and_wait(self):
+        self.move_other_out()
+        self.wait_until_other_out()
+
+    def auto_move(self, val):
+        if self.safe_to_actuate():
+            self.force_move(val)
+        else:
+            self.move_other_out()
+            ttime.sleep(1)
+            self.auto_move(val)
+            
+
+    def setpoint_safe_put(self, val):
+        assert self.safe_to_actuate()
+        self.setpoint.put(val)
 
 class UphasePositioner(PVPositioner):
     readback = Cpt(EpicsSignalRO, '-Ax:Phase}Mtr.RBV')
@@ -54,6 +97,12 @@ EPU105.gap.read_attrs = ['setpoint', 'readback']
 EPU105.gap.readback.name='EPU105_gap'
 EPU105.phase.read_attrs = ['setpoint', 'readback']
 EPU105.phase.readback.name='EPU105_phase'
+
+EPU57.gap.other = EPU105.gap
+EPU105.gap.other = EPU57.gap
+
+#EPU57.safe_to_actuate = safe_to_actuate_epu57
+#EPU105.safe_to_actuate = safe_to_actuate_epu105
 
 
 class Source(Device):
