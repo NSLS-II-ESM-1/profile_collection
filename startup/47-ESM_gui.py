@@ -29,7 +29,8 @@ def esm_gui(filename=esm_ui_config_file, detached=False, verbose=False):
 
 def gui_designer():
     import os
-    os.system("/opt/bsstudio/gui_designer.sh")
+    #os.system("/opt/bsstudio/gui_designer.sh")
+    os.system("~/opt_bsstudio/gui_designer.sh")
 
 def bsstudio_profile_results():
     import pstats

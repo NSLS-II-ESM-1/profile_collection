@@ -8,7 +8,7 @@ from bluesky.plans import scan, adaptive_scan, spiral_fermat, spiral,scan_nd
 from bluesky.plan_stubs import abs_set, mv
 from bluesky.preprocessors import baseline_decorator, subs_decorator
 # from bluesky.callbacks import LiveTable,LivePlot, CallbackBase
-from pyOlog.SimpleOlogClient import SimpleOlogClient
+#from pyOlog.SimpleOlogClient import SimpleOlogClient
 #from ophyd import EpicSignal
 from esm import ss_csv
 from cycler import cycler
