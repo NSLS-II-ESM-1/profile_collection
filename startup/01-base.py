@@ -32,7 +32,7 @@ EpicsSignalBase.set_defaults(connection_timeout=8)
 import os
 import nslsii
 
-nslsii.configure_base(get_ipython().user_ns, 'arpes')
+nslsii.configure_base(get_ipython().user_ns, 'arpes', publish_documents_with_kafka=True)
 
 # Set ipython startup dir variable (used in some modules):
 PROFILE_STARTUP_PATH = os.path.abspath(get_ipython().profile_dir.startup_dir)
