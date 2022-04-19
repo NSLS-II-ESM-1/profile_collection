@@ -52,7 +52,7 @@ class QuadEMPort(ADBase):
 
 
 class ESMQuadEM(QuadEM):
-    conf = Cpt(QuadEMPort, port_name="EM180")
+    conf = Cpt(QuadEMPort, port_name="NSLS_EM")
     em_range = Cpt(EpicsSignalWithRBV, "Range", string=True)
 
     image = Cpt(ImagePlugin_V33, 'image1:')
