@@ -537,13 +537,15 @@ class ESM_monochromator_device:
         yield from self.change_offsets(grating, branch)
         yield from mv(PGM.Grating_Trans, self.Grt_Translation[grating] )
 
+        #print('PGM M2 pos', PGM.Mirror_Pitch.position)
+        #print('PGM GR pos', PGM.Grating_Pitch.position)
+
         #Determine the number of steps and make the step arrays to use when moving the photon energy.
-        n_steps=int(max(round( abs(self.PGM_angles(photon_energy,grating,EPU=EPU)['gamma']-
-                               PGM.Mirror_Pitch.position)/1  ),
-                    round( abs(self.PGM_angles(photon_energy,grating,EPU=EPU)['beta']-
-                        PGM.Grating_Pitch.position)/2  )))
+        n_steps=int(max(round( abs(self.PGM_angles(photon_energy,grating,EPU=EPU)['gamma']- PGM.Mirror_Pitch.position)/1  ),
+                        round( abs(self.PGM_angles(photon_energy,grating,EPU=EPU)['beta']- PGM.Grating_Pitch.position)/2  ) ) )
         if n_steps == 0: n_steps = 1 # if the number of steps is 0 set it to 1
 
+        #print('n = ', n_steps)
 
         # divide the range of motion of M2 and the grating into 'n_steps' even steps
 
@@ -566,11 +568,16 @@ class ESM_monochromator_device:
                               self.PGM_angles(photon_energy,grating,EPU=EPU,
                                               c=c_val)['beta'], num=n_steps)
 
+
         for i in range(n_steps):   # set position of M2 pitch and GRT pitch step by step.
             yield from mv(PGM.Mirror_Pitch, M2_steps[i],    PGM.Grating_Pitch, GRT_steps[i])
 
-        yield from mv(PGM.Focus_Const, self.PGM_angles(photon_energy,grating,EPU=EPU, c=c_val)['c'],
-                      PGM.Energy, photon_energy)
+#        print('arrived here')
+        # next line removed in march 22 (Elio)
+#        yield from mv(PGM.Focus_Const, self.PGM_angles(photon_energy,grating,EPU=EPU, c=c_val)['c'],
+#                      PGM.Energy, photon_energy)
+
+        
 
         if not EPU==None:
             if LP == 'LH':

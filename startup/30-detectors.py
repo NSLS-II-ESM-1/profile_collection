@@ -91,7 +91,7 @@ qem07 = ESMQuadEM("XF:21IDC-BI{EM:7}EM180:", name="qem07")
 qem08 = ESMQuadEM("XF:21IDC-BI{EM:8}EM180:", name="qem08")
 # qem09 not connected as of May 24, 2018
 # qem09 = ESMQuadEM('XF:21IDC-BI{EM:9}EM180:', name='qem09')
-qem10 = ESMQuadEM("XF:21IDC-BI{EM:10}EM180:", name="qem10")
+##qem10 = ESMQuadEM("XF:21IDC-BI{EM:10}EM180:", name="qem10")
 # qem11 not connected as of May 24, 2018
 # qem11 = ESMQuadEM('XF:21IDC-BI{EM:11}EM180:', name='qem11')
 qem12 = ESMQuadEM("XF:21IDC-BI{EM:12}EM180:", name="qem12")
@@ -161,8 +161,8 @@ Diag1_CamH.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam01/"
 #Diag1_CamV = MyDetector("XF:21IDA-BI{Diag:1-Cam:V}", name="Diag1_CamV")
 #Diag1_CamV.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam02/"
 
-# Lock23A_CamEA3_1 = MyDetector('XF:21IDC-BI{BT:B2-Diag:B2_1}', name='Lock23A_CamEA3_1')
-# Lock23A_CamEA3_1.hdf5.write_path_template = '/nsls2/xf21id1/image_files/cam03/'
+Lock23A_CamEA3_1 = MyDetector('XF:21IDD-BI{ES-Cam:3}', name='Lock23A_CamEA3_1')
+Lock23A_CamEA3_1.hdf5.write_path_template = '/nsls2/xf21id1/image_files/cam03/'
 
 #Lock23A_CamEA3_1 = MyDetector(
 #    "XF:21IDD-BI{Lock2:3A-Cam:EA3_1}", name="Lock23A_CamEA3_1"
@@ -178,7 +178,7 @@ Diag1_CamH.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam01/"
 #Prep2A_CamEA2_1 = MyDetector("XF:21IDD-BI{Prep:2A-Cam:EA2_1}", name="Prep2A_CamEA2_1")
 #Prep2A_CamEA2_1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam05/"
 
-Mir3_Cam10_U_1 = MyDetector("XF:21IDB-BI{Mir:3-Cam:10_U_1}", name="Mir3_Cam10_U_1")
+Mir3_Cam10_U_1 = MyDetector("XF:21IDB-BI{Mir:3-Cam:6}", name="Mir3_Cam10_U_1")
 Mir3_Cam10_U_1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam06/"
 
 
@@ -191,7 +191,7 @@ Mir3_Cam10_U_1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam06/"
 #Anal1A_Cambeam = MyDetector("XF:21IDD-BI{Anal:1A-Cam:beam}", name="Anal1A_Cambeam")
 #Anal1A_Cambeam.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam08/"
 
-Prep2A_CamLEED = MyDetector("XF:21IDD-BI{Prep:2A-Cam:LEED}", name="Prep2A_CamLEED")
+Prep2A_CamLEED = MyDetector("XF:21IDD-BI{ES-Cam:9}", name="Prep2A_CamLEED")
 Prep2A_CamLEED.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam09/"
 
 #Prep2A_Camevap1 = MyDetector("XF:21IDD-BI{Prep:2A-Cam:evap1}", name="Prep2A_Camevap1")
@@ -200,7 +200,7 @@ Prep2A_CamLEED.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam09/"
 #Prep2A_Camevap2 = MyDetector("XF:21IDD-BI{Prep:2A-Cam:evap2}", name="Prep2A_Camevap2")
 #Prep2A_Camevap2.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam11/"
 
-LOWT_5A_Cam1 = MyDetector("XF:21IDD-OP{LOWT:5A-Cam:1}", name="LOWT_5A_Cam1")
+LOWT_5A_Cam1 = MyDetector("XF:21IDD-OP{ES-Cam:14}", name="LOWT_5A_Cam1")
 LOWT_5A_Cam1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam14/"
 
 #LOWT_5A_Cam2 = MyDetector("XF:21IDD-OP{LOWT:5A-Cam:2}", name="LOWT_5A_Cam2")

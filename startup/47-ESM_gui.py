@@ -1,6 +1,7 @@
 #esm_ui_config_file = "/home2/xf21id1/constructor/esm_usr1.ui"
 sys.path.insert(0,'/home2/xf21id1/PEAK-notebooks-alpha13/PythonNotebooks/')
-esm_ui_config_file = "/opt/bsstudio/bsstudio-xf/21id/esm_usr1.ui"
+esm_ui_config_file = "/home2/xf21id1/git/bsstudio-xf/21id/esm_usr2.ui"
+esm_ui_old_config_file = "/home2/xf21id1/git/bsstudio-xf_old/21id/esm_usr2.ui"
 
 def update_gui():
     import os
@@ -26,6 +27,9 @@ def esm_gui(filename=esm_ui_config_file, detached=False, verbose=False):
     #import cProfile
     #cProfile.run("esm_gui1('"+filename+"')", "profile_results")
     esm_gui1(filename, detached=detached, verbose=verbose)
+
+def old_gui():
+    esm_gui(esm_ui_old_config_file)
 
 def gui_designer():
     import os

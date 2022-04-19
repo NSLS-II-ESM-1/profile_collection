@@ -37,11 +37,14 @@ class LT_mtr(Device):
    X = Comp(EpicsMotor,"-Ax:X}Mtr", kind='hinted')
    Y = Comp(EpicsMotor,"-Ax:Y}Mtr", kind='hinted')
    Z = Comp(EpicsMotor,"-Ax:Z}Mtr", kind='hinted')
-   Ry =  Comp(EpicsMotor,"-Ax:Ry}Mtr", kind='hinted')
+   Ry =  Comp(EpicsMotor,"-Ax:R1}Mtr", kind='hinted')
+   Rz =  Comp(EpicsMotor,"-Ax:R2}Mtr", kind='hinted')
+   Rx =  Comp(EpicsMotor,"-Ax:R3}Mtr", kind='hinted')
 
-LT = LT_mtr('XF:21IDD-ES{LT:1-Manip:EA5_1', name='LT')
+#LT = LT_mtr('XF:21IDD-ES{LT:1-Manip:EA5_1', name='LT')
+LT = LT_mtr('XF:21IDD-ES{PRV', name='LT')
 
-
+#
 # ---------------------------- SAMPLE_PREP Chamber -----------------------------
 # Sample_prep chamber:
 #
