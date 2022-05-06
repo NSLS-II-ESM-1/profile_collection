@@ -90,6 +90,7 @@ class ESMQuadEM(QuadEM):
 class ESMbpm(ESMQuadEM):
     conf = Cpt(QuadEMPort, port_name="NSLS2_EM")
 
+
 qem01 = ESMQuadEM("XF:21IDA-BI{EM:1}EM180:", name="qem01")
 qem02 = ESMQuadEM("XF:21IDB-BI{EM:2}EM180:", name="qem02")
 qem03 = ESMQuadEM("XF:21IDB-BI{EM:3}EM180:", name="qem03")
@@ -107,6 +108,7 @@ qem08 = ESMQuadEM("XF:21IDC-BI{EM:8}EM180:", name="qem08")
 ##qem10 = ESMQuadEM("XF:21IDC-BI{EM:10}EM180:", name="qem10")
 # qem11 not connected as of May 24, 2018
 # qem11 = ESMQuadEM('XF:21IDC-BI{EM:11}EM180:', name='qem11')
+
 
 
 qem12 = ESMQuadEM("XF:21IDC-BI{EM:12}EM180:", name="qem12")
