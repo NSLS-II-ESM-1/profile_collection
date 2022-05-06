@@ -347,9 +347,9 @@ def ESM_status(f_nm = None):
             ############ PRINT THE BEAMLINE STATUS FILE ######
     
     if f_nm == None: 
-        fl="/nsls2/xf21id1/csv_files/STATUS.txt"
+        fl="/nsls2/data/esm/legacy/csv_files/STATUS.txt"
     else:
-        fl='/nsls2/xf21id1/csv_files/'+ f_nm +'_STATUS.txt'
+        fl='/nsls2/data/esm/legacy/csv_files/'+ f_nm +'_STATUS.txt'
         
     f = open(fl, "a")
 
