@@ -90,7 +90,7 @@ class ESMQuadEM(QuadEM):
 class ESMbpm(ESMQuadEM):
     conf = Cpt(QuadEMPort, port_name="NSLS2_EM")
 
-
+#uncomment later and fix
 qem01 = ESMQuadEM("XF:21IDA-BI{EM:1}EM180:", name="qem01")
 qem02 = ESMQuadEM("XF:21IDB-BI{EM:2}EM180:", name="qem02")
 qem03 = ESMQuadEM("XF:21IDB-BI{EM:3}EM180:", name="qem03")
@@ -100,11 +100,17 @@ qem05 = ESMQuadEM("XF:21IDB-BI{EM:5}EM180:", name="qem05")
 qem06 = ESMQuadEM("XF:21IDC-BI{EM:6}EM180:", name="qem06")
 qem07 = ESMQuadEM("XF:21IDC-BI{EM:7}EM180:", name="qem07")
 qem08 = ESMQuadEM("XF:21IDC-BI{EM:8}EM180:", name="qem08")
+
+
+
 # qem09 not connected as of May 24, 2018
 # qem09 = ESMQuadEM('XF:21IDC-BI{EM:9}EM180:', name='qem09')
 ##qem10 = ESMQuadEM("XF:21IDC-BI{EM:10}EM180:", name="qem10")
 # qem11 not connected as of May 24, 2018
 # qem11 = ESMQuadEM('XF:21IDC-BI{EM:11}EM180:', name='qem11')
+
+
+#uncomment later and fix
 qem12 = ESMQuadEM("XF:21IDC-BI{EM:12}EM180:", name="qem12")
 qem13 = ESMQuadEM("XF:21IDC-BI{EM:13}EM180:", name="qem13")
 qem15 = ESMQuadEM("XF:21IDC-BI{EM:15}EM180:", name="qem15")
@@ -116,8 +122,8 @@ xqem01 = ESMbpm("XF:21IDA-BI{EM:BPM01}", name="xqem01")
 class MyDetector(SingleTrigger, AreaDetector):
     #    tiff = Cpt(TIFFPluginWithFileStore,
     #               suffix='TIFF1:',
-    #               write_path_template='/nsls2/xf21id1/image_files/',  # trailing slash!
-    #               read_path_template='/nsls2/xf21id1/image_files/',
+    #               write_path_template='/nsls2/data/esm/legacy/image_files/',  # trailing slash!
+    #               read_path_template='/nsls2/data/esm/legacy/image_files/',
     #               root='/direct'    )
     image = Cpt(ImagePlugin_V33, "image1:")
     stats1 = Cpt(StatsPlugin_V33, "Stats1:")
@@ -135,8 +141,8 @@ class MyDetector(SingleTrigger, AreaDetector):
     hdf5 = Cpt(
         HDF5PluginWithFileStore,
         suffix="HDF1:",
-        write_path_template="/nsls2/xf21id1/image_files/",  # trailing slash!
-        root="/nsls2/xf21id1/",
+        write_path_template="/nsls2/data/esm/legacy/image_files/",  # trailing slash!
+        root="/nsls2/data/esm/legacy/",
         reg=db.reg,
     )
 
@@ -167,64 +173,64 @@ class MyDetector(SingleTrigger, AreaDetector):
 
 
 Diag1_CamH = MyDetector("XF:21IDA-BI{Diag:1-Cam:H}", name="Diag1_CamH")
-Diag1_CamH.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam01/"
+Diag1_CamH.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam01/"
 
 #Diag1_CamV = MyDetector("XF:21IDA-BI{Diag:1-Cam:V}", name="Diag1_CamV")
-#Diag1_CamV.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam02/"
+#Diag1_CamV.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam02/"
 
 Lock23A_CamEA3_1 = MyDetector('XF:21IDD-BI{ES-Cam:3}', name='Lock23A_CamEA3_1')
-Lock23A_CamEA3_1.hdf5.write_path_template = '/nsls2/xf21id1/image_files/cam03/'
+Lock23A_CamEA3_1.hdf5.write_path_template = '/nsls2/data/esm/legacy/image_files/cam03/'
 
 #Lock23A_CamEA3_1 = MyDetector(
 #    "XF:21IDD-BI{Lock2:3A-Cam:EA3_1}", name="Lock23A_CamEA3_1"
 #)
-#Lock23A_CamEA3_1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam03/"
+#Lock23A_CamEA3_1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam03/"
 
 
 #Lock14A_CamEA4_1 = MyDetector(
 #    "XF:21IDD-BI{Lock1:4A-Cam:EA4_1}", name="Lock14A_CamEA4_1"
 #)
-#Lock14A_CamEA4_1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam04/"
+#Lock14A_CamEA4_1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam04/"
 
 #Prep2A_CamEA2_1 = MyDetector("XF:21IDD-BI{Prep:2A-Cam:EA2_1}", name="Prep2A_CamEA2_1")
-#Prep2A_CamEA2_1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam05/"
+#Prep2A_CamEA2_1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam05/"
 
 Mir3_Cam10_U_1 = MyDetector("XF:21IDB-BI{Mir:3-Cam:6}", name="Mir3_Cam10_U_1")
-Mir3_Cam10_U_1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam06/"
+Mir3_Cam10_U_1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam06/"
 
 
 # BC1_Diag1_U_1 = MyDetector('XF:21IDA-BI{BC:1-Diag:1_U_1}', name='BC1_Diag1_U_1')
-# BC1_Diag1_U_1.hdf5.write_path_template = '/nsls2/xf21id1/image_files/cam07/'
+# BC1_Diag1_U_1.hdf5.write_path_template = '/nsls2/data/esm/legacy/image_files/cam07/'
 
 #Anal1A_Camlens = MyDetector("XF:21IDD-BI{Anal:1A-Cam:lens}", name="Anal1A_Camlens")
-#Anal1A_Camlens.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam07/"
+#Anal1A_Camlens.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam07/"
 
 #Anal1A_Cambeam = MyDetector("XF:21IDD-BI{Anal:1A-Cam:beam}", name="Anal1A_Cambeam")
-#Anal1A_Cambeam.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam08/"
+#Anal1A_Cambeam.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam08/"
 
 Prep2A_CamLEED = MyDetector("XF:21IDD-BI{ES-Cam:9}", name="Prep2A_CamLEED")
-Prep2A_CamLEED.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam09/"
+Prep2A_CamLEED.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam09/"
 
 #Prep2A_Camevap1 = MyDetector("XF:21IDD-BI{Prep:2A-Cam:evap1}", name="Prep2A_Camevap1")
-#Prep2A_Camevap1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam10/"
+#Prep2A_Camevap1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam10/"
 
 #Prep2A_Camevap2 = MyDetector("XF:21IDD-BI{Prep:2A-Cam:evap2}", name="Prep2A_Camevap2")
-#Prep2A_Camevap2.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam11/"
+#Prep2A_Camevap2.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam11/"
 
 LOWT_5A_Cam1 = MyDetector("XF:21IDD-OP{ES-Cam:14}", name="LOWT_5A_Cam1")
-LOWT_5A_Cam1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam14/"
+LOWT_5A_Cam1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam14/"
 
 #LOWT_5A_Cam2 = MyDetector("XF:21IDD-OP{LOWT:5A-Cam:2}", name="LOWT_5A_Cam2")
-#LOWT_5A_Cam2.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam15/"
+#LOWT_5A_Cam2.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam15/"
 
 #BTA2_Cam1 = MyDetector("XF:21IDD-OP{BT:A2-Cam:1}", name="BTA2_Cam1")
-#BTA2_Cam1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam16/"
+#BTA2_Cam1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam16/"
 
 #BTB2_Cam1 = MyDetector("XF:21IDD-OP{BT:B2-Cam:1}", name="B2BT_Cam1")
-#BTB2_Cam1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam17/"
+#BTB2_Cam1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam17/"
 
 #PEEM1B_Cam1 = MyDetector("XF:21IDD-OP{PEEM:1B-Cam:1}", name="PEEM1B_Cam1")
-#PEEM1B_Cam1.hdf5.write_path_template = "/nsls2/xf21id1/image_files/cam18/"
+#PEEM1B_Cam1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam18/"
 
 #BTB5_Cam1 = MyDetector("XF:21IDD-OP{BT:B5-Cam:1}", name="BTB5_Cam1")
 #BTB5_Cam1.hdf5.write_path_template = "/nsls2/xf21id/image_files/cam19/"
