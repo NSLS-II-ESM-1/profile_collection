@@ -9,7 +9,17 @@ def safe_to_actuate_epu57():
 def safe_to_actuate_epu105():
     return EPU57.gap.position>219
 
-class UgapPositioner(PVPositioner):
+class SlowStopPVPositioner(PVPositioner):
+    """This keeps the Gap and Phase from sending stop over the CAGateway in fast succession.
+    maffettone added this in response to JIRA SXSS-353
+    """
+    def stop(self, *, success=False):
+        if self.stop_signal is not None:
+            self.stop_signal.put(self.stop_value, wait=True)
+            ttime.sleep(0.1)
+        super(PVPositioner).stop(success=success)
+
+class UgapPositioner(SlowStopPVPositioner):
     readback = Cpt(EpicsSignalRO, '-Ax:Gap}Mtr.RBV')
     setpoint = Cpt(EpicsSignal, '-Ax:Gap}Mtr')
     actuate = Cpt(EpicsSignal, '}Cmd:Start-Cmd', string=True)
@@ -64,7 +74,7 @@ class UgapPositioner(PVPositioner):
         assert self.safe_to_actuate()
         self.setpoint.put(val)
 
-class UphasePositioner(PVPositioner):
+class UphasePositioner(SlowStopPVPositioner):
     readback = Cpt(EpicsSignalRO, '-Ax:Phase}Mtr.RBV')
     setpoint = Cpt(EpicsSignal, '-Ax:Phase}Mtr')
     actuate = Cpt(EpicsSignal, '}Cmd:Start-Cmd', string=True)
