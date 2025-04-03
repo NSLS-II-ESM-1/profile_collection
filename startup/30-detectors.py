@@ -113,8 +113,8 @@ qem08 = ESMQuadEM("XF:21IDC-BI{EM:8}EM180:", name="qem08")
 
 qem12 = ESMQuadEM("XF:21IDC-BI{EM:12}EM180:", name="qem12")
 qem13 = ESMQuadEM("XF:21IDC-BI{EM:13}EM180:", name="qem13")
-qem15 = ESMQuadEM("XF:21IDC-BI{EM:15}EM180:", name="qem15")
-qem16 = ESMQuadEM("XF:21IDC-BI{EM:16}EM180:", name="qem16")
+#qem15 = ESMQuadEM("XF:21IDC-BI{EM:15}EM180:", name="qem15")
+#qem16 = ESMQuadEM("XF:21IDC-BI{EM:16}EM180:", name="qem16")
 
 xqem01 = ESMbpm("XF:21IDA-BI{EM:BPM01}", name="xqem01")
 
@@ -143,7 +143,6 @@ class MyDetector(SingleTrigger, AreaDetector):
         suffix="HDF1:",
         write_path_template="/nsls2/data/esm/legacy/image_files/",  # trailing slash!
         root="/nsls2/data/esm/legacy/",
-        reg=db.reg,
     )
 
     def set_primary(self, n, value=None):
@@ -217,7 +216,7 @@ Prep2A_CamLEED.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/ca
 #Prep2A_Camevap2 = MyDetector("XF:21IDD-BI{Prep:2A-Cam:evap2}", name="Prep2A_Camevap2")
 #Prep2A_Camevap2.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam11/"
 
-LOWT_5A_Cam1 = MyDetector("XF:21IDD-OP{ES-Cam:14}", name="LOWT_5A_Cam1")
+LOWT_5A_Cam1 = MyDetector("XF:21IDD-OP{ES-Cam:16}", name="LOWT_5A_Cam1")
 LOWT_5A_Cam1.hdf5.write_path_template = "/nsls2/data/esm/legacy/image_files/cam14/"
 
 #LOWT_5A_Cam2 = MyDetector("XF:21IDD-OP{LOWT:5A-Cam:2}", name="LOWT_5A_Cam2")
@@ -268,3 +267,11 @@ for camera in all_standard_pros:
     camera.stage_sigs[camera.trans1.blocking_callbacks] = 1
     camera.stage_sigs[camera.cam.trigger_mode] = "Fixed Rate"
     camera.set_primary(["All"])
+
+
+
+
+class flowmeter(Device):
+	value = Cpt(EpicsSignal, 'XF:21ID1-ES{IOLogik:1}AI:1-I')
+
+flowm = flowmeter(name='flowm')

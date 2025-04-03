@@ -522,6 +522,7 @@ class ESM_monochromator_device:
 
         '''
 
+
         # check that the requested value is within the range of both the EPU and the grating.
         if (self.Range[grating][0]> photon_energy) or (self.Range[grating][1]< photon_energy):
             raise RuntimeError('photon energy out of range for grating,'+
@@ -591,15 +592,22 @@ class ESM_monochromator_device:
 #        yield from mv(PGM.Focus_Const, self.PGM_angles(photon_energy,grating,EPU=EPU, c=c_val)['c'],
 #                      PGM.Energy, photon_energy)
 
-        
-
+                        
         if not EPU==None:
             if LP == 'LH':
-                yield from mv(getattr(ip.user_ns['EPU'+EPU],'phase'), 0.0 )
+                if  np.abs(getattr(ip.user_ns['EPU'+EPU],'phase').readback.value)  < 0.1:
+                     print('already LH phase')
+                     pass
+                else:
+                     yield from mv(getattr(ip.user_ns['EPU'+EPU],'phase'), 0.0 )
                 yield from mv(getattr(ip.user_ns['EPU'+EPU],'gap'), self.Und_e2g(photon_energy,EPU=EPU) )
             elif LP == 'LV':
 #                yield from mv(getattr(ip.user_ns['EPU'+EPU],'gap'), 100.0 )                
-                yield from mv(getattr(ip.user_ns['EPU'+EPU],'phase'), float(EPU)/2 )
+                if  np.abs(getattr(ip.user_ns['EPU'+EPU],'phase').readback.value - float(EPU)/2) < 0.1:
+                    print('already LV phase')
+                    pass
+                else:
+                    yield from mv(getattr(ip.user_ns['EPU'+EPU],'phase'), float(EPU)/2 )
                 yield from mv(getattr(ip.user_ns['EPU'+EPU],'gap'), self.Und_e2g_LV(photon_energy,EPU=EPU) )
             elif LP == 'CL':
                 yield from mv(getattr(ip.user_ns['EPU'+EPU],'gap'), 100.0 )                
@@ -609,7 +617,7 @@ class ESM_monochromator_device:
                 yield from mv(getattr(ip.user_ns['EPU'+EPU],'gap'), 100.0 )                
                 yield from mv(getattr(ip.user_ns['EPU'+EPU],'phase'),-self.Und_e2g_Cphase(photon_energy,EPU=EPU) )
                 yield from mv(getattr(ip.user_ns['EPU'+EPU],'gap'), self.Und_e2g_Cgap(photon_energy,EPU=EPU) )
-            
+                
         # if shutter is 'close':
         #     yield from mv(shutter_FOE, 'Open')
 
