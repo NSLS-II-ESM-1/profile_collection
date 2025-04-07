@@ -1,0 +1,9 @@
+pv_specs:
+  "XF:21IDC-OP{Mir:4A-FM}:BPM0:PosX":
+    type: ChannelDouble
+    value: [0, 0, 0]
+
+  "XF:21IDC-OP{Mir:4A-FM}:BPM0:PosY":
+    type: ChannelDouble
+    value: [0, 0, 0]
+
