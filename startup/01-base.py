@@ -5,7 +5,7 @@ from ophyd.signal import EpicsSignalBase
 
 
 # Set timeout for all EpicsSignalBase objects
-EpicsSignalBase.set_defaults(connection_timeout=8)
+EpicsSignalBase.set_defaults(connection_timeout=10)
 
 # Configure RE + other services
 nslsii.configure_base(get_ipython().user_ns,
