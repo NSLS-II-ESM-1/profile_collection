@@ -126,4 +126,3 @@ runengine_metadata_dir = appdirs.user_data_dir(appname="bluesky") / Path("runeng
 
 # PersistentDict will create the directory if it does not exist
 RE.md = PersistentDict(runengine_metadata_dir)
-

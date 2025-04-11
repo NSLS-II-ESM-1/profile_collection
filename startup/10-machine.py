@@ -119,9 +119,11 @@ class Monochromator(Device):
     Mirror_Pitch = Comp(EpicsMotor,"-Ax:8_MP}Mtr")
     Mirror_Pitch_off = Comp(EpicsSignal,"-Ax:8_MP}Mtr.OFF")
     Mirror_Pitch_set = Comp(EpicsSignal,"-Ax:8_MP}Mtr.SET")
+    Mirror_Pitch_kill = Comp(EpicsSignal, "-Ax:8_MP}Cmd:Kill-Cmd")
     Grating_Pitch = Comp(EpicsMotor,"-Ax:8_GP}Mtr")
     Grating_Pitch_off = Comp(EpicsSignal,"-Ax:8_GP}Mtr.OFF")
     Grating_Pitch_set = Comp(EpicsSignal,"-Ax:8_GP}Mtr.SET")
+    Grating_Pitch_kill = Comp(EpicsSignal, "-Ax:8_GP}Cmd:Kill-Cmd")
     Grating_lines = Comp(EpicsSignal,"}:LINES:RBV",write_pv="}:LINES:SET",put_complete=False, kind='hinted')
 
 PGM = Monochromator("XF:21IDB-OP{Mono:1",name="PGM")

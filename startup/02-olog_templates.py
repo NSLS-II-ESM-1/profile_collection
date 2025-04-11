@@ -1,5 +1,4 @@
 from datetime import datetime as datetime
-
 ########### OLOG CUSTOMIZATION #############
 # Time scans
 # scan_time description template

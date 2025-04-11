@@ -301,7 +301,7 @@ def SiC2F(photon_energy, current):
                 raise RuntimeError('photon energy outside of range of conversion data')
         else:
             flux =  (current)/(1.6E-19)/SiCtoF(photon_energy)
-            return flux
+            return '{:.3e}'.format(flux)
 
 
 def gaussian_1D(x,params):
